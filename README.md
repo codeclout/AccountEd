@@ -2,7 +2,7 @@
 
 ### Overview
 
-AccountEd (AE) is a platform-agnostic data processing framework consisting of a learning management system and educator tools. This tool is built atop of blockchain technologies that are used to validate data integrity at any point in time.
+AccountEd (AE) is a platform-agnostic data processing framework consisting of a learning management system and educator tools. This framework is integrated with blockchain technologies that are used to validate data integrity at any point in time.
 
 ### System Requirements
 
