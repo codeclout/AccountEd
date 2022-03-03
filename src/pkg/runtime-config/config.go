@@ -1,20 +1,36 @@
-package main
+package runtime_config
 
 import (
 	"log"
 	"os"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )
 
-var configFileLocation string = "./config.hcl"
+const configFileLocation string = "./runtime-config.hcl"
 
 type AccessControlListConfig struct {
 	Read  string `hcl:"read"`
 	Write string `hcl:"write"`
 }
 
+type AWSCloudConfig struct {
+	AccessKeyId     *string
+	AWSRegion       string
+	AWSProfile      string
+	Expiration      *time.Time
+	RoleArn         string
+	SecretAccessKey *string
+	SessionName     string
+	SessionToken    *string
+}
+
 type RuntimeConfig struct {
+	*AWSCloudConfig
+	InfoLog *log.Logger
+
 	Environment string
 	HostName    string
 
@@ -37,18 +53,34 @@ type ServiceConfig struct {
 	HostName                 string `hcl:"address"`
 	Port                     int16  `hcl:"port"`
 	Protocol                 string `hcl:"protocol,label"`
+	UseCache                 bool   `hcl:"use_cache"`
 }
 
-func getConfig() *RuntimeConfig {
+func (r *RuntimeConfig) SetAwsSession(c sts.AssumeRoleOutput) error {
+	*r.AWSCloudConfig.AccessKeyId = *c.Credentials.AccessKeyId
+	*r.AWSCloudConfig.SecretAccessKey = *c.Credentials.SecretAccessKey
+	*r.AWSCloudConfig.Expiration = *c.Credentials.Expiration
+	*r.AWSCloudConfig.SessionToken = *c.Credentials.SessionToken
+
+	return nil
+}
+
+func GetConfig() (*RuntimeConfig, error) {
 	config := RuntimeConfig{
 		Environment: os.Getenv("ENVIRONMENT"),
+		AWSCloudConfig: &AWSCloudConfig{
+			AWSRegion:   os.Getenv("AWS_REGION"),
+			AWSProfile:  os.Getenv("AWS_PROFILE"),
+			RoleArn:     os.Getenv("AWS_ROLE_ARN"),
+			SessionName: os.Getenv("AWS_SESSION_NAME"),
+		},
 	}
 
 	e := hclsimple.DecodeFile(configFileLocation, nil, &config)
 
 	if e != nil {
-		log.Fatalf("Failed to load configuration %s", e)
+		return nil, e
 	}
 
-	return &config
+	return &config, nil
 }

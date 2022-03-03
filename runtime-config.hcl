@@ -17,5 +17,6 @@ service "http" {
   db_driver            = "mongodb"
   db_connection_string = ""
   port                 = 8088
+  use_cache            = true
 }
 // workspaces { name = "accountEd-${env.ENV}-org-management" }
