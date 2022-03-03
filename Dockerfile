@@ -23,11 +23,14 @@ RUN su - ci-svc-accountEd
 
 # pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
 COPY go.mod go.sum ./
-COPY ./config.hcl ./
+COPY runtime-config.hcl ./
 
 RUN go mod tidy 
 RUN go mod verify
 RUN go get github.com/hashicorp/hcl/v2/hclsimple
+RUN go get github.com/aws/aws-sdk-go-v2/config
+RUN go get github.com/aws/aws-sdk-go-v2/service/sts
+RUN go get github.com/codeclout/AccountEd/src/pkg/runtime-config
 
 COPY ./src .
 
