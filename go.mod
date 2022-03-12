@@ -3,7 +3,9 @@ module github.com/codeclout/AccountEd
 go 1.17
 
 require (
+	github.com/aws/aws-sdk-go-v2 v1.14.0
 	github.com/aws/aws-sdk-go-v2/config v1.14.0
+	github.com/aws/aws-sdk-go-v2/service/organizations v1.13.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.15.0
 	github.com/hashicorp/hcl/v2 v2.11.1
 )
@@ -11,7 +13,6 @@ require (
 require (
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.14.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.9.0 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.11.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.5 // indirect

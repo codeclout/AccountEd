@@ -5,6 +5,12 @@ acls {
   write = "service:write"
 }
 
+cloudProvider {
+  aws {
+    role_duration = 3600
+  }
+}
+
 healthcheck {
   interval = "3s"
   retries  = 3

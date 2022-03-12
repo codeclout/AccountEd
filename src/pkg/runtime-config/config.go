@@ -16,6 +16,10 @@ type AccessControlListConfig struct {
 	Write string `hcl:"write"`
 }
 
+type AWSRuntimeConfig struct {
+	RoleDuration int32 `hcl:"role_duration"`
+}
+
 type AWSCloudConfig struct {
 	AccessKeyId     *string
 	AWSRegion       string
@@ -27,12 +31,17 @@ type AWSCloudConfig struct {
 	SessionToken    *string
 }
 
+type Cloud struct {
+	AWS AWSRuntimeConfig `hcl:"aws,block"`
+}
+
 type RuntimeConfig struct {
 	*AWSCloudConfig
 	InfoLog *log.Logger
 
-	Environment string
-	HostName    string
+	CloudProvider Cloud `hcl:"cloudProvider,block"`
+	Environment   string
+	HostName      string
 
 	ACL          AccessControlListConfig `hcl:"acls,block"`
 	HealthCheck  HealthCheckConfig       `hcl:"healthcheck,block"`
