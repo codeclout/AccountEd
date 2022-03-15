@@ -6,7 +6,7 @@ export GOARCH = $(shell go env GOARCH)
 export TF_INPUT = $(shell go env TF_INPUT)
 export TF_LOG = $(shell go env TF_LOG)
 
-export TF_VAR_LMS_ACCOUNT_ROLE = $(shell go env LMS_ACCOUNT_ROLE)
+export TF_VAR_LMS_ACCOUNT_ROLE_NAME = $(shell go env LMS_ACCOUNT_ROLE)
 export TF_VAR_LMS_USER_ACCOUNT_EMAIL = $(shell go env LMS_USER_ACCOUNT_EMAIL)
 export TF_VAR_PROXY_ACCOUNT_USERS_EMAIL = $(shell go env PROXY_ACCOUNT_USERS_EMAIL)
 export TF_VAR_PROXY_ACCOUNT_ROLE_NAME = $(shell go env PROXY_ACCOUNT_ROLE_NAME)
