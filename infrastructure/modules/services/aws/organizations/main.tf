@@ -152,6 +152,64 @@ resource "aws_organizations_policy" "prod_monitoring" {
   CONTENT
 }
 
+resource "aws_organizations_policy" "accountEd_project_environment" {
+  name = "PROJECT_ENVIRONMENT"
+  type = "TAG_POLICY"
+
+  content = <<CONTENT
+  {
+    "tags": {
+      "environment": {
+        "tag_key": {
+          "@@asign": "Environment"
+        },
+        "tag_value": {
+          "@@assign": [
+            "dev",
+            "ref",
+            "stage",
+            "prod"
+          ]
+        },
+        "enforced_for": {
+          "@@assign": [
+            "*"
+          ]
+        }
+      }
+    }
+  }
+  CONTENT
+}
+
+resource "aws_organizations_policy" "accountEd_project_type" {
+  name = "PROJECT_TYPE"
+  type = "TAG_POLICY"
+
+  content = <<CONTENT
+  {
+    "tags": {
+      "project": {
+        "tag_key": {
+          "@@asign": "Project"
+        },
+        "tag_value": {
+          "@@assign": [
+            "LMS",
+            "PROXY"
+          ]
+        },
+        "enforced_for": {
+          "@@assign": [
+            "*"
+          ]
+        }
+      }
+    }
+  }
+  CONTENT
+}
+
 resource "aws_organizations_policy_attachment" "root_restrict_billing" {
   policy_id = aws_organizations_policy.restrict_billing.id
   target_id = aws_organizations_organization.AccountEdManagement.roots[0].id
