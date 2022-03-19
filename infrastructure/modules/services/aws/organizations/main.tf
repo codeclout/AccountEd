@@ -15,18 +15,18 @@ resource "aws_organizations_policy" "restrict_leave_org" {
   name = "PROD_OU_RESTRICT_LEAVE_ORG"
 
   content = <<CONTENT
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Deny",
-        "Action": [
-          "organizations:LeaveOrganization"
-        ],
-        "Resource": [ "*" ]
-      }
-    ]
-  }
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": [
+            "organizations:LeaveOrganization"
+          ],
+          "Resource": [ "*" ]
+        }
+      ]
+    }
   CONTENT
 }
 
@@ -34,23 +34,23 @@ resource "aws_organizations_policy" "restrict_root" {
   name = "ROOT_USER_RESTRICT"
 
   content = <<CONTENT
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Deny",
-        "Action": [ "*" ],
-        "Resource": [ "*" ],
-        "Condition: {
-          "ForAllValues:StringLike": {
-            "aws:PrincipalArn": [
-              "arn:aws:iam::*:root"
-            ]
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": [ "*" ],
+          "Resource": [ "*" ],
+          "Condition: {
+            "ForAllValues:StringLike": {
+              "aws:PrincipalArn": [
+                "arn:aws:iam::*:root"
+              ]
+            }
           }
         }
-      }
-    ]
-  }
+      ]
+    }
   CONTENT
 }
 
@@ -112,27 +112,6 @@ resource "aws_organizations_policy" "prod_logging" {
 
 resource "aws_organizations_policy" "restrict_billing" {
   name = "ROOT_RESTRICT_BILLING"
-
-  content = <<CONTENT
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Deny",
-        "Action": [
-          "aws-portal:ModifyAccount",
-          "aws-portal:ModifyBilling",
-          "aws-portal:ModifyPaymentMethods"
-        ],
-        "Resource": [ "*" ]
-      }
-    ]
-  }
-  CONTENT
-}
-
-resource "aws_organizations_policy" "prod_monitoring" {
-  name = "PROD_MONITORING"
 
   content = <<CONTENT
   {
@@ -227,11 +206,6 @@ resource "aws_organizations_policy_attachment" "ou_prod_restrict_leave_org" {
 
 resource "aws_organizations_policy_attachment" "ou_prod_logging" {
   policy_id = aws_organizations_policy.prod_logging.id
-  target_id = aws_organizations_organizational_unit.prod.id
-}
-
-resource "aws_organizations_policy_attachment" "ou_prod_monitoring" {
-  policy_id = aws_organizations_policy.prod_monitoring.id
   target_id = aws_organizations_organizational_unit.prod.id
 }
 
