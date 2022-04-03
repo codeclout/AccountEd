@@ -114,20 +114,20 @@ resource "aws_organizations_policy" "restrict_billing" {
   name = "ROOT_RESTRICT_BILLING"
 
   content = <<CONTENT
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Deny",
-        "Action": [
-          "aws-portal:ModifyAccount",
-          "aws-portal:ModifyBilling",
-          "aws-portal:ModifyPaymentMethods"
-        ],
-        "Resource": [ "*" ]
-      }
-    ]
-  }
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": [
+            "aws-portal:ModifyAccount",
+            "aws-portal:ModifyBilling",
+            "aws-portal:ModifyPaymentMethods"
+          ],
+          "Resource": [ "*" ]
+        }
+      ]
+    }
   CONTENT
 }
 
@@ -136,28 +136,28 @@ resource "aws_organizations_policy" "accountEd_project_environment" {
   type = "TAG_POLICY"
 
   content = <<CONTENT
-  {
-    "tags": {
-      "environment": {
-        "tag_key": {
-          "@@asign": "Environment"
-        },
-        "tag_value": {
-          "@@assign": [
-            "dev",
-            "ref",
-            "stage",
-            "prod"
-          ]
-        },
-        "enforced_for": {
-          "@@assign": [
-            "*"
-          ]
+    {
+      "tags": {
+        "environment": {
+          "tag_key": {
+            "@@asign": "Environment"
+          },
+          "tag_value": {
+            "@@assign": [
+              "dev",
+              "ref",
+              "stage",
+              "prod"
+            ]
+          },
+          "enforced_for": {
+            "@@assign": [
+              "*"
+            ]
+          }
         }
       }
     }
-  }
   CONTENT
 }
 
@@ -166,26 +166,26 @@ resource "aws_organizations_policy" "accountEd_project_type" {
   type = "TAG_POLICY"
 
   content = <<CONTENT
-  {
-    "tags": {
-      "project": {
-        "tag_key": {
-          "@@asign": "Project"
-        },
-        "tag_value": {
-          "@@assign": [
-            "LMS",
-            "PROXY"
-          ]
-        },
-        "enforced_for": {
-          "@@assign": [
-            "*"
-          ]
+    {
+      "tags": {
+        "project": {
+          "tag_key": {
+            "@@asign": "Project"
+          },
+          "tag_value": {
+            "@@assign": [
+              "LMS",
+              "PROXY"
+            ]
+          },
+          "enforced_for": {
+            "@@assign": [
+              "*"
+            ]
+          }
         }
       }
     }
-  }
   CONTENT
 }
 

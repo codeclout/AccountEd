@@ -1,4 +1,4 @@
-package main
+package lambda_step_session
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	runtimeconfig "github.com/codeclout/AccountEd/src/pkg/runtime-config"
 )
 
 // STSAssumeRoleAPI defines the interface for the AssumeRole function.
@@ -30,7 +29,7 @@ func TakeRole(c context.Context, api STSAssumeRoleAPI, input *sts.AssumeRoleInpu
 }
 
 func AWSGetSessionToken() (*sts.AssumeRoleOutput, error) {
-	rtc, e := runtimeconfig.GetConfig()
+	rtc, e := aws.GetConfig()
 	if e != nil {
 		return nil, e
 	}

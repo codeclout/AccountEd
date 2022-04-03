@@ -1,15 +1,15 @@
-package runtime_config
+package aws
 
 import (
+	"context"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )
-
-const configFileLocation string = "./runtime-config.hcl"
 
 type AccessControlListConfig struct {
 	Read  string `hcl:"read"`
@@ -44,25 +44,7 @@ type RuntimeConfig struct {
 	HostName      string
 
 	ACL          AccessControlListConfig `hcl:"acls,block"`
-	HealthCheck  HealthCheckConfig       `hcl:"healthcheck,block"`
 	Organization string                  `hcl:"organization"`
-	Service      ServiceConfig           `hcl:"service,block"`
-}
-
-type HealthCheckConfig struct {
-	Interval string `hcl:"interval"`
-	Retries  int16  `hcl:"retries"`
-	Timeout  string `hcl:"timeout"`
-}
-
-type ServiceConfig struct {
-	CacheDriver              string `hcl:"cache_driver"`
-	DatabaseDriver           string `hcl:"db_driver"`
-	DatabaseConnectionString string `hcl:"db_connection_string"`
-	HostName                 string `hcl:"address"`
-	Port                     int16  `hcl:"port"`
-	Protocol                 string `hcl:"protocol,label"`
-	UseCache                 bool   `hcl:"use_cache"`
 }
 
 func (r *RuntimeConfig) SetAwsSession(c sts.AssumeRoleOutput) error {
@@ -74,7 +56,14 @@ func (r *RuntimeConfig) SetAwsSession(c sts.AssumeRoleOutput) error {
 	return nil
 }
 
-func GetConfig() (*RuntimeConfig, error) {
+func GetConfig(ctx context.Context) (*RuntimeConfig, error) {
+	wd, wdError := os.Getwd()
+	if wdError != nil {
+		return nil, wdError
+	}
+
+	configFileLocation := filepath.Join(wd, "config.hcl")
+
 	config := RuntimeConfig{
 		Environment: os.Getenv("ENVIRONMENT"),
 		AWSCloudConfig: &AWSCloudConfig{
