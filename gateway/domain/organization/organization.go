@@ -1,4 +1,4 @@
-package domain
+package organization
 
 import (
 	"time"
@@ -6,23 +6,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type Organization interface {
+type Port interface {
 	CreateOrganization(input CreateOrganizationInput) (*CreateOrganizationResult, error)
 	CreateOrganizationUnit(input CreateOrganizationUnitInput) (*CreateOrganizationUnitResult, error)
-	GetOrganizationDetails(id uuid.UUID) (Details, error)
-	GetOrganizationUnits(id uuid.UUID) ([]OrganizationUnit, error)
+	Organization(input uuid.UUID) (OrgDetails, error)
+	OrganizationUnit(input uuid.UUID) (OrgUnit, error)
 }
 
-type Policies interface {
-	AttachPolicy(policy uuid.UUID, target uuid.UUID) (*Policy, error)
+type PoliciesPort interface {
 	CreatePolicy(input CreatePolicyInput) (*CreatePolicyOutput, error)
-	GetPoliciesByOrganizationId(id uuid.UUID) ([]Policy, error)
-}
-
-type Team interface {
-}
-
-type Project interface {
 }
 
 type CreatePolicyInput struct {
@@ -57,23 +49,13 @@ type CreateOrganizationResult struct {
 	ID uuid.UUID
 }
 
-type Details struct {
+type OrgDetails struct {
 	ID    uuid.UUID
 	Name  string
-	Units []OrganizationUnit
+	Units []OrgUnit
 }
 
-type OrganizationUnit struct {
+type OrgUnit struct {
 	ID   uuid.UUID
 	Name string
-}
-
-type Target struct {
-	ID   uuid.UUID
-	Type *OrganizationUnit
-}
-
-type Policy struct {
-	ID      uuid.UUID
-	Targets []Target
 }
