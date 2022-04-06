@@ -1,18 +1,22 @@
 package api
 
 import (
-	"github.com/codeclout/AccountEd/gateway/domain/organization"
+	ports "github.com/codeclout/AccountEd/gateway/core/organization"
 	"github.com/google/uuid"
 )
 
 type Adapter struct {
-	org organization.Port
+	org ports.Port
 }
 
-func (a Adapter) GetOrganizationDetails(id uuid.UUID) (organization.OrgDetails, error) {
+func NewAdapter(a ports.Port) *Adapter {
+	return &Adapter{org: a}
+}
+
+func (a Adapter) GetOrganizationDetails(id uuid.UUID) (ports.Details, error) {
 	return a.org.Organization(id)
 }
 
-func (a Adapter) GetOrganizationUnits(id uuid.UUID) (organization.OrgUnit, error) {
+func (a Adapter) GetOrganizationUnit(id uuid.UUID) (ports.OrganizationUnit, error) {
 	return a.org.OrganizationUnit(id)
 }

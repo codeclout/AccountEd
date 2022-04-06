@@ -1,19 +1,12 @@
-package api
+package ports
 
-import "github.com/google/uuid"
+import (
+	"github.com/codeclout/AccountEd/agent/core/organization"
+	"github.com/codeclout/AccountEd/gateway/core/organization"
+	"github.com/google/uuid"
+)
 
 type OrganizationAPIPort interface {
-	GetOrganizationDetails(id uuid.UUID) (Details, error)
-	GetOrganizationUnit(id uuid.UUID) (OrganizationUnit, error)
-}
-
-type Details struct {
-	ID    uuid.UUID
-	Name  string
-	Units []OrganizationUnit
-}
-
-type OrganizationUnit struct {
-	ID   uuid.UUID
-	Name string
+	GetOrganizationDetails(id uuid.UUID) (organization.Details, error)
+	GetOrganizationUnit(id uuid.UUID) (organization.OrganizationUnit, error)
 }

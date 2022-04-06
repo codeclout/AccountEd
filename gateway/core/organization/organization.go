@@ -1,4 +1,4 @@
-package organization
+package ports
 
 import (
 	"time"
@@ -9,8 +9,8 @@ import (
 type Port interface {
 	CreateOrganization(input CreateOrganizationInput) (*CreateOrganizationResult, error)
 	CreateOrganizationUnit(input CreateOrganizationUnitInput) (*CreateOrganizationUnitResult, error)
-	Organization(input uuid.UUID) (OrgDetails, error)
-	OrganizationUnit(input uuid.UUID) (OrgUnit, error)
+	Organization(input uuid.UUID) (Details, error)
+	OrganizationUnit(input uuid.UUID) (OrganizationUnit, error)
 }
 
 type PoliciesPort interface {
@@ -49,13 +49,13 @@ type CreateOrganizationResult struct {
 	ID uuid.UUID
 }
 
-type OrgDetails struct {
+type Details struct {
 	ID    uuid.UUID
 	Name  string
-	Units []OrgUnit
+	Units []OrganizationUnit
 }
 
-type OrgUnit struct {
+type OrganizationUnit struct {
 	ID   uuid.UUID
 	Name string
 }

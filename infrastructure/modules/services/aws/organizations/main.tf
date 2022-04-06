@@ -213,7 +213,8 @@ resource "aws_organizations_organization" "AccountEdManagement" {
   aws_service_access_principals = [
     "account.amazonaws.com",
     "cloudtrail.amazonaws.com",
-    "servicecatalog.amazonaws.com"
+    "servicecatalog.amazonaws.com",
+    "sts.amazonaws.com"
   ]
 }
 
