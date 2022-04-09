@@ -1,4 +1,4 @@
-package adapters
+package organization
 
 import (
 	ports "github.com/codeclout/AccountEd/gateway/core/organization"
