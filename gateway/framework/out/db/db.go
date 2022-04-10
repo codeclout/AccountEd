@@ -2,5 +2,5 @@ package ports
 
 type DatabasePort interface {
 	CloseConnection()
-	LogDataInteraction()
+	LogDataInteraction(key string, value string)
 }
