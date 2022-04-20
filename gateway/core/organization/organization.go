@@ -13,6 +13,13 @@ type Port interface {
 	OrganizationUnit(input uuid.UUID) (OrganizationUnit, error)
 }
 
+//type Config interface {
+//	// *** factory function ***
+//	// create a value
+//	// initialize it for use
+//	// return to caller
+//}
+
 type PoliciesPort interface {
 	CreatePolicy(input CreatePolicyInput) (*CreatePolicyOutput, error)
 }
@@ -59,3 +66,5 @@ type OrganizationUnit struct {
 	ID   uuid.UUID
 	Name string
 }
+
+type OrganizationEvent struct{}
