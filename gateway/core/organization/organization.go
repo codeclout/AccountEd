@@ -1,47 +1,31 @@
 package ports
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Port interface {
-	CreateOrganization(input CreateOrganizationInput) (*CreateOrganizationResult, error)
-	CreateOrganizationUnit(input CreateOrganizationUnitInput) (*CreateOrganizationUnitResult, error)
-	Organization(input uuid.UUID) (Details, error)
-	OrganizationUnit(input uuid.UUID) (OrganizationUnit, error)
+	ActivateOrganization(ctx context.Context, in ActivateInput) error
+	DeactivateOrganization(ctx context.Context, id uuid.UUID) error
+	GetOrganization(ctx context.Context, id uuid.UUID) (Details, error)
+	GetOrganizationBatch(ctx context.Context, ids []uuid.UUID) ([]Details, error)
+	LogOrganizationHistoryEvent(ctx context.Context) error
+	UpsertOrganizationUnit(ctx context.Context, unit Details) error
 }
-
-//type Config interface {
-//	// *** factory function ***
-//	// create a value
-//	// initialize it for use
-//	// return to caller
-//}
-
-type PoliciesPort interface {
-	CreatePolicy(input CreatePolicyInput) (*CreatePolicyOutput, error)
-}
-
-type CreatePolicyInput struct {
-	Content     string
-	Description string
-	Name        string
-	Type        string
-}
-
-type CreatePolicyOutput struct {
-	ID   uuid.UUID
-	Name string
-}
-
-type CreateOrganizationInput struct {
+type ActivateInput struct {
 	Date  time.Time
 	Email string
+	ID    uuid.UUID
 	Name  string
 }
-
+type Details struct {
+	ID    uuid.UUID
+	Name  string
+	Units []OrganizationUnit
+}
 type CreateOrganizationUnitInput struct {
 	Name     string
 	ParentID string
@@ -56,15 +40,7 @@ type CreateOrganizationResult struct {
 	ID uuid.UUID
 }
 
-type Details struct {
-	ID    uuid.UUID
-	Name  string
-	Units []OrganizationUnit
-}
-
 type OrganizationUnit struct {
 	ID   uuid.UUID
 	Name string
 }
-
-type OrganizationEvent struct{}
