@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Port interface {
+type OrganizationPort interface {
 	ActivateOrganization(ctx context.Context, in ActivateInput) error
 	DeactivateOrganization(ctx context.Context, id uuid.UUID) error
 	GetOrganization(ctx context.Context, id uuid.UUID) (Details, error)

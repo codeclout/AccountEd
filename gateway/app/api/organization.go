@@ -1,11 +1,17 @@
 package ports
 
 import (
-	ports "github.com/codeclout/AccountEd/gateway/core/organization"
+	"context"
+
+	model "github.com/codeclout/AccountEd/gateway/core/organization"
 	"github.com/google/uuid"
 )
 
-type OrganizationAPIPort interface {
-	GetOrganizationDetails(id uuid.UUID) (ports.Details, error)
-	GetOrganizationUnit(id uuid.UUID) (ports.OrganizationUnit, error)
+type OrganizationAPI interface {
+	GetOrganizationByID(ctx context.Context, id uuid.UUID) (model.Details, error)
+	GetOrganizationListByID(ctx context.Context, ids []uuid.UUID) ([]model.Details, error)
+	PostOrganizationUnit(ctx context.Context, unit model.Details) error
+	PublishEvent(ctx context.Context) error
+	PutActivation(ctx context.Context, in model.ActivateInput) error
+	PutDeactivation(ctx context.Context, id uuid.UUID) error
 }

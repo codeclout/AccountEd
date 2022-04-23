@@ -29,7 +29,7 @@ func (a Adapter) GetOrganization(ctx context.Context, id uuid.UUID) (ports.Detai
 	return ports.Details{}, nil
 }
 
-// GetOrganizationBatch - Get a slice of organization details they their identifiers
+// GetOrganizationBatch - Get a slice of organization details via their identifiers
 func (a Adapter) GetOrganizationBatch(ctx context.Context, ids []uuid.UUID) ([]ports.Details, error) {
 	d := make([]ports.Details, 0, 100)
 
