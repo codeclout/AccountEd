@@ -22,15 +22,18 @@ type Adapter struct {
 	client     *mongo.Client
 	collection *mongo.Collection
 	ctx        context.Context
+	database   *mongo.Database
 }
 
 func NewAdapter(ctx context.Context, client *mongo.Client, db string) *Adapter {
 	collection := client.Database(db).Collection("organization")
+	database := client.Database(db)
 
 	return &Adapter{
 		client:     client,
 		collection: collection,
 		ctx:        ctx,
+		database:   database,
 	}
 }
 
@@ -40,9 +43,9 @@ func NewAdapter(ctx context.Context, client *mongo.Client, db string) *Adapter {
 func (a *Adapter) ActivateOrganization(id uuid.UUID) error {
 	filter := bson.D{primitive.E{Key: "internalID", Value: id}}
 	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "isActive", Value: 1},
-		{Key: "isMarkedForDeletion", Value: 0},
-		{Key: "isPending", Value: 0},
+		{Key: "isActive", Value: true},
+		{Key: "isMarkedForDeletion", Value: false},
+		{Key: "isPending", Value: false},
 		{Key: "updatedAt", Value: time.Now()},
 	}}}
 
@@ -60,7 +63,25 @@ func (a *Adapter) ActivateOrganization(id uuid.UUID) error {
 }
 
 func (a *Adapter) DeactivateOrganization(id uuid.UUID) error {
-	return ErrorNotImplemented
+	filter := bson.D{primitive.E{Key: "internalID", Value: id}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "isActive", Value: false},
+		{Key: "isMarkedForDeletion", Value: true},
+		{Key: "isPending", Value: false},
+		{Key: "updatedAt", Value: time.Now()},
+	}}}
+
+	var record bson.M
+	e := a.collection.FindOneAndUpdate(a.ctx, filter, update, options.FindOneAndUpdate()).Decode(&record)
+
+	if e != nil {
+		if errors.Is(e, mongo.ErrNoDocuments) {
+			return ErrorNotFound
+		}
+		return e
+	}
+
+	return nil
 }
 
 func (a *Adapter) GetOrganization(id uuid.UUID) (model.Details, error) {
