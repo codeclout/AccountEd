@@ -2,26 +2,57 @@ package db
 
 import (
 	"context"
-	"log"
+	"errors"
 	"time"
 
 	model "github.com/codeclout/AccountEd/gateway/core/organization"
-	repo "github.com/codeclout/AccountEd/gateway/framework/out/db"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+var ErrorNotFound = errors.New("not found")
+
 type Adapter struct {
-	client  *mongo.Client
-	ctx     context.Context
-	db      string
-	repo    repo.OrganizationRepository
-	timeout time.Duration
+	client     *mongo.Client
+	collection *mongo.Collection
+	ctx        context.Context
 }
 
-func (a *Adapter) ActivateOrganization(ctx context.Context, id uuid.UUID) error {
+func NewAdapter(ctx context.Context, client *mongo.Client, db string) *Adapter {
+	collection := client.Database(db).Collection("organization")
+
+	return &Adapter{
+		client:     client,
+		collection: collection,
+		ctx:        ctx,
+	}
+}
+
+// ActivateOrganization - find the record for which the id field matches the id
+// and set isActive field to 1. Updates isPending & isMarkedForDeletion fields to 0.
+// return ErrorNotFound if the record does not exist
+func (a *Adapter) ActivateOrganization(id uuid.UUID) error {
+	filter := bson.D{primitive.E{Key: "internalID", Value: id}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "isActive", Value: 1},
+		{Key: "isMarkedForDeletion", Value: 0},
+		{Key: "isPending", Value: 0},
+		{Key: "updatedAt", Value: time.Now()},
+	}}}
+
+	var record bson.M
+	e := a.collection.FindOneAndUpdate(a.ctx, filter, update, options.FindOneAndUpdate()).Decode(&record)
+
+	if e != nil {
+		if errors.Is(e, mongo.ErrNoDocuments) {
+			return ErrorNotFound
+		}
+		return e
+	}
+
 	return nil
 }
 
@@ -45,44 +76,10 @@ func (a *Adapter) GetOrganizationBatch(ctx context.Context, ids []uuid.UUID) ([]
 	return s, nil
 }
 
-func (a *Adapter) LogOrganizationHistoryEvent(ctx context.Context, event model.OrganizationEvent) error {
+func (a *Adapter) LogOrganizationHistoryEvent(ctx context.Context) error {
 	return nil
 }
 
 func (a *Adapter) UpsertOrganizationUnit(ctx context.Context, unit model.Details) error {
 	return nil
-}
-
-func NewAdapter(db, uri string, repo repo.OrganizationRepository, timeout int) (*Adapter, error) {
-	t := time.Duration(timeout) * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), t)
-	defer cancel()
-
-	client, e := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	if e != nil {
-		log.Fatalf("db connection failed: %v", e)
-	}
-
-	e = client.Ping(ctx, readpref.Primary())
-	if e != nil {
-		log.Fatalf("db ping failed: %v", e)
-	}
-
-	a := Adapter{
-		client:  client,
-		ctx:     ctx,
-		db:      db,
-		repo:    repo,
-		timeout: time.Duration(t) * time.Second,
-	}
-
-	defer a.CloseConnection()
-
-	return &a, nil
-}
-
-func (a *Adapter) CloseConnection() {
-	if e := a.client.Disconnect(a.ctx); e != nil {
-		panic(e)
-	}
 }
