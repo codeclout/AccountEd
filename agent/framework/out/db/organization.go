@@ -13,7 +13,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var ErrorNotFound = errors.New("not found")
+var (
+	ErrorNotFound       = errors.New("not found")
+	ErrorNotImplemented = errors.New("not implemented")
+)
 
 type Adapter struct {
 	client     *mongo.Client
@@ -56,30 +59,30 @@ func (a *Adapter) ActivateOrganization(id uuid.UUID) error {
 	return nil
 }
 
-func (a *Adapter) DeactivateOrganization(ctx context.Context, id uuid.UUID) error {
-	return nil
+func (a *Adapter) DeactivateOrganization(id uuid.UUID) error {
+	return ErrorNotImplemented
 }
 
-func (a *Adapter) GetOrganization(ctx context.Context, id uuid.UUID) (model.Details, error) {
+func (a *Adapter) GetOrganization(id uuid.UUID) (model.Details, error) {
 	ou := make([]model.OrganizationUnit, 0, 100)
 
 	return model.Details{
 		ID:    id,
 		Name:  "",
 		Units: ou,
-	}, nil
+	}, ErrorNotImplemented
 }
 
-func (a *Adapter) GetOrganizationBatch(ctx context.Context, ids []uuid.UUID) ([]model.Details, error) {
+func (a *Adapter) GetOrganizationBatch(ids []uuid.UUID) ([]model.Details, error) {
 	s := make([]model.Details, 0, 100)
 
-	return s, nil
+	return s, ErrorNotImplemented
 }
 
 func (a *Adapter) LogOrganizationHistoryEvent(ctx context.Context) error {
-	return nil
+	return ErrorNotImplemented
 }
 
-func (a *Adapter) UpsertOrganizationUnit(ctx context.Context, unit model.Details) error {
-	return nil
+func (a *Adapter) UpsertOrganizationUnit(unit model.Details) error {
+	return ErrorNotImplemented
 }
