@@ -54,3 +54,9 @@ terraform.rc
 .idea
 .vscode
 .DS_Store
+
+# Ignore elm stuff
+elm-stuff
+
+# Ignore node stuff
+node_modules
