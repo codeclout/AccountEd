@@ -1,17 +1,19 @@
 module Register.UserType exposing (main)
 
+import Browser
 import Html exposing (Html, a, div, fieldset, h1, input, label, span, text)
 import Html.Attributes exposing (..)
-import Browser
 import Html.Events exposing (onClick)
 
+
+
 -- import Debug exposing (log)
-
-
 -- MAIN
 
 
-main = Browser.sandbox { init = init, update = update, view = view }
+main =
+    Browser.sandbox { init = init, update = update, view = view }
+
 
 
 -- MODEL
@@ -20,8 +22,8 @@ main = Browser.sandbox { init = init, update = update, view = view }
 type alias Model =
     { orgType : Organization
     , homeSchooler : String
-    , group: String
-    , school: String
+    , group : String
+    , school : String
     }
 
 
@@ -40,6 +42,7 @@ type Organization
     | School
 
 
+
 -- UPDATE
 
 
@@ -49,38 +52,41 @@ type Msg
 
 update : Msg -> Model -> Model
 update msg model =
-  case msg of
-      SwitchTo newOrgType ->
-          { model | orgType = newOrgType }
+    case msg of
+        SwitchTo newOrgType ->
+            { model | orgType = newOrgType }
+
+
 
 -- VIEW
 
 
-view: Model -> Html Msg
-view model = 
+view : Model -> Html Msg
+view model =
     div []
-      [ div [] 
-          [ h1 [] [ text "Tell us what's your situation" ] 
-          , fieldset [] 
-            [ div []
-              [ radio (SwitchTo HomeSchooler) model.homeSchooler
-              , radio (SwitchTo SmallGroup) model.group
-              , radio (SwitchTo School) model.school
-              ]
+        [ div []
+            [ h1 [] [ text "Tell us what's your situation" ]
+            , fieldset []
+                [ div []
+                    [ radio (SwitchTo HomeSchooler) model.homeSchooler
+                    , radio (SwitchTo SmallGroup) model.group
+                    , radio (SwitchTo School) model.school
+                    ]
+                ]
+            , div []
+                [ a [ href "onboarding-step-2" ]
+                    [ text "Next" ]
+                ]
             ]
-          , div []
-            [ a [ href "onboarding-step-2"]
-              [ text "Next" ]
-            ]
-          ]
-      ]
+        ]
 
-radio : msg -> String -> Html msg 
+
+radio : msg -> String -> Html msg
 radio msg tname =
-  label [] 
-  [ input [ type_ "radio", name "organization-onboarding-radio", onClick msg ] [] 
-  , div []
-    [ span [] 
-      [ text tname ]
-    ]
-  ]
+    label []
+        [ input [ type_ "radio", name "organization-onboarding-radio", onClick msg ] []
+        , div []
+            [ span []
+                [ text tname ]
+            ]
+        ]
