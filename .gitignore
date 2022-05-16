@@ -60,3 +60,6 @@ elm-stuff
 
 # Ignore node stuff
 node_modules
+
+# Ignore build stuff
+dist
