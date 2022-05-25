@@ -1,6 +1,5 @@
-module Register.UserType exposing (main)
+module Register.UserType exposing (Model, Msg, init, update, view)
 
-import Browser
 import Html exposing (Html, a, div, fieldset, h1, input, label, span, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -8,14 +7,6 @@ import Html.Events exposing (onClick)
 
 
 -- import Debug exposing (log)
--- MAIN
-
-
-main =
-    Browser.sandbox { init = init, update = update, view = view }
-
-
-
 -- MODEL
 
 
@@ -27,13 +18,18 @@ type alias Model =
     }
 
 
-init : Model
-init =
-    { orgType = HomeSchooler
+initialModel : Model
+initialModel =
+    { group = "Small Group"
     , homeSchooler = "Person"
-    , group = "Small Group"
+    , orgType = HomeSchooler
     , school = "School"
     }
+
+
+init : Model
+init =
+    initialModel
 
 
 type Organization
