@@ -14,7 +14,7 @@ provider "cloudflare" {
 }
 
 module "ui_onboarding_config" {
-  source = "../modules/cloudflare-onboarding-worker-kv"
+  source = "../../modules/services/cloudflare/kv "
 
   step_one = {
     homeschooler = "I am representing my household",
