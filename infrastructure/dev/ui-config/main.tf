@@ -23,4 +23,5 @@ module "ui_onboarding_config" {
   }
 
   step_one_header = "Please tell us, what is your situation?"
+  worker_kv_ns    = "NS_UI_ONBOARDING_CONFIG"
 }

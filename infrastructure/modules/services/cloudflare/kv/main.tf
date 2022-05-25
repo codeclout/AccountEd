@@ -8,7 +8,7 @@ terraform {
 }
 
 resource "cloudflare_workers_kv_namespace" "ui_config" {
-  title = "NS_UI_ONBOARDING_CONFIG"
+  title = var.worker_kv_ns
 }
 
 resource "cloudflare_workers_kv" "onboarding_step_one" {
