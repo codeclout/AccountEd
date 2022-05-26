@@ -2,12 +2,13 @@ module Routes exposing (Route(..), match)
 
 import Html exposing (a)
 import Url exposing (Url)
-import Url.Parser as Parser exposing (Parser)
+import Url.Parser as Parser exposing ((</>), Parser)
 
 
 type Route
     = Admin
-    | Login
+    | Auth
+    | Login String
     | Register
 
 
@@ -19,7 +20,8 @@ routes : Parser (Route -> r) r
 routes =
     Parser.oneOf
         [ Parser.map Admin Parser.top
-        , Parser.map Login (Parser.s "login")
+        , Parser.map Auth (Parser.s "auth")
+        , Parser.map Login (Parser.s "login" </> Parser.string)
         , Parser.map Register (Parser.s "register")
         ]
 

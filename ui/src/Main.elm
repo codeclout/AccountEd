@@ -1,17 +1,18 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Navigation
 import Dict exposing (update)
 import Html exposing (Html, div, h1, text)
 import Html.Attributes exposing (..)
-import Json.Decode exposing (bool, decodeString, int, string)
+import Json.Decode exposing (bool, decodeString, int, maybe, string)
 import Routes
 import Url exposing (Url)
 
 
 type Page
     = Admin
+    | Auth
     | Login
     | Register
     | NotFound
@@ -21,9 +22,18 @@ type Page
 --    | ServerError
 
 
+type Token
+    = Token String
+
+
+type alias Flags =
+    { storedToken : Maybe String }
+
+
 type alias Model =
     { page : Page
     , navKey : Navigation.Key
+    , token : Maybe Token
     }
 
 
@@ -32,16 +42,24 @@ type Msg
     | Req UrlRequest
 
 
-initialModel : Navigation.Key -> Model
-initialModel navigationKey =
+initialModel : Maybe Token -> Navigation.Key -> Model
+initialModel t navigationKey =
     { page = NotFound
     , navKey = navigationKey
+    , token = t
     }
 
 
-init : () -> Url -> Navigation.Key -> ( Model, Cmd Msg )
-init () url navigationKey =
-    setNewPage (Routes.match url) (initialModel navigationKey)
+init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
+init flags url navigationKey =
+    let
+        t =
+            Maybe.map Token flags.storedToken
+
+        _ =
+            Debug.log "flags" flags
+    in
+    setNewPage (Routes.match url) (initialModel t navigationKey)
 
 
 main =
@@ -66,8 +84,11 @@ setNewPage maybeRoute model =
         Just Routes.Admin ->
             ( { model | page = Admin }, Cmd.none )
 
-        Just Routes.Login ->
-            ( { model | page = Login }, Cmd.none )
+        Just Routes.Auth ->
+            ( { model | page = Auth }, Cmd.none )
+
+        Just (Routes.Login authToken) ->
+            ( { model | page = Login, token = Just (Token authToken) }, storeToken authToken )
 
         Just Routes.Register ->
             ( { model | page = Register }, Cmd.none )
@@ -92,6 +113,11 @@ viewContent page =
         Admin ->
             ( "Administrator"
             , h1 [] [ text "Admin" ]
+            )
+
+        Auth ->
+            ( "Auth"
+            , h1 [] [ text "Auth" ]
             )
 
         Login ->
@@ -120,3 +146,6 @@ view model =
     { title = title
     , body = [ content ]
     }
+
+
+port storeToken : String -> Cmd msg
