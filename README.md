@@ -6,14 +6,14 @@ AccountEd (AE) is a platform-agnostic data processing framework consisting of a 
 
 ### System Requirements
 
-This system requires an environment with Docker and the docker compose tool installed.
+This system requires an environment with Docker (or Docker compatible environment), [NodeJS][nodejs-download] & [Go][golang-download] installed.
 
 ### Installation
 
 `Local Development`: 
 
 - [Docker Desktop][docker-desktop] or any other means of ensuring `docker compose v2` is running on your system
-- `Mac`: Add the following to your `/etc/hosts` file to connect to the MongDB replica set from a GUI such as MongoDB Compass
+- `Mac`: Add the following to your `/etc/hosts` file to connect to the local MongDB replica set from a GUI such as MongoDB Compass
 ```bash
 # /etc/hosts
 # local mongo replica
@@ -33,3 +33,5 @@ Anyone is encouraged to contribute to the repository by forking and submitting a
 
 
 [docker-desktop]: https://www.docker.com/products/docker-desktop/
+[golang-download]: https://go.dev/dl/
+[nodejs-download]: https://nodejs.org/en/download/
