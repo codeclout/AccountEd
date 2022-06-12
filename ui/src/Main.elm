@@ -3,6 +3,7 @@ port module Main exposing (main)
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Navigation
 import Dict exposing (update)
+import Errors.Types exposing (ClientLogin(..))
 import Html exposing (Html, div, h1, text)
 import Html.Attributes exposing (..)
 import Json.Decode exposing (bool, decodeString, int, maybe, string)
@@ -55,9 +56,6 @@ init flags url navigationKey =
     let
         t =
             Maybe.map Token flags.storedToken
-
-        _ =
-            Debug.log "flags" flags
     in
     setNewPage (Routes.match url) (initialModel t navigationKey)
 

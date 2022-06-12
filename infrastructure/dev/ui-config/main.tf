@@ -22,6 +22,14 @@ module "ui_onboarding_config" {
     small_group  = "I am representing a small group up to 250 people"
   }
 
-  step_one_header = "Please tell us, what is your situation?"
-  worker_kv_ns    = "NS_UI_ONBOARDING_CONFIG"
+  step_two = {
+    include_online_portfolio_heading     = "Include online portfolio?"
+    include_online_portfolio_description = "Your profile can include a portfolio comprised of all coursework"
+  }
+
+  step_one_header   = "Please tell us, what is your situation?"
+  step_two_header   = "Tell us about your company"
+  step_three_header = "Information"
+
+  worker_kv_ns = "NS_UI_ONBOARDING_CONFIG"
 }

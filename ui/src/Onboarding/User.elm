@@ -1,8 +1,10 @@
-module Register.UserType exposing (Model, Msg, init, update, view)
+module Onboarding.User exposing (Model, Msg, init, update, view)
 
 import Html exposing (Html, a, div, fieldset, h1, input, label, span, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Json.Decode as Decode exposing (decodeString, string, succeed)
+import Json.Decode.Pipeline as DecodePipeline exposing (required)
 
 
 
@@ -16,6 +18,14 @@ type alias Model =
     , group : String
     , school : String
     }
+
+
+onBoardingStepOneDecoder =
+    succeed value
+        |> DecodePipeline.required "homeschooler" Decode.string
+        |> DecodePipeline.required "organization" Decode.string
+        |> DecodePipeline.required "small_group" Decode.string
+        |> DecodePipeline.required "step_one_header" Decode.string
 
 
 initialModel : Model

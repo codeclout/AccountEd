@@ -1,0 +1,12 @@
+name = "elm-interop"
+type = "javascript"
+
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
+compatibility_date = "2022-05-25"
+
+kv_namespaces = [
+    { binding = "NS_UI_ONBOARDING_CONFIG", id = "8772b85a080f4b268f7989a68e79327a" },
+]

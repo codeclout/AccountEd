@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	model "github.com/codeclout/AccountEd/gateway/core/organization"
+	model "github.com/codeclout/AccountEd/backend/gateway/core/organization"
 	"github.com/google/uuid"
 )
 

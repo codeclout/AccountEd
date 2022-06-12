@@ -19,9 +19,24 @@ resource "cloudflare_workers_kv" "onboarding_step_one" {
   value    = each.value
 }
 
+resource "cloudflare_workers_kv" "onboarding_step_two" {
+  namespace_id = cloudflare_workers_kv_namespace.ui_config.id
+
+  for_each = var.step_two
+  key      = each.key
+  value    = each.value
+}
+
 resource "cloudflare_workers_kv" "onboarding_step_one_header" {
   namespace_id = cloudflare_workers_kv_namespace.ui_config.id
 
   key   = "step_one_header"
   value = var.step_one_header
+}
+
+resource "cloudflare_workers_kv" "onboarding_step_two_header" {
+  namespace_id = cloudflare_workers_kv_namespace.ui_config.id
+
+  key   = "step_two_header"
+  value = var.step_two_header
 }

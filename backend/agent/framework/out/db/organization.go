@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	model "github.com/codeclout/AccountEd/gateway/core/organization"
+	model "github.com/codeclout/AccountEd/backend/gateway/core/organization"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

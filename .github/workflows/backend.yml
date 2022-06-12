@@ -1,0 +1,20 @@
+name: accountEd-backend-lint
+
+on:
+  push:
+    branches:
+      - develop-backend
+
+jobs:
+  lint-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18.3
+      - name: lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          working-directory: backend
