@@ -29,7 +29,7 @@ var cfg = {
 };
 rs.initiate(cfg, { force: true });
 rs.reconfig(cfg, { force: true });
-rs.slaveOk();
+rs.secondaryOk();
 db.getMongo().setReadPref('nearest');
-db.getMongo().setSlaveOk(); 
+db.getMongo().setSecondaryOk(); 
 EOF

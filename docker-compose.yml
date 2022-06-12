@@ -11,8 +11,8 @@ services:
       test: mongosh --eval 'db.runCommand("ping").ok' "localhost:27017/test" --quiet
       start_period: 40s
       retries: 3
-      timeout: 10s
-      interval: 45s
+      timeout: 7s
+      interval: 10s
     networks:
       - accountEd-local
   db1:
@@ -27,8 +27,8 @@ services:
       test: mongosh --eval 'db.runCommand("ping").ok' "localhost:27017/test" --quiet
       start_period: 40s
       retries: 3
-      timeout: 10s
-      interval: 45s
+      timeout: 7s
+      interval: 10s
     networks:
       - accountEd-local
   db2:
@@ -43,8 +43,8 @@ services:
       test: mongosh --eval 'db.runCommand("ping").ok' "localhost:27017/test" --quiet
       start_period: 40s
       retries: 3
-      timeout: 10s
-      interval: 45s
+      timeout: 7s
+      interval: 10s
     networks:
       - accountEd-local
   mongo-init-replicas:
@@ -73,7 +73,7 @@ services:
       mongo-init-replicas:
         condition: service_completed_successfully
     volumes:
-      - ./migrations/mongo/migration:/usr/local/migrate
+      - ./migrations/mongo/local/migration:/usr/local/migrate
 
 
 networks:
