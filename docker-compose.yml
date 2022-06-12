@@ -1,0 +1,82 @@
+services:
+  db:
+    image: mongo:5.0.9
+    command: --oplogSize 512 --replSet rs0 --bind_ip_all
+    restart: unless-stopped
+    expose:
+      - 27017
+    ports:
+      - '27017:27017'
+    healthcheck:
+      test: mongosh --eval 'db.runCommand("ping").ok' "localhost:27017/test" --quiet
+      start_period: 40s
+      retries: 3
+      timeout: 10s
+      interval: 45s
+    networks:
+      - accountEd-local
+  db1:
+    image: mongo:5.0.9
+    command: --oplogSize 512 --replSet rs0 --bind_ip_all
+    restart: unless-stopped
+    expose:
+      - 27017
+    ports:
+      - '27018:27017'
+    healthcheck:
+      test: mongosh --eval 'db.runCommand("ping").ok' "localhost:27017/test" --quiet
+      start_period: 40s
+      retries: 3
+      timeout: 10s
+      interval: 45s
+    networks:
+      - accountEd-local
+  db2:
+    image: mongo:5.0.9
+    command: --oplogSize 512 --replSet rs0 --bind_ip_all
+    restart: unless-stopped
+    expose:
+      - 27017
+    ports:
+      - '27019:27017'
+    healthcheck:
+      test: mongosh --eval 'db.runCommand("ping").ok' "localhost:27017/test" --quiet
+      start_period: 40s
+      retries: 3
+      timeout: 10s
+      interval: 45s
+    networks:
+      - accountEd-local
+  mongo-init-replicas:
+    image: mongo:5.0.9
+    entrypoint: ["/scripts/setup.sh"]
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+      db1:
+        condition: service_healthy
+      db2:
+        condition: service_healthy
+    networks:
+      - accountEd-local
+    volumes:
+      - ./scripts:/scripts
+  mongo-migrate:
+    build:
+      context: ./migrations
+      dockerfile: Dockerfile
+    image: mongo/migrator:5.0.9
+    networks:
+      - accountEd-local
+    depends_on:
+      mongo-init-replicas:
+        condition: service_completed_successfully
+    volumes:
+      - ./migrations/mongo/migration:/usr/local/migrate
+
+
+networks:
+  accountEd-local:
+    driver: bridge
+    attachable: true
