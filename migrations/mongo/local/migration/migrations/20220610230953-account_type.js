@@ -2,7 +2,7 @@ const assert = require("assert");
 
 module.exports = {
   async up(db, client) {
-    await db.createCollection("account_type", {
+    await db.createCollection("account_types", {
       collation: {
         caseLevel: true,
         locale: "en_US",
@@ -13,7 +13,7 @@ module.exports = {
 
     const initialData = ["homeschooler", "organization", "study-group"];
     const records = initialData.map((v) => ({
-      type: v,
+      account_type: v,
     }));
 
     await db.collection("account_type").insertMany(records);

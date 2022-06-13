@@ -29,7 +29,6 @@ module.exports = {
     }));
 
     const r = await db.collection("account").insertMany(initialData);
-    console.log(r.insertedIds);
 
     const xt = await Promise.all(
       Object.values(r.insertedIds).map(async () => {

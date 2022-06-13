@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 MONGODB1=db
 MONGODB2=db1

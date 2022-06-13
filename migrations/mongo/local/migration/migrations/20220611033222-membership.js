@@ -16,7 +16,7 @@ module.exports = {
 
     const ac = await db
       .collection("account_type")
-      .find({ type: "homeschooler" })
+      .find({ account_type: "homeschooler" })
       .toArray();
     const homeschoolerAccountTypeId = new ObjectId(ac[0]._id);
 
