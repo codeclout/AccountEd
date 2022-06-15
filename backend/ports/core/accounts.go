@@ -1,14 +1,10 @@
 package ports
 
-import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
-)
-
 type AccountPort interface {
-	NewAccountType(in string) (AccountTypeOutput, error)
+	NewAccountType(insertId interface{}, name string) (NewAccountTypeOutput, error)
 }
 
-type AccountTypeOutput struct {
-	_id         primitive.ObjectID
-	accountType string
+type NewAccountTypeOutput struct {
+	AccountType string
+	ID          interface{}
 }

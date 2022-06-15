@@ -2,7 +2,7 @@ const assert = require("assert");
 
 module.exports = {
   async up(db, client) {
-    await db.createCollection("account_types", {
+    await db.createCollection("account_type", {
       collation: {
         caseLevel: true,
         locale: "en_US",
