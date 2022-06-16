@@ -24,7 +24,7 @@ func (a Adapter) CreateAccountType(name string) (port.NewAccountTypeOutput, erro
 		return port.NewAccountTypeOutput{}, ex
 	}
 
-	result, e := a.account.NewAccountType(insertId, name)
+	result, e := a.account.NewAccountType(insertId.InsertedID, name)
 
 	if e != nil {
 		return port.NewAccountTypeOutput{}, e

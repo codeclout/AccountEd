@@ -14,6 +14,7 @@ import (
 )
 
 type Adapter struct {
+	cancel context.CancelFunc
 	client *mongo.Client
 	ctx    context.Context
 }
@@ -21,7 +22,6 @@ type Adapter struct {
 func NewAdapter(timeout int, uri string) (*Adapter, error) {
 	t := time.Duration(timeout) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), t)
-	defer cancel()
 
 	client, e := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if e != nil {
@@ -34,16 +34,17 @@ func NewAdapter(timeout int, uri string) (*Adapter, error) {
 	}
 
 	a := Adapter{
+		cancel: cancel,
 		client: client,
 		ctx:    ctx,
 	}
 
-	defer a.CloseConnection()
 	return &a, nil
 
 }
 
 func (a *Adapter) CloseConnection() {
+	defer a.cancel()
 	if e := a.client.Disconnect(a.ctx); e != nil {
 		panic(e)
 	}
@@ -56,7 +57,7 @@ func (a *Adapter) InsertAccountType(coll string, data string) (ports.InsertID, e
 	result, e := collection.InsertOne(context.TODO(), bson.M{"account_type": data})
 
 	if e != nil {
-		fmt.Printf("error inserting account type %v", e)
+		fmt.Printf("error inserting account type: %v", e)
 		return ports.InsertID{}, e
 	}
 

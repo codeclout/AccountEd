@@ -26,6 +26,8 @@ func main() {
 	uri := "mongodb://localhost:27017,localhost:27018,localhost:27019/accountEd?replicaSet=rs0"
 	accountDbAdapter, e = db.NewAdapter(5, uri)
 
+	defer accountDbAdapter.CloseConnection()
+
 	if e != nil {
 		log.Fatalf("Failed to instantiate db connection: %v", e)
 	}

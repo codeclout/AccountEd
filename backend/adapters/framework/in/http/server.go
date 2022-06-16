@@ -18,5 +18,6 @@ func NewAdapter(api ports.AccountAPIPort) *Adapter {
 func (a Adapter) Run() {
 	app := fiber.New()
 
+	app.Post("/", a.CreateAccountType)
 	log.Fatal(app.Listen(":3000"))
 }

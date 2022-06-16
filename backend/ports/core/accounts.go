@@ -5,6 +5,6 @@ type AccountPort interface {
 }
 
 type NewAccountTypeOutput struct {
-	AccountType string
-	ID          interface{}
+	AccountType string      `json:"accountType"`
+	ID          interface{} `json:"id"`
 }
