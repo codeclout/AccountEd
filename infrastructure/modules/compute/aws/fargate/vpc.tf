@@ -46,9 +46,9 @@ resource "aws_subnet" "public" {
 #   gateway_id             = aws_internet_gateway.public_internet_gateway.id
 # }
 
-# resource "aws_internet_gateway" "public_internet_gateway" {
-#   vpc_id = aws_vpc.network.id
-# }
+resource "aws_internet_gateway" "public_internet_gateway" {
+  vpc_id = aws_vpc.network.id
+}
 
 resource "aws_route_table" "route_table" {
   count  = var.availability_zone_count * 2
