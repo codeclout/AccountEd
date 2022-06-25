@@ -1,4 +1,5 @@
 locals {
+  subnet_idx = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8]
   subnets = [
     "compute-${var.aws_region}",
     "db-${var.aws_region}"
@@ -23,11 +24,14 @@ resource "aws_vpc" "network" {
   tags = merge({ Name = "vpc-${var.app}-${var.environment}" }, var.tags)
 }
 
-resource "aws_subnet" "private" {
+# models - 10.0.0.0/18 for each AZ 
+# (10.0.{0-56}.0/21) in AZ 1
+# (10.0.{64+}.0/21) in AZ 2
+resource "aws_subnet" "public" {
   count = var.availability_zone_count * 2
 
   availability_zone = data.aws_availability_zones.av.names[count.index % var.availability_zone_count]
-  cidr_block        = cidrsubnet(aws_vpc.network.cidr_block, 5, count.index == 0 ? count.index : count.index % 2 == 0 ? count.index - 1 : 8 + (count.index == 1 ? 0 : 1))
+  cidr_block        = cidrsubnet(aws_vpc.network.cidr_block, 5, count.index % 2 == 0 ? local.subnet_idx[count.index] : 8 + local.subnet_idx[count.index])
   vpc_id            = aws_vpc.network.id
 
   tags = {
@@ -56,6 +60,6 @@ resource "aws_route_table" "route_table" {
 resource "aws_route_table_association" "route_table_association" {
   count = var.availability_zone_count * 2
 
-  subnet_id      = aws_subnet.private[count.index].id
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.route_table[count.index].id
 }
