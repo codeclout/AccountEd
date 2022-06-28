@@ -1,9 +1,9 @@
 locals {
   subnet_idx = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8]
-  subnets = [
-    "compute-${var.aws_region}",
-    "db-${var.aws_region}"
-  ]
+  subnets = {
+    public : ["compute-${var.aws_region}", "management-${var.aws_region}"],
+    private : ["compute-${var.aws_region}", "db-${var.aws_region}", "management-${var.aws_region}"]
+  }
   vpc_cidr = "10.0.0.0/16"
 }
 
@@ -28,14 +28,14 @@ resource "aws_vpc" "network" {
 # (10.0.{0-56}.0/21) in AZ 1
 # (10.0.{64+}.0/21) in AZ 2
 resource "aws_subnet" "public" {
-  count = var.availability_zone_count * length(local.subnets)
+  count = var.availability_zone_count * length(local.subnets.public)
 
   availability_zone = data.aws_availability_zones.av.names[count.index % var.availability_zone_count]
   cidr_block        = cidrsubnet(aws_vpc.network.cidr_block, 5, count.index % 2 == 0 ? local.subnet_idx[count.index] : 8 + local.subnet_idx[count.index])
   vpc_id            = aws_vpc.network.id
 
   tags = {
-    "Name" = "${local.subnets[count.index > var.availability_zone_count / 2 ? 1 : 0]}-${substr(data.aws_availability_zones.av.names[count.index % var.availability_zone_count], -1, -1)}"
+    "Name" = "${local.subnets.public[count.index > var.availability_zone_count / 2 ? 1 : 0]}-${substr(data.aws_availability_zones.av.names[count.index % var.availability_zone_count], -1, -1)}"
   }
 }
 
@@ -43,23 +43,34 @@ resource "aws_subnet" "public" {
 #   route_table_id = aws_route_table.public_route_table.id
 
 #   destination_cidr_block = "0.0.0.0/0"
-#   gateway_id             = aws_internet_gateway.public_internet_gateway.id
+#   gateway_id             = aws_internet_gateway.igw.id
 # }
 
-resource "aws_internet_gateway" "public_internet_gateway" {
+resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.network.id
+
+  tags = merge({ Name = "igw-${var.app}-${var.environment}" }, var.tags)
 }
 
-resource "aws_route_table" "route_table" {
-  count  = var.availability_zone_count * length(local.subnets)
+resource "aws_route_table" "public_route_table" {
+  count = var.availability_zone_count * length(local.subnets.public)
+  route {
+    cidr_block = aws_subnet.public[count.index].cidr_block
+    gateway_id = aws_internet_gateway.igw.id
+  }
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
   vpc_id = aws_vpc.network.id
 
-  tags = merge({ Name = "${local.subnets[count.index > var.availability_zone_count / 2 ? 1 : 0]}-${substr(data.aws_availability_zones.av.names[count.index % var.availability_zone_count], -1, -1)}-route-table" }, var.tags)
+  tags = merge({ Name = "route-table-${local.subnets.public[count.index > var.availability_zone_count / 2 ? 1 : 0]}-${substr(data.aws_availability_zones.av.names[count.index % var.availability_zone_count], -1, -1)}" }, var.tags)
 }
 
 resource "aws_route_table_association" "route_table_association" {
   count = var.availability_zone_count * length(local.subnets)
 
   subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.route_table[count.index].id
+  route_table_id = aws_route_table.public_route_table[count.index].id
 }
