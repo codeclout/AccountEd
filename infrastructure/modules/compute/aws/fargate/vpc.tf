@@ -52,7 +52,7 @@ resource "aws_route_table" "explicit_subnet" {
 
   vpc_id = aws_vpc.network.id
 
-  tags = merge({ Name = "route-table-${element(local.subnets, count.index)}-${substr(data.aws_availability_zones.av.names[count.index % var.availability_zone_count], -1, -1)}" }, var.tags)
+  tags = merge({ Name = "route-table-${local.subnets[element(slice(local.subnet_idx, 0, (length(local.subnet_idx) / 2) - 1), count.index)]}-${substr(data.aws_availability_zones.av.names[count.index % var.availability_zone_count], -1, -1)}" }, var.tags)
 }
 
 # public route table
