@@ -97,4 +97,47 @@ resource "aws_eip" "eip_nat_gateway" {
   count = 2
 
   vpc = true
+  depends_on = [
+    aws_internet_gateway.igw
+  ]
+}
+
+resource "aws_route" "compute_a" {
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.ngw.id
+  route_table_id         = aws_route_table.explicit_subnet[0].id
+
+  depends_on = [
+    aws_route_table.explicit_subnet[0]
+  ]
+}
+
+resource "aws_route" "compute_b" {
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.ngw.id
+  route_table_id         = aws_route_table.explicit_subnet[1].id
+
+  depends_on = [
+    aws_route_table.explicit_subnet[1]
+  ]
+}
+
+resource "aws_route" "management_a" {
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.ngw.id
+  route_table_id         = aws_route_table.explicit_subnet[6].id
+
+  depends_on = [
+    aws_route_table.explicit_subnet[6]
+  ]
+}
+
+resource "aws_route" "management_b" {
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.ngw.id
+  route_table_id         = aws_route_table.explicit_subnet[7].id
+
+  depends_on = [
+    aws_route_table.explicit_subnet[7]
+  ]
 }
