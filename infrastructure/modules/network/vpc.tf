@@ -104,7 +104,7 @@ resource "aws_eip" "eip_nat_gateway" {
 
 resource "aws_route" "compute_a" {
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.ngw.id
+  nat_gateway_id         = aws_nat_gateway.ngw[0].id
   route_table_id         = aws_route_table.explicit_subnet[0].id
 
   depends_on = [
@@ -114,7 +114,7 @@ resource "aws_route" "compute_a" {
 
 resource "aws_route" "compute_b" {
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.ngw.id
+  nat_gateway_id         = aws_nat_gateway.ngw[1].id
   route_table_id         = aws_route_table.explicit_subnet[1].id
 
   depends_on = [
@@ -124,7 +124,7 @@ resource "aws_route" "compute_b" {
 
 resource "aws_route" "management_a" {
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.ngw.id
+  nat_gateway_id         = aws_nat_gateway.ngw[0].id
   route_table_id         = aws_route_table.explicit_subnet[6].id
 
   depends_on = [
@@ -134,7 +134,7 @@ resource "aws_route" "management_a" {
 
 resource "aws_route" "management_b" {
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.ngw.id
+  nat_gateway_id         = aws_nat_gateway.ngw[1].id
   route_table_id         = aws_route_table.explicit_subnet[7].id
 
   depends_on = [

@@ -1,17 +1,6 @@
-# Name of the application
 variable "app" {
   type    = string
   default = "sch00l.io"
-}
-
-variable "aws_profile" {
-  type    = string
-  default = "default"
-}
-
-variable "aws_region" {
-  type    = string
-  default = "us-east-2"
 }
 
 variable "availability_zone_count" {
@@ -24,6 +13,10 @@ variable "availability_zone_count" {
   }
 }
 
+variable "aws_region" {
+  type = string
+}
+
 variable "environment" {
   type = string
 
@@ -31,21 +24,6 @@ variable "environment" {
     condition     = can(regex("^dev$|^prod$", var.environment))
     error_message = "Error: Only 2 environments are supported - dev & prod"
   }
-}
-
-variable "image_tag_mutability" {
-  type    = string
-  default = "IMMUTABLE"
-
-  validation {
-    condition     = can(regex("^MUTABLE$|^IMMUTABLE$", var.image_tag_mutability))
-    error_message = "Error: image tag mutability must be IMMUTABLE or MUTABLE"
-  }
-}
-
-variable "should_scan_image_on_push" {
-  type    = bool
-  default = true
 }
 
 variable "tags" {
