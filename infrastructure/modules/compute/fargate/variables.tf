@@ -88,8 +88,8 @@ variable "task_desired_count" {
   description = "Number of instances of the task definition to place and keep running"
 
   validation {
-    condition     = var.task_desired_count >= 1 && var.task_desired_count <= 4
-    error_message = "Number of task instances must be greater than 1 and less than 4"
+    condition     = var.environment == "prod" ? var.task_desired_count >= 1 && var.task_desired_count <= 4 : var.task_desired_count <= 2
+    error_message = "Prod number of task instances must be greater than 1 and less than 4 | dev task instances, 2 or less"
   }
 }
 
