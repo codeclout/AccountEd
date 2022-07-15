@@ -1,7 +1,10 @@
+SHELL=/bin/bash
+.EXPORT_ALL_VARIABLES:
+.SHELLFLAGS = -uec
+
 GO_VERSION := 1.18.3
 
-export GOOS = $(shell go env GOOS)
-export GOARCH = $(shell go env GOARCH)
+GOOS = $(shell go env GOOS)
 
 export TF_INPUT = $(shell go env TF_INPUT)
 export TF_LOG = $(shell go env TF_LOG)
@@ -12,14 +15,18 @@ export TF_VAR_PROXY_ACCOUNT_USERS_EMAIL = $(shell go env PROXY_ACCOUNT_USERS_EMA
 export TF_VAR_PROXY_ACCOUNT_ROLE_NAME = $(shell go env PROXY_ACCOUNT_ROLE_NAME)
 
 .PHONY: init-local-environment
-init-local-environment:
+init-local-environment: build-docker
 	cd ./migrations/mongo/local/migration && npm i
 	docker compose config
 	docker compose up
 
-# .PHONY: build-docker
-# build-docker:
-# 	docker build --target=prod -t accountEd-${GO_ARCH}-$${ENV} .
+.PHONY: build-docker
+build-docker:
+	$(shell docker build --progress plain --target=prod -t accounted-$(shell go env GOARCH)-$${ENV} .)
+
+.PHONY: update-go-packages
+update-go-packages:
+	${MAKE} -C backend update-go-packages
 
 # .PHONY: ci-buildx-register-container
 # ci-buildx-register-container:
@@ -41,22 +48,6 @@ init-local-environment:
 # 	go mod tidy
 # 	go mod verify
 
-# .PHONY: update-go-packages
-# update-go-packages:
-# 	go get -u ./...
-# 	go mod tidy
-
-# .PHONY: install-go
-# install-go:
-# 	wget "https://golang.org/dl/go$(GO_VERSION).linux-amd64.tar.gz"
-# 	sudo tar -C /usr/local -xzf go$(GO_VERSION).linux-amd64.tar.gz
-# 	rm go$(GO_VERSION).linux-amd64.tar.gz
-
-# .PHONY: init-go
-# init-go:
-# 	echo 'export PATH=$$PATH:/usr/local/go/bin' >> $$(HOME)/.bashrc
-# 	echo 'export PATH=$$PATH:$$(HOME)/go/bin' >> $$(HOME)/.bashrc
-
 # # compile the main application into a binary named accountEd
 # .PHONY: init-local-build
 # init-local-build:
@@ -64,10 +55,3 @@ init-local-environment:
 
 # register-image:
 # 	docker push $${CONTAINER_REGISTRY}-$${ENV}-$${VERSION}
-
-# .PHONY: upgrade-go
-# upgrade-go:
-# 	sudo rm -rf /usr/bin/go
-# 	wget "https://golang.org/dl/go$(GO_VERSION).linux-amd64.tar.gz"
-# 	sudo tar -C /usr/local -xzf go$(GO_VERSION).linux-amd64.tar.gz
-# 	rm go$(GO_VERSION).linux-amd64.tar.gz
