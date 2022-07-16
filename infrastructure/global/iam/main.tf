@@ -9,8 +9,4 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-  assume_role {
-    duration = "15m"
-    role_arn = "arn:aws:iam::*:role/ci-svc-usr-role"
-  }
 }
