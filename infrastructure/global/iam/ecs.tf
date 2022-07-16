@@ -41,14 +41,14 @@ resource "aws_iam_role" "ecs_task_role" {
 
 resource "aws_iam_policy" "ecs_task_role_policy" {
   name        = "ecsTaskAPIAccess"
-  description = "My test policy"
+  description = "ECS Task Role Policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Action = [
-          "ssm:GetParameter",
+          "ssm:GetParameter"
         ]
         Effect   = "Allow"
         Resource = "arn:aws:ssm:*::parameter/*"
