@@ -16,6 +16,23 @@ resource "aws_iam_role" "ecr_build_role" {
   })
 }
 
+resource "aws_iam_user_policy" "ci_svc_build_usr" {
+  name = "buildUserPolicy"
+  user = "ci-svc-build-usr"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "sts:AssumeRole"
+        Effect   = "Allow"
+        Sid      = ""
+        Resource = aws_iam_role.ecr_build_role.arn
+      }
+    ]
+  })
+}
+
 resource "aws_iam_policy" "ecr_authorization_policy" {
   name = "ecrAuthorization"
 
