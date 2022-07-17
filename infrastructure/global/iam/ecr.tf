@@ -1,3 +1,19 @@
+resource "aws_iam_role" "ecr_build_role" {
+  name = "ecrBuildRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "sts:AssumeRole"
+        Effect   = "Allow"
+        Resource = "arn:aws:iam::*:user/ci-svc-build-usr"
+        Sid      = ""
+      }
+    ]
+  })
+}
+
 resource "aws_iam_policy" "ecr_authorization_policy" {
   name = "ecrAuthorization"
 
@@ -36,4 +52,14 @@ resource "aws_iam_policy" "ecr_private_push_pull_policy" {
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "name" {
+  role       = aws_iam_role.ecr_build_role
+  policy_arn = aws_iam_policy.ecr_authorization_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "name" {
+  role       = aws_iam_role.ecr_build_role
+  policy_arn = aws_iam_policy.ecr_private_push_pull_policy.arn
 }
