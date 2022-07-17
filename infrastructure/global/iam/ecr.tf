@@ -5,10 +5,12 @@ resource "aws_iam_role" "ecr_build_role" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = "sts:AssumeRole"
-        Effect   = "Allow"
-        Resource = "arn:aws:iam::*:user/ci-svc-build-usr"
-        Sid      = ""
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::*:user/ci-svc-build-usr"
+        }
+        Sid = ""
       }
     ]
   })
