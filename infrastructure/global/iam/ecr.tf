@@ -55,11 +55,11 @@ resource "aws_iam_policy" "ecr_private_push_pull_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "ecr_authorization" {
-  role       = aws_iam_role.ecr_build_role
+  role       = aws_iam_role.ecr_build_role.name
   policy_arn = aws_iam_policy.ecr_authorization_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "ecr_private_push_pull" {
-  role       = aws_iam_role.ecr_build_role
+  role       = aws_iam_role.ecr_build_role.name
   policy_arn = aws_iam_policy.ecr_private_push_pull_policy.arn
 }
