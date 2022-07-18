@@ -1,3 +1,7 @@
+data "aws_iam_user" "build_user" {
+  user_name = "ci-svc-build-usr"
+}
+
 resource "aws_iam_role" "ecr_build_role" {
   name = "ecrBuildRole"
 
@@ -8,7 +12,7 @@ resource "aws_iam_role" "ecr_build_role" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::*:user/ci-svc-build-usr"
+          AWS = data.aws_iam_user.build_user.arn
         }
         Sid = ""
       }
