@@ -15,6 +15,14 @@ resource "aws_iam_role" "ecr_build_role" {
           AWS = data.aws_iam_user.build_user.arn
         }
         Sid = ""
+      },
+      {
+        Action = "sts:TagSession"
+        Effect = "Allow"
+        Principal = {
+          AWS = data.aws_iam_user.build_user.arn
+        }
+        Sid = ""
       }
     ]
   })
