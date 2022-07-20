@@ -62,18 +62,16 @@ resource "aws_iam_policy" "ecr_authorization_policy" {
   })
 }
 
-resource "aws_iam_policy" "ecr_private_push_pull_policy" {
-  name = "ecr-push-pull-private"
+resource "aws_iam_policy" "ecr_push_private" {
+  name = "ecr-push-private"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Action = [
-          "ecr:BatchGetImage",
           "ecr:BatchCheckLayerAvailability",
           "ecr:CompleteLayerUpload",
-          "ecr:GetDownloadUrlForLayer",
           "ecr:InitiateLayerUpload",
           "ecr:PutImage",
           "ecr:UploadLayerPart"
@@ -92,5 +90,5 @@ resource "aws_iam_role_policy_attachment" "ecr_authorization" {
 
 resource "aws_iam_role_policy_attachment" "ecr_private_push_pull" {
   role       = aws_iam_role.ecr_build_role.name
-  policy_arn = aws_iam_policy.ecr_private_push_pull_policy.arn
+  policy_arn = aws_iam_policy.ecr_push_private.arn
 }
