@@ -1,0 +1,78 @@
+name: accountEd-backend
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - backend/**
+      - .github/workflows/application.yml
+  workflow_dispatch:
+
+jobs:
+  build-and-push-images:
+    runs-on: ubuntu-latest
+    steps:
+        -
+          name: Checkout
+          uses: actions/checkout@v2.4.2
+        -
+          name: Cache Go Modules
+          uses: actions/cache@v3
+          with:
+            path: |
+              ~/.cache/go-build
+              ~/go/pkg/mod
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-
+        -
+          name: Cache Docker Layers
+          uses: actions/cache@v3
+          with:
+            path: /tmp/.buildx-cache
+            key: ${{ runner.os }}-buildx-${{ github.sha }}
+            restore-keys: |
+              ${{ runner.os }}-buildx-
+        -
+          uses: actions/cache@v3
+          with:
+            path: |
+              ~/.cache/go-build
+              ~/go/pkg/mod
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-  
+        -
+          name: Configure AWS credentials
+          if: ${{ github.event_name != 'pull_request' }}
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+            aws-region: ${{ secrets.AWS_REGION }}
+        -
+          name: Login to Amazon ECR
+          if: github.event_name != 'pull_request'
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v1
+        -
+          name: Login to GHCR
+          if: ${{ github.event_name != 'pull_request' }}
+          uses: docker/login-action@v1
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+        # -
+        #   name: Build, tag, and push docker image to Amazon ECR
+        #   if: github.event_name != 'pull_request'
+        #   env:
+        #     REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        #     REPOSITORY: my-ecr-repo
+        #     IMAGE_TAG: ${{ github.sha }}
+        #   run: |
+        #     docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+        #     docker push $REGISTRY/$REPOSITORY:$IMAGE_TA
