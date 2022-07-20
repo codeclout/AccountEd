@@ -53,6 +53,7 @@ jobs:
             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
             aws-region: ${{ secrets.AWS_REGION }}
+            role-duration-seconds: 3600
         -
           name: Login to Amazon ECR
           if: github.event_name != 'pull_request'
