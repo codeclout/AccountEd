@@ -63,7 +63,7 @@ resource "aws_iam_policy" "ecr_authorization_policy" {
 }
 
 resource "aws_iam_policy" "ecr_push_private" {
-  name = "ecr-push-private"
+  name = "ecrPushPrivate"
 
   policy = jsonencode({
     Version = "2012-10-17"
