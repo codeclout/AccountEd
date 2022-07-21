@@ -88,7 +88,7 @@ resource "aws_iam_role_policy_attachment" "ecr_authorization" {
   policy_arn = aws_iam_policy.ecr_authorization_policy.arn
 }
 
-resource "aws_iam_role_policy_attachment" "ecr_private_push_pull" {
+resource "aws_iam_role_policy_attachment" "ecr_push_private" {
   role       = aws_iam_role.ecr_build_role.name
   policy_arn = aws_iam_policy.ecr_push_private.arn
 }
