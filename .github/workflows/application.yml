@@ -34,16 +34,7 @@ jobs:
             path: /tmp/.buildx-cache
             key: ${{ runner.os }}-buildx-${{ github.sha }}
             restore-keys: |
-              ${{ runner.os }}-buildx-
-        -
-          uses: actions/cache@v3
-          with:
-            path: |
-              ~/.cache/go-build
-              ~/go/pkg/mod
-            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-            restore-keys: |
-              ${{ runner.os }}-go-  
+              ${{ runner.os }}-buildx-  
         -
           name: Configure AWS credentials
           if: ${{ github.event_name != 'pull_request' }}
@@ -53,7 +44,7 @@ jobs:
             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
             aws-region: ${{ secrets.AWS_REGION }}
-            role-duration-seconds: 3600
+            role-duration-seconds: 300
         -
           name: Login to Amazon ECR
           if: github.event_name != 'pull_request'
@@ -67,6 +58,11 @@ jobs:
             registry: ghcr.io
             username: ${{ github.actor }}
             password: ${{ secrets.GITHUB_TOKEN }}
+        -
+          name: Log Output
+          run: |
+            echo ${{ steps.login-ecr.outputs }}
+            
         # -
         #   name: Build, tag, and push docker image to Amazon ECR
         #   if: github.event_name != 'pull_request'
