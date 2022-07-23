@@ -8,6 +8,7 @@ on:
     paths:
       - backend/**
       - .github/workflows/application.yml
+      - Makefile
   workflow_dispatch:
 
 jobs:
