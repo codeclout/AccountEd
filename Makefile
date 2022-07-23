@@ -28,15 +28,16 @@ build-docker:
 update-go-packages:
 	${MAKE} -C backend update-go-packages
 
-# .PHONY: ci-buildx-register-container
-# ci-buildx-register-container:
-# 	docker buildx install
-# 	docker buildx create --name accountEdBuilder
-# 	docker buildx use accountEdBuilder
-# 	docker buildx inspect accountEdBuilder --bootstrap
-
-# 	echo $${GITHUB_TOKEN} | docker login ghcr.io -u $${GITHUB_USERNAME} --password-stdin
-# 	docker buildx build --platform $${GO_OS}/$${GO_ARCH} -t ghcr.io/$${GITHUB_ACCOUNT_OWNER}/accountEd-$${GO_ARCH}-$${ENV} . --push
+.PHONY: ci-buildx-register-container
+ci-buildx-register-container:
+	docker buildx install
+	docker buildx create --name accountEdBuilder
+	docker buildx use accountEdBuilder
+	docker buildx inspect accountEdBuilder --bootstrap
+	
+# echo $${GH_TOKEN} | docker login ghcr.io -u $${GH_ACTOR} --password-stdin
+	docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/$${GH_ACTOR}/accountEd . --push
+	docker buildx build --platform linux/amd64,linux/arm64 -t $${ECR_REGISTRY}/$${ECR_REPOSITORY}:$${IMAGE_TAG} . --push
 
 # .PHONY: setup-local-go
 # setup-local-go:

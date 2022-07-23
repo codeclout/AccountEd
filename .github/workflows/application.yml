@@ -50,6 +50,8 @@ jobs:
           if: github.event_name != 'pull_request'
           id: login-ecr
           uses: aws-actions/amazon-ecr-login@v1
+          with:
+            registry-type: private
         -
           name: Login to GHCR
           if: ${{ github.event_name != 'pull_request' }}
@@ -59,17 +61,13 @@ jobs:
             username: ${{ github.actor }}
             password: ${{ secrets.GITHUB_TOKEN }}
         -
-          name: Log Output
+          name: Build, tag, and push docker image to Amazon ECR
+          if: github.event_name != 'pull_request'
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: sch00l.io-dev
+            GH_ACTOR: ${{ github.actor }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            IMAGE_TAG: ${{ github.sha }}
           run: |
-            echo ${{ steps.login-ecr.outputs }}
-            
-        # -
-        #   name: Build, tag, and push docker image to Amazon ECR
-        #   if: github.event_name != 'pull_request'
-        #   env:
-        #     REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        #     REPOSITORY: my-ecr-repo
-        #     IMAGE_TAG: ${{ github.sha }}
-        #   run: |
-        #     docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-        #     docker push $REGISTRY/$REPOSITORY:$IMAGE_TA
+            make ci-buildx-register-container
