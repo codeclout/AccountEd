@@ -36,8 +36,8 @@ ci-buildx-register-container:
 	docker buildx inspect accountEdBuilder --bootstrap
 	
 # echo $${GH_TOKEN} | docker login ghcr.io -u $${GH_ACTOR} --password-stdin
-	docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/$${GH_ACTOR}/accounted . --push
-	docker buildx build --platform linux/amd64,linux/arm64 -t $${ECR_REGISTRY}/$${ECR_REPOSITORY}:$${IMAGE_TAG} . --push
+	docker buildx build --target=prod --platform linux/amd64,linux/arm64 -t ghcr.io/$${GH_ACTOR}/accounted . --push
+	docker buildx build --target=prod --platform linux/amd64,linux/arm64 -t $${ECR_REGISTRY}/$${ECR_REPOSITORY}:$${IMAGE_TAG} . --push
 
 # .PHONY: setup-local-go
 # setup-local-go:
