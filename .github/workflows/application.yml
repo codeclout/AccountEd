@@ -67,6 +67,7 @@ jobs:
           env:
             ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
             ECR_REPOSITORY: sch00l.io-dev
+            ENV: dev
             GH_ACTOR: ${{ github.actor }}
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             IMAGE_TAG: ${{ github.sha }}
