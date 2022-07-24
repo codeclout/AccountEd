@@ -71,5 +71,8 @@ jobs:
             GH_ACTOR: ${{ github.actor }}
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             IMAGE_TAG: ${{ github.sha }}
+          permissions:
+            packages: write
+            contents: read
           run: |
             make ci-buildx-register-container
