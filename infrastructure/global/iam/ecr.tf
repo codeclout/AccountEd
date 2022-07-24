@@ -2,6 +2,10 @@ data "aws_iam_user" "build_user" {
   user_name = "ci-svc-build-usr"
 }
 
+data "aws_ecr_repository" "service" {
+  name = "sch00l.io-dev"
+}
+
 resource "aws_iam_role" "ecr_build_role" {
   name = "ecrBuildRole"
 
@@ -56,7 +60,7 @@ resource "aws_iam_policy" "ecr_authorization_policy" {
           "ecr:GetAuthorizationToken"
         ]
         Effect   = "Allow"
-        Resource = "*"
+        Resource = data.aws_ecr_repository.service.arn
       }
     ]
   })
@@ -77,7 +81,7 @@ resource "aws_iam_policy" "ecr_push_private" {
           "ecr:UploadLayerPart"
         ]
         Effect   = "Allow"
-        Resource = "*"
+        Resource = data.aws_ecr_repository.service.arn
       }
     ]
   })
