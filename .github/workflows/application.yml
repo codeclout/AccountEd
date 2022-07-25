@@ -14,6 +14,7 @@ on:
 permissions:
   packages: write
   contents: read
+  id-token: write
 
 jobs:
   build-and-push-images:
