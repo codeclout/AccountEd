@@ -75,4 +75,4 @@ jobs:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             IMAGE_TAG: ${{ github.sha }}
           run: |
-            make ci-buildx-register-container
+            docker buildx build --build-arg ENV=$ENV --target=prod --platform linux/amd64,linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest . --push
