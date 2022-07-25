@@ -42,8 +42,10 @@ resource "aws_iam_policy" "ecr_push_private" {
         Action = [
           "ecr:BatchCheckLayerAvailability",
           "ecr:CompleteLayerUpload",
+          "ecr:DescribeImages",
           "ecr:GetAuthorizationToken",
           "ecr:InitiateLayerUpload",
+          "ecr:ListImages",
           "ecr:PutImage",
           "ecr:UploadLayerPart"
         ]
