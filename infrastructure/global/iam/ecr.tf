@@ -1,5 +1,7 @@
-data "aws_iam_user" "build_user" {
-  user_name = "ci-svc-build-usr"
+resource "aws_iam_openid_connect_provider" "main" {
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
 data "aws_ecr_repository" "service" {
@@ -13,37 +15,18 @@ resource "aws_iam_role" "ecr_build_role" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
+        Action = "sts:AssumeRoleWithIdentity"
         Effect = "Allow"
         Principal = {
-          AWS = data.aws_iam_user.build_user.arn
+          Federated = aws_iam_openid_connect_provider.main.arn
         }
         Sid = ""
-      },
-      {
-        Action = "sts:TagSession"
-        Effect = "Allow"
-        Principal = {
-          AWS = data.aws_iam_user.build_user.arn
+        Condition = {
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" : "sts.amazonaws.com",
+            "token.actions.githubusercontent.com:sub" : "repo:codeclout/AccountEd:*"
+          }
         }
-        Sid = ""
-      }
-    ]
-  })
-}
-
-resource "aws_iam_user_policy" "ci_svc_build_usr" {
-  name = "buildUserPolicy"
-  user = "ci-svc-build-usr"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = "sts:AssumeRole"
-        Effect   = "Allow"
-        Sid      = ""
-        Resource = aws_iam_role.ecr_build_role.arn
       }
     ]
   })
