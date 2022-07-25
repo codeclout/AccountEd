@@ -48,7 +48,7 @@ resource "aws_iam_policy" "ecr_push_private" {
           "ecr:UploadLayerPart"
         ]
         Effect   = "Allow"
-        Resource = data.aws_ecr_repository.service.arn
+        Resource = "*"
       }
     ]
   })
