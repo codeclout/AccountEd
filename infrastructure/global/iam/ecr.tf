@@ -41,13 +41,22 @@ resource "aws_iam_policy" "ecr_push_private" {
       {
         Action = [
           "ecr:BatchCheckLayerAvailability",
+          "ecr:BatchDeleteImage",
           "ecr:CompleteLayerUpload",
           "ecr:DescribeImages",
-          "ecr:GetAuthorizationToken",
           "ecr:InitiateLayerUpload",
           "ecr:ListImages",
           "ecr:PutImage",
+          "ecr:PutImageTagMutability",
+          "ecr:StartImageScan",
           "ecr:UploadLayerPart"
+        ]
+        Effect   = "Allow"
+        Resource = data.aws_ecr_repository.service.arn
+      },
+      {
+        Action = [
+          "ecr:GetAuthorizationToken"
         ]
         Effect   = "Allow"
         Resource = "*"
