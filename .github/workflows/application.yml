@@ -75,9 +75,4 @@ jobs:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             IMAGE_TAG: ${{ github.sha }}
           run: |
-            docker buildx install
-            docker buildx create --name accountEdBuilder
-            docker buildx use accountEdBuilder
-            docker buildx inspect accountEdBuilder --bootstrap
-            
-            docker buildx build --build-arg ENV=$ENV --target=prod --platform linux/amd64,linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest . --push
+            make ci-buildx-register-container
