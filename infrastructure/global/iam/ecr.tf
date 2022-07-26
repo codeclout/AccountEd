@@ -41,13 +41,15 @@ resource "aws_iam_policy" "ecr_push_private" {
       {
         Action = [
           "ecr:BatchCheckLayerAvailability",
-          "ecr:BatchDeleteImage",
           "ecr:CompleteLayerUpload",
           "ecr:DescribeImages",
+          "ecr:DescribeImageReplicationStatus",
           "ecr:InitiateLayerUpload",
           "ecr:ListImages",
+          "ecr:ListTagsForResource",
           "ecr:PutImage",
           "ecr:PutImageTagMutability",
+          "ecr:ReplicateImage",
           "ecr:StartImageScan",
           "ecr:UploadLayerPart"
         ]
