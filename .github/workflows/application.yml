@@ -54,8 +54,6 @@ jobs:
           if: github.event_name != 'pull_request'
           id: login-ecr
           uses: aws-actions/amazon-ecr-login@v1
-          with:
-            registry-type: private
         -
           name: Login to GHCR
           if: ${{ github.event_name != 'pull_request' }}
