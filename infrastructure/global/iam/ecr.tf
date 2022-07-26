@@ -41,9 +41,13 @@ resource "aws_iam_policy" "ecr_push_private" {
       {
         Action = [
           "ecr:BatchCheckLayerAvailability",
+          "ecr:BatchGetImage",
           "ecr:CompleteLayerUpload",
           "ecr:DescribeImages",
           "ecr:DescribeImageReplicationStatus",
+          "ecr:DescribeRepositories",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:GetRepositoryPolicy",
           "ecr:InitiateLayerUpload",
           "ecr:ListImages",
           "ecr:ListTagsForResource",
