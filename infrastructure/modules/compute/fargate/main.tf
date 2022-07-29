@@ -27,7 +27,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
   requires_compatibilities = ["FARGATE"]
   runtime_platform {
     operating_system_family = "LINUX"
-    cpu_architecture        = "X86_64"
+    cpu_architecture        = "ARM64"
   }
   task_role_arn = var.task_role_arn
 
