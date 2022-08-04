@@ -1,3 +1,13 @@
+variable "alb_certificate_arn" {
+  type        = string
+  description = "ARN of the ACM Certificate resource"
+}
+
+variable "alb_subnets" {
+  type        = list(string)
+  description = "Subnets associated with the ALB"
+}
+
 # Name of the application
 variable "app" {
   type    = string
@@ -31,6 +41,12 @@ variable "image_tag_mutability" {
     condition     = can(regex("^MUTABLE$|^IMMUTABLE$", var.image_tag_mutability))
     error_message = "Error: image tag mutability must be IMMUTABLE or MUTABLE"
   }
+}
+
+variable "resource_purpose" {
+  type        = string
+  description = "Answers the purpose the resource serves - e.g. core-account-management"
+  default     = "ephemeral"
 }
 
 variable "service_subnets" {
@@ -87,10 +103,10 @@ variable "task_desired_count" {
   type        = number
   description = "Number of instances of the task definition to place and keep running"
 
-  validation {
-    condition     = var.environment == "prod" ? var.task_desired_count >= 1 && var.task_desired_count <= 4 : var.task_desired_count <= 2
-    error_message = "Prod number of task instances must be greater than 1 and less than 4 | dev task instances, 2 or less"
-  }
+  # validation {
+  #   condition     = var.environment == "prod" ? var.task_desired_count >= 1 && var.task_desired_count <= 4 : var.task_desired_count <= 2
+  #   error_message = "Prod number of task instances must be greater than 1 and less than 4 | dev task instances, 2 or less"
+  # }
 }
 
 variable "task_execution_role_arn" {
@@ -100,7 +116,7 @@ variable "task_execution_role_arn" {
 
 variable "task_image" {
   type        = string
-  description = "The image used to start the container"
+  description = "The image URI & tag used to start the container"
 }
 
 variable "task_memory" {
