@@ -28,6 +28,12 @@ variable "image_tag_mutability" {
   }
 }
 
+variable "resource_purpose" {
+  type        = string
+  description = "Answers the purpose the resource serves - e.g. core-account-management"
+  default     = "ephemeral"
+}
+
 variable "should_scan_image_on_push" {
   type    = bool
   default = true
