@@ -18,7 +18,7 @@ resource "aws_lb" "core_app_lb" {
 }
 
 resource "aws_lb_target_group" "core_app_target_group_fargate_ip" {
-  name        = "${var.environment}-${var.resource_purpose}-target-group"
+  name        = "${var.environment}-${var.resource_purpose}-tg"
   port        = parseint(var.task_container_port, 10)
   protocol    = "HTTP"
   target_type = "ip"
