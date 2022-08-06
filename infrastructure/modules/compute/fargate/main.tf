@@ -38,7 +38,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       environment = [
         { "name" : "ENVIRONMENT", "value" : "${var.environment}" },
         { "name" : "HEALTHCHECK_INTERVAL", "value" : "${var.task_container_hc_interval}" },
-        { "name" : "PORT", "value" : tostring(var.task_container_port) }
+        { "name" : "PORT", "value" : var.task_container_port }
       ],
       image = var.task_image
       logConfiguration = {

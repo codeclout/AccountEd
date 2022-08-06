@@ -95,7 +95,7 @@ variable "task_container_name" {
 }
 
 variable "task_container_port" {
-  type        = number
+  type        = string
   description = "ECS task defintion container port number bound to the host port"
 }
 
