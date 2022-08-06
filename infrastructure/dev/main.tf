@@ -72,12 +72,12 @@ module "ecs_compute" {
 
   alb_certificate_arn     = aws_acm_certificate.alb_cert.arn
   alb_security_groups     = [module.network.public_sg_ingress_insecure_id, module.network.public_sg_ingress_secure_id]
+  alb_vpc_id              = module.network.alb_vpc_id
   app                     = local.app_name
   aws_region              = var.aws_region
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
   task_image              = data.aws_ecr_image.svc_image.id
   task_role_arn           = module.iam.ecs_task_role_arn
-  vpc_id                  = module.network.vpc_id
 
   task_container_hc_interval = 5
   task_cpu                   = 256

@@ -22,6 +22,6 @@ output "public_sg_ingress_secure_id" {
   value = aws_security_group_rule.scg_alb_rule_port443.id
 }
 
-output "vpc_id" {
+output "alb_vpc_id" {
   value = aws_vpc.network.id
 }
