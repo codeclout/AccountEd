@@ -5,5 +5,5 @@ variable "aws_region" {
 
 variable "container_registry_arn" {
   type    = string
-  default = ""
+  default = "arn:aws:ecr:us-east-2:*"
 }
