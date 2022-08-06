@@ -65,11 +65,13 @@ module "ecs_compute" {
   source = "../modules/compute/fargate"
 
   environment         = "dev"
+  health_check_path   = ["/hc"]
   resource_purpose    = "core-account-management"
   task_container_port = "8088"
   task_container_name = "my container"
 
   alb_certificate_arn     = aws_acm_certificate.alb_cert.arn
+  alb_security_groups     = [module.network.public_sg_ingress_insecure_id, module.network.public_sg_ingress_secure_id]
   app                     = local.app_name
   aws_region              = var.aws_region
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn

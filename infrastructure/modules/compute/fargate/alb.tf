@@ -17,7 +17,15 @@ resource "aws_lb" "core_app_lb" {
   subnets         = var.alb_subnets
 }
 
-resource "aws_lb_listener" "front_end" {
+resource "aws_lb_target_group" "core_app_target_group_fargate_ip" {
+  name        = "${var.environment}-${var.resource_purpose}-target-group"
+  port        = parseint(var.task_container_port, 10)
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = aws_vpc.main.id
+}
+
+resource "aws_lb_listener" "core_app_listener_secure" {
   load_balancer_arn = aws_lb.core_app_lb.arn
   port              = "443"
   protocol          = "HTTPS"
@@ -26,6 +34,42 @@ resource "aws_lb_listener" "front_end" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.front_end.arn
+    target_group_arn = aws_lb_target_group.core_app_target_group_fargate_ip.arn
+  }
+}
+
+resource "aws_lb_listener" "core_alb_listener_redirect" {
+  load_balancer_arn = aws_lb.core_app_lb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "health_check" {
+  listener_arn = aws_lb.core_app_lb.arn
+
+  action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "OK"
+      status_code  = "200"
+    }
+
+    condition {
+      path_pattern {
+        values = var.health_check_path
+      }
+    }
   }
 }

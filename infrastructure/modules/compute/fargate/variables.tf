@@ -3,6 +3,11 @@ variable "alb_certificate_arn" {
   description = "ARN of the ACM Certificate resource"
 }
 
+variable "alb_security_groups" {
+  type        = list(string)
+  description = "Security group IDs for ALB"
+}
+
 variable "alb_subnets" {
   type        = list(string)
   description = "Subnets associated with the ALB"
@@ -31,6 +36,10 @@ variable "environment" {
     condition     = can(regex("^dev$|^prod$", var.environment))
     error_message = "Error: Only 2 environments are supported - dev & prod"
   }
+}
+
+variable "health_check_path" {
+  type = list(string)
 }
 
 variable "image_tag_mutability" {
