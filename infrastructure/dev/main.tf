@@ -13,8 +13,7 @@ terraform {
 }
 
 provider "aws" {
-  profile = "default"
-  region  = var.aws_region
+  region = var.aws_region
 }
 
 # GITHUB_TOKEN required in the environment to authenticate with GitHub
@@ -33,6 +32,8 @@ data "github_ref" "dev" {
 
 module "iam" {
   source = "../global/iam"
+
+  container_registry_arn = module.ecr.container_repository_arn
 }
 
 module "network" {

@@ -4,10 +4,6 @@ resource "aws_iam_openid_connect_provider" "main" {
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
-data "aws_ecr_repository" "service" {
-  name = "sch00l.io-dev"
-}
-
 resource "aws_iam_role" "ecr_build_role" {
   name = "ecrBuildRole"
 
@@ -58,7 +54,7 @@ resource "aws_iam_policy" "ecr_push_private" {
           "ecr:UploadLayerPart"
         ]
         Effect   = "Allow"
-        Resource = data.aws_ecr_repository.service.arn
+        Resource = var.container_registry_arn
       },
       {
         Action = [
