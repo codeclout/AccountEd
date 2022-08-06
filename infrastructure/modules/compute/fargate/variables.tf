@@ -13,6 +13,10 @@ variable "alb_subnets" {
   description = "Subnets associated with the ALB"
 }
 
+variable "alb_vpc_id" {
+  type = string
+}
+
 # Name of the application
 variable "app" {
   type    = string
