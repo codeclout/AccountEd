@@ -65,11 +65,11 @@ resource "aws_lb_listener_rule" "health_check" {
       message_body = "OK"
       status_code  = "200"
     }
+  }
 
-    condition {
-      path_pattern {
-        values = var.health_check_path
-      }
+  condition {
+    path_pattern {
+      values = var.health_check_path
     }
   }
 }
