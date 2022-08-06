@@ -52,9 +52,10 @@ module "network" {
 module "ecr" {
   source = "../modules/compute/ecr"
 
-  app         = local.app_name
-  aws_region  = var.aws_region
-  environment = "dev"
+  app              = local.app_name
+  aws_region       = var.aws_region
+  environment      = "dev"
+  resource_purpose = "core"
 }
 
 data "aws_ecr_image" "svc_image" {
