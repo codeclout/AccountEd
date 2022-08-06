@@ -22,7 +22,7 @@ resource "aws_lb_target_group" "core_app_target_group_fargate_ip" {
   port        = parseint(var.task_container_port, 10)
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = var.vpc_id
+  vpc_id      = var.alb_vpc_id
 }
 
 resource "aws_lb_listener" "core_app_listener_secure" {
