@@ -4,5 +4,6 @@ variable "aws_region" {
 }
 
 variable "container_registry_arn" {
-  type = string
+  type    = string
+  default = ""
 }
