@@ -77,6 +77,7 @@ module "ecs_compute" {
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
   task_image              = data.aws_ecr_image.svc_image.id
   task_role_arn           = module.iam.ecs_task_role_arn
+  vpc_id                  = module.network.vpc_id
 
   task_container_hc_interval = 5
   task_cpu                   = 256
