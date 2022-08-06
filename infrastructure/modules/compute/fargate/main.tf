@@ -8,7 +8,7 @@ terraform {
 }
 
 resource "aws_ecs_cluster" "app_cluster" {
-  name = "${var.environment}-${var.app}-${var.resource_purpose}"
+  name = "${var.environment}-${var.resource_purpose}"
 
   setting {
     name  = "containerInsights"
