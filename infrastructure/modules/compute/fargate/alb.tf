@@ -1,5 +1,5 @@
 resource "aws_lb" "core_app_lb" {
-  name = "${var.environment}-${var.app}-core-app"
+  name = "${var.environment}-${var.task_container_name}-alb"
 
   drop_invalid_header_fields = false
   enable_deletion_protection = false
