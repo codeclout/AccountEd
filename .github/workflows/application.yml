@@ -67,7 +67,7 @@ jobs:
           if: github.event_name != 'pull_request'
           env:
             ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-            ECR_REPOSITORY: sch00l.io-dev
+            ECR_REPOSITORY: dev-sch00l.io-core
             ENV: dev
             GH_ACTOR: ${{ github.actor }}
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
