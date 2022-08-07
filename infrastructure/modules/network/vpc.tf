@@ -57,6 +57,7 @@ resource "aws_route_table" "explicit_subnet" {
 
 # public route table
 resource "aws_route_table" "public" {
+  count  = 2
   vpc_id = aws_vpc.network.id
 
   route {
