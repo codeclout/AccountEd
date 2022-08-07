@@ -60,7 +60,7 @@ module "ecr" {
 
 data "aws_ecr_image" "svc_image" {
   image_tag       = substr(data.github_ref.dev.sha, 0, 11)
-  repository_name = module.ecr.container_repository_url
+  repository_name = "dev-${local.app_name}-core"
 }
 
 module "ecs_compute" {
