@@ -51,7 +51,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       },
       portMappings = [
         {
-          containerPort = var.task_container_port
+          containerPort = parseint(var.task_container_port, 10)
           protocol      = "tcp"
         }
       ],
