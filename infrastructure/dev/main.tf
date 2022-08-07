@@ -59,7 +59,7 @@ module "ecr" {
 }
 
 data "aws_ecr_image" "svc_image" {
-  image_tag       = substr(data.github_ref.dev.sha, 0, 11)
+  image_tag       = substr(data.github_ref.dev.sha, 0, 12)
   repository_name = "dev-${local.app_name}-core"
 }
 
