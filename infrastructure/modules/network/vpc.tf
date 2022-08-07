@@ -57,7 +57,6 @@ resource "aws_route_table" "explicit_subnet" {
 
 # public route table
 resource "aws_route_table" "public" {
-  count  = 2
   vpc_id = aws_vpc.network.id
 
   route {
@@ -82,7 +81,7 @@ resource "aws_route_table_association" "route_table_association" {
 resource "aws_route_table_association" "public_compute" {
   count = 2
 
-  route_table_id = aws_route_table.public[count.index].id
+  route_table_id = aws_route_table.public.id
   subnet_id      = aws_subnet.mask_21[4 + count.index].id
 }
 

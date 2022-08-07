@@ -68,9 +68,9 @@ resource "aws_ecs_service" "fargate_service" {
   task_definition = aws_ecs_task_definition.fargate_task_definition.arn
   desired_count   = var.task_desired_count
 
-  force_new_deployment              = true
-  health_check_grace_period_seconds = parseint(var.task_container_hc_interval, 10)
-  launch_type                       = "FARGATE"
+  force_new_deployment = true
+  # health_check_grace_period_seconds = parseint(var.task_container_hc_interval, 10)
+  launch_type = "FARGATE"
 
   lifecycle {
     ignore_changes = [desired_count]
