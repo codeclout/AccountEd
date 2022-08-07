@@ -78,11 +78,16 @@ resource "aws_route_table_association" "route_table_association" {
 }
 
 # assign the public route table to the public subnet az1
-resource "aws_route_table_association" "public_compute" {
-  count = 2
+resource "aws_route_table_association" "public_compute_subnet_4" {
 
   route_table_id = aws_route_table.public.id
-  subnet_id      = aws_subnet.mask_21[4 + count.index].id
+  subnet_id      = aws_subnet.mask_21[4].id
+}
+
+resource "aws_route_table_association" "public_compute_subnet_5" {
+
+  route_table_id = aws_route_table.public.id
+  subnet_id      = aws_subnet.mask_21[5].id
 }
 
 resource "aws_nat_gateway" "ngw" {
