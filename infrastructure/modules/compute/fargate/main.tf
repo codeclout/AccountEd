@@ -63,7 +63,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
 }
 
 resource "aws_ecs_service" "fargate_service" {
-  name            = "${var.environment}-${var.app}-${var.resource_purpose}"
+  name            = "${var.environment}-${var.resource_purpose}"
   cluster         = aws_ecs_cluster.app_cluster.id
   task_definition = aws_ecs_task_definition.fargate_task_definition.arn
   desired_count   = var.task_desired_count

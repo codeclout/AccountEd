@@ -81,7 +81,7 @@ resource "aws_route_table_association" "route_table_association" {
 resource "aws_route_table_association" "public_compute" {
   count = 2
 
-  route_table_id = aws_route_table.public.id
+  route_table_id = aws_route_table.public[count.index].id
   subnet_id      = aws_subnet.mask_21[4 + count.index].id
 }
 
