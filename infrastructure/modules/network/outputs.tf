@@ -15,7 +15,7 @@ output "public_compute_subnet_az_5" {
 }
 
 output "alb_security_grp" {
-  value = aws_security_group_.scg_alb.id
+  value = aws_security_group.scg_alb.id
 }
 
 output "alb_vpc_id" {
