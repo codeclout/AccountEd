@@ -55,7 +55,7 @@ resource "aws_lb_listener" "core_alb_listener_redirect" {
 }
 
 resource "aws_lb_listener_rule" "health_check" {
-  listener_arn = aws_lb.core_app_lb.arn
+  listener_arn = aws_lb_listener.core_app_listener_secure.arn
 
   action {
     type = "fixed-response"
