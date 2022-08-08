@@ -70,11 +70,31 @@ resource "aws_route_table" "public" {
 }
 
 # assign each route table to a subnet
-resource "aws_route_table_association" "route_table_association" {
-  count = var.availability_zone_count * length(local.subnets)
+# resource "aws_route_table_association" "route_table_association" {
+#   count = var.availability_zone_count * length(local.subnets)
 
-  subnet_id      = aws_subnet.mask_21[count.index].id
-  route_table_id = aws_route_table.explicit_subnet[count.index].id
+#   subnet_id      = aws_subnet.mask_21[count.index].id
+#   route_table_id = aws_route_table.explicit_subnet[count.index].id
+# }
+
+resource "aws_route_table_association" "private_compute_subnet_0" {
+  route_table_id = aws_route_table.explicit_subnet[0].id
+  subnet_id      = aws_subnet.mask_21[0].id
+}
+
+resource "aws_route_table_association" "private_compute_subnet_1" {
+  route_table_id = aws_route_table.explicit_subnet[1].id
+  subnet_id      = aws_subnet.mask_21[1].id
+}
+
+resource "aws_route_table_association" "private_db_subnet_2" {
+  route_table_id = aws_route_table.explicit_subnet[2].id
+  subnet_id      = aws_subnet.mask_21[2].id
+}
+
+resource "aws_route_table_association" "private_db_subnet_3" {
+  route_table_id = aws_route_table.explicit_subnet[3].id
+  subnet_id      = aws_subnet.mask_21[3].id
 }
 
 # assign the public route table to the public subnet az1
@@ -88,6 +108,16 @@ resource "aws_route_table_association" "public_compute_subnet_5" {
 
   route_table_id = aws_route_table.public.id
   subnet_id      = aws_subnet.mask_21[5].id
+}
+
+resource "aws_route_table_association" "private_mgmt_subnet_6" {
+  route_table_id = aws_route_table.explicit_subnet[6].id
+  subnet_id      = aws_subnet.mask_21[6].id
+}
+
+resource "aws_route_table_association" "private_mgmt_subnet_7" {
+  route_table_id = aws_route_table.explicit_subnet[7].id
+  subnet_id      = aws_subnet.mask_21[7].id
 }
 
 resource "aws_nat_gateway" "ngw" {
