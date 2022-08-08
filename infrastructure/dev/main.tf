@@ -73,7 +73,7 @@ module "ecs_compute" {
   task_container_name = "core-api"
 
   alb_certificate_arn     = aws_acm_certificate.alb_cert.arn
-  alb_security_groups     = [module.network.public_sg_ingress_insecure_id, module.network.public_sg_ingress_secure_id]
+  alb_security_groups     = [module.network.alb_security_grp]
   alb_vpc_id              = module.network.alb_vpc_id
   app                     = local.app_name
   aws_region              = var.aws_region
