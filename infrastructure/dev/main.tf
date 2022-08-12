@@ -58,10 +58,10 @@ module "ecr" {
   resource_purpose = "core"
 }
 
-data "aws_ecr_image" "svc_image" {
-  image_tag       = substr(data.github_ref.dev.sha, 0, 12)
-  repository_name = "dev-${local.app_name}-core"
-}
+# data "aws_ecr_image" "svc_image" {
+#   image_tag       = substr(data.github_ref.dev.sha, 0, 12)
+#   repository_name = "dev-${local.app_name}-core"
+# }
 
 module "ecs_compute" {
   source = "../modules/compute/fargate"
