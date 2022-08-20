@@ -4,17 +4,6 @@ resource "aws_security_group" "scg_ecs" {
   tags   = var.tags
 }
 
-# resource "aws_security_group_rule" "scg_ecs_rule" {
-#   protocol = "tcp"
-#   type     = "ingress"
-
-#   from_port = 32768
-#   to_port   = 65535
-
-#   security_group_id        = aws_security_group.scg_ecs.id
-#   source_security_group_id = aws_security_group.scg_alb.id
-# }
-
 resource "aws_security_group" "scg_alb" {
   name   = "${var.environment}-scg-alb"
   vpc_id = aws_vpc.network.id
