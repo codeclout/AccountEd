@@ -19,9 +19,12 @@ data "aws_availability_zones" "av" {
 }
 
 resource "aws_vpc" "network" {
-  cidr_block           = local.vpc_cidr
+  cidr_block = local.vpc_cidr
+
   enable_dns_hostnames = true
-  instance_tenancy     = "default"
+  enable_dns_support   = true
+
+  instance_tenancy = "default"
 
   tags = merge({ Name = "vpc-${var.app}-${var.environment}" }, var.tags)
 }
@@ -121,15 +124,15 @@ resource "aws_route_table_association" "private_mgmt_subnet_7" {
 }
 
 resource "aws_nat_gateway" "ngw" {
-  count = 2
+  count = var.nat_gateway_count
 
   allocation_id     = aws_eip.eip_nat_gateway[count.index].id
   connectivity_type = "public"
-  subnet_id         = aws_subnet.mask_21[4 + count.index].id
+  subnet_id         = var.nat_gateway_count > 1 ? aws_subnet.mask_21[4 + count.index].id : aws_subnet.mask_21[5].id
 }
 
 resource "aws_eip" "eip_nat_gateway" {
-  count = 2
+  count = var.nat_gateway_count
 
   vpc = true
   depends_on = [
@@ -149,7 +152,7 @@ resource "aws_route" "compute_a" {
 
 resource "aws_route" "compute_b" {
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.ngw[1].id
+  nat_gateway_id         = var.nat_gateway_count > 1 ? aws_nat_gateway.ngw[1].id : aws_nat_gateway.ngw[0].id
   route_table_id         = aws_route_table.explicit_subnet[1].id
 
   depends_on = [
@@ -169,7 +172,7 @@ resource "aws_route" "management_a" {
 
 resource "aws_route" "management_b" {
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.ngw[1].id
+  nat_gateway_id         = var.nat_gateway_count > 1 ? aws_nat_gateway.ngw[1].id : aws_nat_gateway.ngw[0].id
   route_table_id         = aws_route_table.explicit_subnet[7].id
 
   depends_on = [

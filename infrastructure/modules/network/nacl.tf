@@ -30,7 +30,7 @@ resource "aws_network_acl_rule" "alb_public_inbound_secure" {
   to_port     = 443
 }
 
-resource "aws_network_acl_rule" "alb_public_outbound" {
+resource "aws_network_acl_rule" "alb_public_ephemeral_inbound" {
   cidr_block     = aws_vpc.network.cidr_block
   network_acl_id = aws_network_acl.alb_public
 
@@ -44,7 +44,7 @@ resource "aws_network_acl_rule" "alb_public_outbound" {
   to_port     = 65535
 }
 
-resource "aws_network_acl_rule" "alb_public_outbound" {
+resource "aws_network_acl_rule" "alb_public_ephemeral_outbound" {
   network_acl_id = aws_network_acl.alb_public
 
   cidr_block  = "0.0.0.0/0"

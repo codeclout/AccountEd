@@ -26,6 +26,16 @@ variable "environment" {
   }
 }
 
+variable "nat_gateway_count" {
+  type        = number
+  description = "Number of NAT Gateways to deploy"
+
+  validation {
+    condition     = var.nat_gateway_count >= 1 && var.nat_gateway_count <= 2
+    error_message = "A minimum of 1 and maximum of 2 NAT Gateway(s) are required"
+  }
+}
+
 variable "tags" {
   type = map(string)
 

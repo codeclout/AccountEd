@@ -58,10 +58,10 @@ module "ecr" {
   resource_purpose = "core"
 }
 
-# data "aws_ecr_image" "svc_image" {
-#   image_tag       = substr(data.github_ref.dev.sha, 0, 12)
-#   repository_name = "dev-${local.app_name}-core"
-# }
+data "aws_ecr_image" "svc_image" {
+  image_tag       = substr(data.github_ref.dev.sha, 0, 12)
+  repository_name = "dev-${local.app_name}-core"
+}
 
 module "ecs_compute" {
   source = "../modules/compute/fargate"
@@ -78,9 +78,10 @@ module "ecs_compute" {
   app                     = local.app_name
   aws_region              = var.aws_region
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
-  # task_image              = data.aws_ecr_image.svc_image.id
-  task_role_arn = module.iam.ecs_task_role_arn
+  task_image              = data.aws_ecr_image.svc_image.id
+  task_role_arn           = module.iam.ecs_task_role_arn
 
+  nat_gateway_count          = 1
   task_container_hc_interval = 5
   task_cpu                   = 256
   task_desired_count         = 1

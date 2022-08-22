@@ -23,6 +23,10 @@ resource "aws_lb_target_group" "core_app_target_group_fargate_ip" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = var.alb_vpc_id
+
+  health_check {
+    path = var.health_check_path
+  }
 }
 
 resource "aws_lb_listener" "core_app_listener_secure" {
