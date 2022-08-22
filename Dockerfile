@@ -3,6 +3,8 @@ FROM golang:1.18-bullseye as build
 ARG ENV
 ENV ENVIRONMENT="${ENV}"
 
+EXPOSE 8088
+
 HEALTHCHECK --interval=30s --timeout=30s --start-period=7s --retries=3 \
     CMD curl -f http://0.0.0.0/8088/hc || exit 1
 
