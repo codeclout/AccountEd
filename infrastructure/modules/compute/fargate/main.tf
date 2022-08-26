@@ -63,20 +63,31 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
 }
 
 resource "aws_ecs_service" "fargate_service" {
-  name            = "${var.environment}-${var.resource_purpose}"
-  cluster         = aws_ecs_cluster.app_cluster.id
-  task_definition = aws_ecs_task_definition.fargate_task_definition.arn
-  desired_count   = var.task_desired_count
+  name = "${var.environment}-${var.resource_purpose}"
+
+  cluster                            = aws_ecs_cluster.app_cluster.id
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 50
+  desired_count                      = var.task_desired_count
+  task_definition                    = aws_ecs_task_definition.fargate_task_definition.arn
 
   force_new_deployment = true
   # health_check_grace_period_seconds = parseint(var.task_container_hc_interval, 10)
   launch_type = "FARGATE"
 
   lifecycle {
-    ignore_changes = [desired_count]
+    ignore_changes = [desired_count, task_definition]
+  }
+
+  load_balancer {
+    container_name   = var.task_container_name
+    container_port   = var.task_container_port
+    target_group_arn = aws_lb_target_group.core_app_target_group_fargate_ip.arn
   }
 
   network_configuration {
-    subnets = var.service_subnets
+    assign_public_ip = false
+    security_groups  = var.ecs_security_groups
+    subnets          = var.service_subnets
   }
 }

@@ -21,3 +21,7 @@ output "alb_security_grp" {
 output "alb_vpc_id" {
   value = aws_vpc.network.id
 }
+
+output "ecs_security_grp" {
+  value = aws_security_group.scg_ecs.id
+}

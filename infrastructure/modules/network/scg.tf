@@ -4,6 +4,28 @@ resource "aws_security_group" "scg_ecs" {
   tags   = var.tags
 }
 
+resource "aws_security_group_rule" "scg_ecs_rule_container_port" {
+  protocol = "tcp"
+  type     = "ingress"
+
+  from_port = var.container_port
+  to_port   = var.container_port
+
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.scg_ecs.id
+}
+
+resource "aws_security_group_rule" "scg_ecs_rule_outbound" {
+  protocol = "-1"
+  type     = "egress"
+
+  from_port = 0
+  to_port   = 0
+
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.scg_ecs.id
+}
+
 resource "aws_security_group" "scg_alb" {
   name   = "${var.environment}-scg-alb"
   vpc_id = aws_vpc.network.id

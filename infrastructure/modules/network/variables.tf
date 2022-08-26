@@ -17,6 +17,11 @@ variable "aws_region" {
   type = string
 }
 
+variable "container_port" {
+  type        = string
+  description = "Allow ingress to the port exposed by the task"
+}
+
 variable "environment" {
   type = string
 

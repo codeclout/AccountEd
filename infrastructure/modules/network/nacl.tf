@@ -3,7 +3,7 @@ resource "aws_network_acl" "alb_public" {
 }
 
 resource "aws_network_acl_rule" "alb_public_inbound_insecure" {
-  network_acl_id = aws_network_acl.alb_public
+  network_acl_id = aws_network_acl.alb_public.id
 
   cidr_block  = "0.0.0.0/0"
   protocol    = "tcp"
@@ -17,7 +17,7 @@ resource "aws_network_acl_rule" "alb_public_inbound_insecure" {
 }
 
 resource "aws_network_acl_rule" "alb_public_inbound_secure" {
-  network_acl_id = aws_network_acl.alb_public
+  network_acl_id = aws_network_acl.alb_public.id
 
   cidr_block  = "0.0.0.0/0"
   protocol    = "tcp"
@@ -32,7 +32,7 @@ resource "aws_network_acl_rule" "alb_public_inbound_secure" {
 
 resource "aws_network_acl_rule" "alb_public_ephemeral_inbound" {
   cidr_block     = aws_vpc.network.cidr_block
-  network_acl_id = aws_network_acl.alb_public
+  network_acl_id = aws_network_acl.alb_public.id
 
   protocol    = "tcp"
   rule_action = "allow"
@@ -45,7 +45,7 @@ resource "aws_network_acl_rule" "alb_public_ephemeral_inbound" {
 }
 
 resource "aws_network_acl_rule" "alb_public_ephemeral_outbound" {
-  network_acl_id = aws_network_acl.alb_public
+  network_acl_id = aws_network_acl.alb_public.id
 
   cidr_block  = "0.0.0.0/0"
   protocol    = "tcp"

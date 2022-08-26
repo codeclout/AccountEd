@@ -22,7 +22,8 @@ provider "github" {
 }
 
 locals {
-  app_name = "sch00l.io"
+  app_name       = "sch00l.io"
+  container_port = "8088"
 }
 
 data "github_ref" "dev" {
@@ -39,11 +40,14 @@ module "iam" {
 module "network" {
   source = "../modules/network"
 
-  app                     = local.app_name
-  availability_zone_count = 2
-  aws_region              = var.aws_region
-  environment             = "dev"
+  environment = "dev"
 
+  app            = local.app_name
+  aws_region     = var.aws_region
+  container_port = local.container_port
+
+  availability_zone_count = 2
+  nat_gateway_count       = 1
   tags = {
     environment = "dev"
   }
@@ -67,9 +71,8 @@ module "ecs_compute" {
   source = "../modules/compute/fargate"
 
   environment         = "dev"
-  health_check_path   = ["/hc"]
+  health_check_path   = "/hc"
   resource_purpose    = "core-account-management"
-  task_container_port = "8088"
   task_container_name = "core-api"
 
   alb_certificate_arn     = aws_acm_certificate.alb_cert.arn
@@ -77,11 +80,12 @@ module "ecs_compute" {
   alb_vpc_id              = module.network.alb_vpc_id
   app                     = local.app_name
   aws_region              = var.aws_region
+  ecs_security_groups     = [module.network.ecs_security_grp]
+  task_container_port     = local.container_port
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
   task_image              = data.aws_ecr_image.svc_image.id
   task_role_arn           = module.iam.ecs_task_role_arn
 
-  nat_gateway_count          = 1
   task_container_hc_interval = 5
   task_cpu                   = 256
   task_desired_count         = 1

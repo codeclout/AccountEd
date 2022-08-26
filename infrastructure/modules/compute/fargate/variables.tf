@@ -33,6 +33,10 @@ variable "aws_region" {
   default = "us-east-2"
 }
 
+variable "ecs_security_groups" {
+  type = list(string)
+}
+
 variable "environment" {
   type = string
 
@@ -43,7 +47,7 @@ variable "environment" {
 }
 
 variable "health_check_path" {
-  type = list(string)
+  type = string
 }
 
 variable "image_tag_mutability" {
