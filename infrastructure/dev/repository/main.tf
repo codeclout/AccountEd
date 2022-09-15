@@ -12,15 +12,14 @@ provider "aws" {
 }
 
 locals {
-  app_name   = "sch00l.io"
-  aws_region = "us-east-2"
+  app_name = "sch00l.io"
 }
 
 module "ecr" {
   source = "../../modules/compute/ecr"
 
   app              = split(".", local.app_name)[0]
-  aws_region       = local.aws_region
+  aws_region       = var.aws_region
   environment      = "dev"
   resource_purpose = "core"
 }
