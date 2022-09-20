@@ -5,10 +5,9 @@ on:
     branches:
       - main
       - develop
-    paths:
-      - backend/**
-      - .github/workflows/application.yml
-      - Makefile
+    paths-ignore:
+      - "infrastructure/**"
+
   workflow_dispatch:
 
 permissions:
@@ -74,3 +73,14 @@ jobs:
             IMAGE_TAG: ${{ github.sha }}
           run: |
             make ci-buildx-register-container
+        - 
+          name: fetch current task definition
+          run: aws ecs describe-task-definition --task-definition $${{ env.ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json
+        -
+          name: render task definition
+          id: render-task-definition
+          uses: aws-actions/amazon-ecs-render-task-definition@v1
+          with:
+            task-definition: "task-definition.json"
+            container-name: $${{ env.CONTAINER_NAME }}
+            image: $${{ format('{0}/{1}:{2}', steps.login-ecr.outputs.registry, env.ECR_REPOSITORY, github.sha) }}
