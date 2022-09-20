@@ -2,18 +2,22 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 4.20.1"
+      version = ">= 4.20.1, < 5.0.0"
     }
 
-    github = {
-      source  = "integrations/github"
-      version = ">= 4.28.0"
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = ">= 3.22.0"
     }
   }
 }
 
 provider "aws" {
   region = var.aws_region
+}
+
+provider "cloudflare" {
+  api_token = var.CF_API_TOKEN
 }
 
 # GITHUB_TOKEN required in the environment to authenticate with GitHub
@@ -26,11 +30,6 @@ locals {
   container_port = "8088"
 }
 
-data "github_ref" "dev" {
-  repository = "AccountEd"
-  ref        = "heads/develop"
-}
-
 module "iam" {
   source = "../global/iam"
 
@@ -41,6 +40,7 @@ module "network" {
   source = "../modules/network"
 
   environment = "dev"
+  vpc_cidr    = "10.1.0.0/16"
 
   app            = local.app_name
   aws_region     = var.aws_region
@@ -51,20 +51,6 @@ module "network" {
   tags = {
     environment = "dev"
   }
-}
-
-module "ecr" {
-  source = "../modules/compute/ecr"
-
-  app              = local.app_name
-  aws_region       = var.aws_region
-  environment      = "dev"
-  resource_purpose = "core"
-}
-
-data "aws_ecr_image" "svc_image" {
-  image_tag       = substr(data.github_ref.dev.sha, 0, 12)
-  repository_name = "dev-${local.app_name}-core"
 }
 
 module "ecs_compute" {
@@ -83,7 +69,7 @@ module "ecs_compute" {
   ecs_security_groups     = [module.network.ecs_security_grp]
   task_container_port     = local.container_port
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
-  task_image              = data.aws_ecr_image.svc_image.id
+  task_image              = "scratch"
   task_role_arn           = module.iam.ecs_task_role_arn
 
   task_container_hc_interval = 5
