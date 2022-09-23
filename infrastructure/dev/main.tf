@@ -26,14 +26,20 @@ provider "github" {
 }
 
 locals {
-  app_name       = "sch00l.io"
-  container_port = "8088"
+  app_name         = "sch00l.io"
+  container_port   = "8088"
+  environment      = "dev"
+  resource_purpose = "core"
+}
+
+data "aws_ecr_repository" "data" {
+  name = "${local.environment}-${split(".", local.app_name)[0]}-${local.resource_purpose}"
 }
 
 module "iam" {
   source = "../global/iam"
 
-  container_registry_arn = module.ecr.container_repository_arn
+  container_registry_arn = data.aws_ecr_repository.data.arn
 }
 
 module "network" {
