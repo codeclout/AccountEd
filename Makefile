@@ -6,14 +6,6 @@ GO_VERSION := 1.18.3
 
 GOOS = $(shell go env GOOS)
 
-export TF_INPUT = $(shell go env TF_INPUT)
-export TF_LOG = $(shell go env TF_LOG)
-
-export TF_VAR_LMS_ACCOUNT_ROLE_NAME = $(shell go env LMS_ACCOUNT_ROLE)
-export TF_VAR_LMS_USER_ACCOUNT_EMAIL = $(shell go env LMS_USER_ACCOUNT_EMAIL)
-export TF_VAR_PROXY_ACCOUNT_USERS_EMAIL = $(shell go env PROXY_ACCOUNT_USERS_EMAIL)
-export TF_VAR_PROXY_ACCOUNT_ROLE_NAME = $(shell go env PROXY_ACCOUNT_ROLE_NAME)
-
 .PHONY: init-local-environment
 init-local-environment: build-docker
 	cd ./migrations/mongo/local/migration && npm i
@@ -35,8 +27,11 @@ ci-buildx-register-container:
 	docker buildx use accountEdBuilder
 	docker buildx inspect accountEdBuilder --bootstrap
 	
-	docker buildx build --build-arg ENV=$${ENV} --target=prod --platform linux/amd64,linux/arm64 -t ghcr.io/$${GH_ACTOR}/$${ECR_REPOSITORY}:$(shell echo $${IMAGE_TAG} | cut -c 1-12) . --push
+	docker buildx build --build-arg ENV=$${ENV} --target=prod --platform linux/amd64,linux/arm64 -t ghcr.io/$${GH_ACTOR}/$${ECR_REPOSITORY}:$(shell echo $${IMAGE_TAG} | cut -c 1-12) --push .
 	docker buildx build --build-arg ENV=$${ENV} --target=prod --platform linux/amd64,linux/arm64 -t $${ECR_REGISTRY}/$${ECR_REPOSITORY}:$(shell echo $${IMAGE_TAG} | cut -c 1-12) --push .
+
+	docker logout ghcr.io/$${GH_ACTOR}
+	docker logout $${ECR_REGISTRY}
 
 # .PHONY: setup-local-go
 # setup-local-go:

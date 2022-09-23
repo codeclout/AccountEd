@@ -6,7 +6,6 @@ locals {
     "public-compute-${var.aws_region}",
     "management-${var.aws_region}"
   ]
-  vpc_cidr = "10.0.0.0/16"
 }
 
 data "aws_availability_zones" "av" {
@@ -19,7 +18,7 @@ data "aws_availability_zones" "av" {
 }
 
 resource "aws_vpc" "network" {
-  cidr_block = local.vpc_cidr
+  cidr_block = var.vpc_cidr
 
   enable_dns_hostnames = true
   enable_dns_support   = true

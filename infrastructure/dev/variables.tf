@@ -3,10 +3,10 @@ variable "aws_region" {
   default = "us-east-2"
 }
 
-variable "AWS_ADM_ACCOUNT_EMAIL" {
-  type        = string
-  description = "AWS ADM Account Creation Email"
-}
+# variable "AWS_ADM_ACCOUNT_EMAIL" {
+#   type        = string
+#   description = "AWS ADM Account Creation Email"
+# }
 
 variable "CF_ACCOUNT_ID" {
   type        = string
@@ -18,10 +18,10 @@ variable "CF_API_TOKEN" {
   description = "Cloudflare API token"
 }
 
-variable "CF_TUNNEL_SECRET" {
-  type        = string
-  description = "32 or more bytes encoded as a base64 string"
-}
+# variable "CF_TUNNEL_SECRET" {
+#   type        = string
+#   description = "32 or more bytes encoded as a base64 string"
+# }
 
 variable "CF_ZONE_ID" {
   type        = string

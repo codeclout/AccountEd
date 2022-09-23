@@ -7,7 +7,7 @@ resource "aws_lb" "core_app_lb" {
   enable_waf_fail_open       = false
   internal                   = false
 
-  idle_timeout = 60
+  idle_timeout = 30
 
   desync_mitigation_mode = "defensive"
   ip_address_type        = "ipv4"
@@ -28,18 +28,24 @@ resource "aws_lb_target_group" "core_app_target_group_fargate_ip" {
   target_type = "ip"
 
   health_check {
-    healthy_threshold = 2
-    interval          = 10
-    matcher           = "200-299"
-    path              = var.health_check_path
-    port              = parseint(var.task_container_port, 10)
-    protocol          = "HTTP"
-    timeout           = 5
+    enabled             = true
+    healthy_threshold   = 2
+    interval            = 15
+    matcher             = "200-299"
+    path                = var.health_check_path
+    port                = parseint(var.task_container_port, 10)
+    protocol            = "HTTP"
+    timeout             = 10
+    unhealthy_threshold = 3
   }
 
   depends_on = [
     aws_lb.core_app_lb
   ]
+
+  # lifecycle {
+  #   create_before_destroy = true
+  # }
 }
 
 resource "aws_lb_listener" "core_app_listener_secure" {
@@ -98,6 +104,12 @@ resource "aws_appautoscaling_target" "ecs_autoscaling_target" {
   resource_id        = "service/${aws_ecs_cluster.app_cluster.name}/${aws_ecs_service.fargate_service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
+
+  lifecycle {
+    ignore_changes = [
+      role_arn,
+    ]
+  }
 }
 
 resource "aws_appautoscaling_policy" "ecs_autoscaling_policy_memory" {
@@ -130,4 +142,23 @@ resource "aws_appautoscaling_policy" "ecs_autoscaling_policy_cpu" {
 
     target_value = 60
   }
+}
+
+# ------- High memory alarm -------
+resource "aws_cloudwatch_metric_alarm" "high-memory-policy-alarm" {
+  alarm_name          = "${var.environment}-high-memory-ecs-service-${aws_ecs_service.fargate_service.name}"
+  alarm_description   = "High Memory for ecs service-${aws_ecs_service.fargate_service.name}"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = "60"
+  statistic           = "Maximum"
+  threshold           = 50
+
+  dimensions = {
+    ServiceName = aws_ecs_service.fargate_service.name,
+    ClusterName = aws_ecs_cluster.app_cluster.name
+  }
+
 }

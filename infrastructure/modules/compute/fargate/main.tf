@@ -44,9 +44,9 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          awslogs-group         = "/ecs/fargate/${var.app}-${var.environment}"
+          awslogs-group         = "/ecs/${var.environment}/${split(".", var.app)[0]}"
           awslogs-region        = var.aws_region
-          awslogs-stream-prefix = "ecs"
+          awslogs-stream-prefix = var.resource_purpose
         }
       },
       portMappings = [
