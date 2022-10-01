@@ -1,4 +1,4 @@
-FROM golang:1.18-bullseye as build
+FROM golang:1.19.1-bullseye as build
 
 ARG ENV
 ENV ENVIRONMENT="${ENV}"

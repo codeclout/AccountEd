@@ -75,6 +75,18 @@ services:
     volumes:
       - ./migrations/mongo/local/migration:/usr/local/migrate
 
+  app:
+    depends_on:
+      mongo-migrate:
+        condition: service_completed_successfully
+    image: accounted-amd64-local
+    networks:
+      - accountEd-local
+    ports:
+      - 8088:8088
+    command:
+      - /usr/ci-svc-usr/accountEd
+
 
 networks:
   accountEd-local:

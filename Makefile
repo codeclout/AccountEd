@@ -2,26 +2,26 @@ SHELL=/bin/bash
 .EXPORT_ALL_VARIABLES:
 .SHELLFLAGS = -uec
 
-GO_VERSION := 1.18.3
+GO_VERSION := 1.19.1
 
 GOOS = $(shell go env GOOS)
 
 .PHONY: init-local-environment
-init-local-environment: build-docker
+init-local-environment: build-image
 	cd ./migrations/mongo/local/migration && npm i
 	docker compose config
 	docker compose up
 
-.PHONY: build-docker
-build-docker:
-	$(shell docker build --progress plain --target=prod -t accounted-$(shell go env GOARCH)-$${ENV} .)
+.PHONY: build-image
+build-image:
+	$(shell docker buildx build --load --target=prod -t accounted-$(shell go env GOARCH)-$${ENV} .)
 
 .PHONY: update-go-packages
 update-go-packages:
 	${MAKE} -C backend update-go-packages
 
-.PHONY: ci-buildx-register-container
-ci-buildx-register-container:
+.PHONY: ci-buildx-register-image
+ci-buildx-register-image:
 	docker buildx install
 	docker buildx create --name accountEdBuilder
 	docker buildx use accountEdBuilder
@@ -48,5 +48,3 @@ ci-buildx-register-container:
 # init-local-build:
 # 	GOOS=$${GO_OS} GOARCH=$${GO_ARCH} go build -v -o accountEd ./backend
 
-# register-image:
-# 	docker push $${CONTAINER_REGISTRY}-$${ENV}-$${VERSION}
