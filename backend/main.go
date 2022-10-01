@@ -23,7 +23,8 @@ func main() {
 		httpAdapter      ports4.HTTPPort
 	)
 
-	uri := "mongodb://localhost:27017,localhost:27018,localhost:27019/accountEd?replicaSet=rs0"
+	// uri := "mongodb://localhost:27017,localhost:27018,localhost:27019/accountEd?replicaSet=rs0"
+	uri := "mongodb://db,db1,db2/accountEd?replicaSet=rs0"
 	accountDbAdapter, e = db.NewAdapter(5, uri)
 
 	defer accountDbAdapter.CloseConnection()
