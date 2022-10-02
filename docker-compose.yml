@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   db:
     image: mongo:5.0.9
@@ -79,7 +81,7 @@ services:
     depends_on:
       mongo-migrate:
         condition: service_completed_successfully
-    image: accounted-amd64-local
+    image: accounted-${GOARCH:-amd64}-${ENV:-local}
     networks:
       - accountEd-local
     ports:
