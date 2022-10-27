@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	ports "github.com/codeclout/AccountEd/ports/framework/out/db"
@@ -17,28 +16,31 @@ type Adapter struct {
 	cancel context.CancelFunc
 	client *mongo.Client
 	ctx    context.Context
+	logger func(l string, m string)
 }
 
-func NewAdapter(timeout int, uri string) (*Adapter, error) {
+func NewAdapter(timeout int, logger func(level string, msg string), uri string) (*Adapter, error) {
 	t := time.Duration(timeout) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 
 	client, e := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if e != nil {
-		log.Fatalf("db connection failed %v", e)
+		logger("fatal", fmt.Sprintf("db connection failed %v", e))
 	}
 
 	e = client.Ping(ctx, readpref.Primary())
 	if e != nil {
-		log.Fatalf("db ping failed: %v", e)
+		logger("fatal", fmt.Sprintf("db ping failed: %v", e))
 	}
 
 	a := Adapter{
 		cancel: cancel,
 		client: client,
 		ctx:    ctx,
+		logger: logger,
 	}
 
+	logger("info", "db connected")
 	return &a, nil
 
 }

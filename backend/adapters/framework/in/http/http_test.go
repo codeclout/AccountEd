@@ -25,7 +25,7 @@ func TestGetPort(t *testing.T) {
 			t.Errorf("%s", e)
 		}
 
-		if c := GetPort(); c != tc.result {
+		if c := getPort(); c != tc.result {
 			t.Errorf("expected %s \n received %s", c, tc.result)
 		}
 

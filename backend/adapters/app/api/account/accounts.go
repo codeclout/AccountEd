@@ -16,7 +16,7 @@ func NewAdapter(act port.AccountPort, db dbport.AccountDbPort) *Adapter {
 	return &Adapter{account: act, db: db}
 }
 
-func (a Adapter) CreateAccountType(name string) (port.NewAccountTypeOutput, error) {
+func (a *Adapter) CreateAccountType(name string) (port.NewAccountTypeOutput, error) {
 	insertId, ex := a.db.InsertAccountType("account_type", name)
 
 	if ex != nil {
