@@ -38,7 +38,7 @@ func main() {
 	}
 
 	accountAdapter = account.NewAdapter(loggerAdapter.Log)
-	accountAPI = account2.NewAdapter(accountAdapter, accountDbAdapter)
+	accountAPI = account2.NewAdapter(accountAdapter, accountDbAdapter, loggerAdapter.Log)
 	httpAdapter = http.NewAdapter(accountAPI, loggerAdapter.Log)
 
 	defer loggerAdapter.Sync()

@@ -2,20 +2,23 @@ package account
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"time"
 
 	ports "github.com/codeclout/AccountEd/ports/core"
 	dbport "github.com/codeclout/AccountEd/ports/framework/out/db"
 )
 
+type l func(l string, m string)
+
 type Adapter struct {
 	account ports.AccountPort
 	db      dbport.AccountDbPort
+	log     l
 }
 
-func NewAdapter(act ports.AccountPort, db dbport.AccountDbPort) *Adapter {
-	return &Adapter{account: act, db: db}
+func NewAdapter(act ports.AccountPort, db dbport.AccountDbPort, logger l) *Adapter {
+	return &Adapter{account: act, db: db, log: logger}
 }
 
 // CreateAccountType - The account_type field has a unique constraint, therefore an error might occur.
@@ -32,7 +35,7 @@ func (a *Adapter) CreateAccountType(name string) (ports.NewAccountTypeOutput, er
 	did, ex := a.db.InsertAccountType("account_type", payload)
 
 	if ex != nil {
-		log.Printf("Account type creation failed: %v", ex)
+		a.log("error", fmt.Sprintf("Account type creation failed: %v", ex))
 		return ports.NewAccountTypeOutput{}, ex
 	}
 
