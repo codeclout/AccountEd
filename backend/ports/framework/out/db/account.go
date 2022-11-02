@@ -2,7 +2,7 @@ package ports
 
 type AccountDbPort interface {
 	CloseConnection()
-	InsertAccountType(handle string, acctType string) (InsertID, error)
+	InsertAccountType(collection string, acctType []byte) (InsertID, error)
 }
 
 type InsertID struct {

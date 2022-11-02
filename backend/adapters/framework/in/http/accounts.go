@@ -27,7 +27,9 @@ func (a *Adapter) HandleCreateAccountType(c *fiber.Ctx) error {
 
 	if e := json.Unmarshal(payload, &t); e != nil {
 		a.log("error", e.Error())
-		return c.SendStatus(400)
+
+		_ = c.SendStatus(400)
+		return c.JSON(RequestErrorWithRetry{Msg: string(ErrorInvalidJSON), ShouldRetry: ShouldRetryRequest(400)})
 	}
 
 	cat := CreateAccountTypeInput{AccountType: t.AccountType}
@@ -35,14 +37,18 @@ func (a *Adapter) HandleCreateAccountType(c *fiber.Ctx) error {
 
 	if e := validate.Struct(cat); e != nil {
 		a.log("error", e.Error())
-		return c.SendStatus(400)
+
+		_ = c.SendStatus(400)
+		return c.JSON(RequestErrorWithRetry{Msg: string(ErrorFailedRequestValidation), ShouldRetry: ShouldRetryRequest(400)})
 	}
 
 	result, e := a.api.CreateAccountType(t.AccountType)
 
 	if e != nil {
 		a.log("error", e.Error())
-		return c.SendStatus(400)
+
+		_ = c.SendStatus(400)
+		return c.JSON(RequestErrorWithRetry{Msg: string(ErrorFailedAction), ShouldRetry: ShouldRetryRequest(400)})
 	}
 
 	return c.JSON(result)

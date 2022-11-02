@@ -8,18 +8,22 @@ import (
 //
 // Implements - the core accounts port
 type Adapter struct {
+	log func(level string, msg string)
 }
 
 // NewAdapter - Creates a new Adapter for the account pkg
-func NewAdapter() *Adapter {
-	return &Adapter{}
+func NewAdapter(logger func(level string, msg string)) *Adapter {
+	return &Adapter{
+		log: logger,
+	}
 }
 
 // NewAccountType - Responsible for returning the result of a new account type create.
-// The account_type field has a unique constraint, therefore an error might occur.
-func (a Adapter) NewAccountType(insertId interface{}, name string) (ports.NewAccountTypeOutput, error) {
+func (a Adapter) NewAccountType(id interface{}, name string, timestamp string) (ports.NewAccountTypeOutput, error) {
 	return ports.NewAccountTypeOutput{
 		AccountType: name,
-		ID:          insertId,
+		CreatedAt:   timestamp,
+		ID:          id,
+		ModifiedAt:  timestamp,
 	}, nil
 }

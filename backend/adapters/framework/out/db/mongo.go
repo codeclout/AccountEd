@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -16,7 +17,13 @@ type Adapter struct {
 	cancel context.CancelFunc
 	client *mongo.Client
 	ctx    context.Context
-	logger func(l string, m string)
+	log    func(l string, m string)
+}
+
+type accountTypeInput struct {
+	AccountType string `json:"accountType"`
+	CreatedAt   string `json:"createdAt"`
+	ModifiedAt  string `json:"modifiedAt"`
 }
 
 func NewAdapter(timeout int, logger func(level string, msg string), uri string) (*Adapter, error) {
@@ -37,7 +44,7 @@ func NewAdapter(timeout int, logger func(level string, msg string), uri string) 
 		cancel: cancel,
 		client: client,
 		ctx:    ctx,
-		logger: logger,
+		log:    logger,
 	}
 
 	logger("info", "db connected")
@@ -52,14 +59,25 @@ func (a *Adapter) CloseConnection() {
 	}
 }
 
-func (a *Adapter) InsertAccountType(coll string, data string) (ports.InsertID, error) {
-	database := a.client.Database("accountEd")
-	collection := database.Collection(coll)
+func (a *Adapter) InsertAccountType(collectionName string, data []byte) (ports.InsertID, error) {
+	var in accountTypeInput
 
-	result, e := collection.InsertOne(context.TODO(), bson.M{"account_type": data})
+	database := a.client.Database("accountEd")
+	collection := database.Collection(collectionName)
+
+	e := json.Unmarshal(data, &in)
+	if e != nil {
+		a.log("error", fmt.Sprintf("invalid payload: %v", e))
+		return ports.InsertID{}, e
+	}
+
+	result, e := collection.InsertOne(context.TODO(), bson.M{
+		"account_type": in.AccountType,
+		"created_at":   in.CreatedAt,
+		"modified_at":  in.ModifiedAt})
 
 	if e != nil {
-		fmt.Printf("error inserting account type: %v", e)
+		a.log("error", fmt.Sprintf("error inserting account type: %v", e))
 		return ports.InsertID{}, e
 	}
 

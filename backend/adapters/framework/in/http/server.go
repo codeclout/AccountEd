@@ -9,6 +9,7 @@ import (
 
 	ports "github.com/codeclout/AccountEd/ports/app"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/etag"
 )
 
 type Adapter struct {
@@ -27,12 +28,14 @@ func (a *Adapter) Run(middlewareLogger func(msg ...interface{})) {
 	app := fiber.New(fiber.Config{})
 	accountRoutes := a.initUserRoutes()
 
+	app.Use(etag.New())
 	app.Use(NewLoggerMiddleware(Config{
 		Log: middlewareLogger,
 		ShouldSkip: func(c *fiber.Ctx) bool {
 			return false
 		},
 	}))
+	//app.Use(AirCollision412())
 
 	app.Mount("/v1/api", accountRoutes)
 	log.Fatal(app.Listen(getPort()))

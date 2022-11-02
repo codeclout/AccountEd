@@ -28,7 +28,6 @@ func main() {
 
 	uri := "mongodb://db,db1,db2/accountEd?replicaSet=rs0"
 
-	accountAdapter = account.NewAdapter()
 	loggerAdapter = logger.NewAdapter()
 
 	go loggerAdapter.Initialize()
@@ -38,6 +37,7 @@ func main() {
 		loggerAdapter.Log("fatal", fmt.Sprintf("Failed to instantiate db connection: %v", e))
 	}
 
+	accountAdapter = account.NewAdapter(loggerAdapter.Log)
 	accountAPI = account2.NewAdapter(accountAdapter, accountDbAdapter)
 	httpAdapter = http.NewAdapter(accountAPI, loggerAdapter.Log)
 
