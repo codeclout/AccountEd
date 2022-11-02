@@ -20,12 +20,6 @@ type Adapter struct {
 	log    func(l string, m string)
 }
 
-type accountTypeInput struct {
-	AccountType string `json:"accountType"`
-	CreatedAt   string `json:"createdAt"`
-	ModifiedAt  string `json:"modifiedAt"`
-}
-
 func NewAdapter(timeout int, logger func(level string, msg string), uri string) (*Adapter, error) {
 	t := time.Duration(timeout) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), t)
@@ -60,7 +54,7 @@ func (a *Adapter) CloseConnection() {
 }
 
 func (a *Adapter) InsertAccountType(collectionName string, data []byte) (ports.InsertID, error) {
-	var in accountTypeInput
+	var in map[string]interface{}
 
 	database := a.client.Database("accountEd")
 	collection := database.Collection(collectionName)
@@ -71,10 +65,7 @@ func (a *Adapter) InsertAccountType(collectionName string, data []byte) (ports.I
 		return ports.InsertID{}, e
 	}
 
-	result, e := collection.InsertOne(context.TODO(), bson.M{
-		"account_type": in.AccountType,
-		"created_at":   in.CreatedAt,
-		"modified_at":  in.ModifiedAt})
+	result, e := collection.InsertOne(context.TODO(), bson.M(in))
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("error inserting account type: %v", e))
