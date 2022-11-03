@@ -12,7 +12,7 @@ type NewAccountTypeOutput struct {
 }
 
 type NewAccountTypeInput struct {
-	AccountType string `json:"accountType"`
-	CreatedAt   string `json:"createdAt"`
-	ModifiedAt  string `json:"modifiedAt"`
+	AccountType string `json:"account_type"`
+	CreatedAt   string `json:"created_at"`
+	ModifiedAt  string `json:"modified_at"`
 }
