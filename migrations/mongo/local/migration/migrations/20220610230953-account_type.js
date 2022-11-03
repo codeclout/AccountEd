@@ -14,6 +14,8 @@ module.exports = {
     const initialData = ["homeschooler", "organization", "study-group"];
     const records = initialData.map((v) => ({
       account_type: v,
+      created_at: new Date().toISOString(),
+      modified_at: new Date().toISOString()
     }));
 
     await db.collection("account_type").insertMany(records);
