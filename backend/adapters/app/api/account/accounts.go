@@ -42,8 +42,21 @@ func (a *Adapter) CreateAccountType(name string) (ports.NewAccountTypeOutput, er
 	result, e := a.account.NewAccountType(did.InsertedID, name, t)
 
 	if e != nil {
+		a.log("error", fmt.Sprintf("Core account type processing failed: %v", e))
 		return ports.NewAccountTypeOutput{}, e
 	}
 
 	return result, nil
+}
+
+func (a *Adapter) GetAccountTypes(collectionName string) ([]ports.NewAccountTypeOutput, error) {
+
+	b, e := a.db.GetAccountTypes(collectionName)
+
+	if e != nil {
+		a.log("error", fmt.Sprintf("Error retrieving account types: %v", e))
+		return []ports.NewAccountTypeOutput{}, e
+	}
+
+	return a.account.ListAccountTypes(b)
 }

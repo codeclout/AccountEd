@@ -6,4 +6,5 @@ import (
 
 type AccountAPIPort interface {
 	CreateAccountType(in string) (ports.NewAccountTypeOutput, error)
+	GetAccountTypes(collectionName string) ([]ports.NewAccountTypeOutput, error)
 }

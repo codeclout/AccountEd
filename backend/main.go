@@ -32,7 +32,7 @@ func main() {
 
 	go loggerAdapter.Initialize()
 
-	accountDbAdapter, e = db.NewAdapter(5, loggerAdapter.Log, uri)
+	accountDbAdapter, e = db.NewAdapter(5, loggerAdapter.Log, uri, "accountEd")
 	if e != nil {
 		loggerAdapter.Log("fatal", fmt.Sprintf("Failed to instantiate db connection: %v", e))
 	}

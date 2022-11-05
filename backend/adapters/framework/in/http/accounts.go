@@ -17,6 +17,7 @@ func (a *Adapter) initUserRoutes() *fiber.App {
 	var accountType = fiber.New()
 
 	accountType.Post("/user-account-type", a.HandleCreateAccountType)
+	accountType.Get("/user-account-types", a.HandleListAccountTypes)
 
 	return accountType
 }
@@ -47,13 +48,20 @@ func (a *Adapter) HandleCreateAccountType(c *fiber.Ctx) error {
 	if e != nil {
 		a.log("error", e.Error())
 
-		_ = c.SendStatus(400)
-		return c.JSON(RequestErrorWithRetry{Msg: string(ErrorFailedAction), ShouldRetry: ShouldRetryRequest(400)})
+		_ = c.SendStatus(500)
+		return c.JSON(RequestErrorWithRetry{Msg: string(ErrorFailedAction), ShouldRetry: ShouldRetryRequest(500)})
 	}
 
 	return c.JSON(result)
 }
 
-func (a *Adapter) GetAccountTypes() error {
-	return nil
+func (a *Adapter) HandleListAccountTypes(c *fiber.Ctx) error {
+	if result, e := a.api.GetAccountTypes("account_type"); e != nil {
+		a.log("error", e.Error())
+
+		_ = c.SendStatus(500)
+		return c.JSON(RequestErrorWithRetry{Msg: string(ErrorFailedAction), ShouldRetry: ShouldRetryRequest(500)})
+	} else {
+		return c.JSON(result)
+	}
 }

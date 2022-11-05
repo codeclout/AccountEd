@@ -13,14 +13,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+type sl func(level, msg string)
+
+var limit int64 = 4
+
 type Adapter struct {
 	cancel context.CancelFunc
 	client *mongo.Client
 	ctx    context.Context
-	log    func(l string, m string)
+	db     *mongo.Database
+	log    sl
 }
 
-func NewAdapter(timeout int, logger func(level string, msg string), uri string) (*Adapter, error) {
+func NewAdapter(timeout int, logger sl, uri, dbname string) (*Adapter, error) {
 	t := time.Duration(timeout) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 
@@ -34,10 +39,13 @@ func NewAdapter(timeout int, logger func(level string, msg string), uri string) 
 		logger("fatal", fmt.Sprintf("db ping failed: %v", e))
 	}
 
+	database := client.Database(dbname)
+
 	a := Adapter{
 		cancel: cancel,
 		client: client,
-		ctx:    ctx,
+		ctx:    context.TODO(),
+		db:     database,
 		log:    logger,
 	}
 
@@ -56,8 +64,7 @@ func (a *Adapter) CloseConnection() {
 func (a *Adapter) InsertAccountType(collectionName string, data []byte) (ports.InsertID, error) {
 	var in map[string]interface{}
 
-	database := a.client.Database("accountEd")
-	collection := database.Collection(collectionName)
+	collection := a.db.Collection(collectionName)
 
 	e := json.Unmarshal(data, &in)
 	if e != nil {
@@ -65,7 +72,7 @@ func (a *Adapter) InsertAccountType(collectionName string, data []byte) (ports.I
 		return ports.InsertID{}, e
 	}
 
-	result, e := collection.InsertOne(context.TODO(), bson.M(in))
+	result, e := collection.InsertOne(a.ctx, bson.M(in))
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("error inserting account type: %v", e))
@@ -73,4 +80,28 @@ func (a *Adapter) InsertAccountType(collectionName string, data []byte) (ports.I
 	}
 
 	return ports.InsertID{InsertedID: result.InsertedID}, nil
+}
+
+func (a *Adapter) GetAccountTypes(collectionName string) ([]byte, error) {
+	// slice of map
+	var temp []bson.M
+
+	collection := a.db.Collection(collectionName)
+
+	o := options.Find().SetLimit(limit)
+	cs, e := collection.Find(a.ctx, bson.M{}, o)
+
+	if e != nil {
+		a.log("error", fmt.Sprintf("error inserting account type: %v", e))
+		return []byte{}, e
+	}
+
+	if e = cs.All(a.ctx, &temp); e != nil {
+		a.log("error", fmt.Sprintf("Results decode failed: %v", e))
+		return []byte{}, e
+	}
+
+	b, _ := json.Marshal(temp)
+
+	return b, nil
 }
