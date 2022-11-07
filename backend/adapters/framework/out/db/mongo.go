@@ -13,20 +13,26 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+type m map[string]interface{}
 type sl func(level, msg string)
 
-var limit int64 = 4
+var (
+	config m
+)
 
 type Adapter struct {
 	cancel context.CancelFunc
 	client *mongo.Client
+	config m
 	ctx    context.Context
 	db     *mongo.Database
 	log    sl
 }
 
-func NewAdapter(timeout int, logger sl, uri, dbname string) (*Adapter, error) {
-	t := time.Duration(timeout) * time.Second
+func NewAdapter(c []byte, logger sl, uri string) (*Adapter, error) {
+	_ = json.Unmarshal(c, &config)
+
+	t := time.Duration(int64(config["DbConnectionTimeout"].(float64))) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 
 	client, e := mongo.Connect(ctx, options.Client().ApplyURI(uri))
@@ -39,11 +45,12 @@ func NewAdapter(timeout int, logger sl, uri, dbname string) (*Adapter, error) {
 		logger("fatal", fmt.Sprintf("db ping failed: %v", e))
 	}
 
-	database := client.Database(dbname)
+	database := client.Database(config["DbName"].(string))
 
 	a := Adapter{
 		cancel: cancel,
 		client: client,
+		config: config,
 		ctx:    context.TODO(),
 		db:     database,
 		log:    logger,
@@ -88,7 +95,7 @@ func (a *Adapter) GetAccountTypes(collectionName string) ([]byte, error) {
 
 	collection := a.db.Collection(collectionName)
 
-	o := options.Find().SetLimit(limit)
+	o := options.Find().SetLimit(int64(a.config["DefaultListLimit"].(float64)))
 	cs, e := collection.Find(a.ctx, bson.M{}, o)
 
 	if e != nil {

@@ -50,7 +50,6 @@ func (a *Adapter) CreateAccountType(name string) (ports.NewAccountTypeOutput, er
 }
 
 func (a *Adapter) GetAccountTypes(collectionName string) ([]ports.NewAccountTypeOutput, error) {
-
 	b, e := a.db.GetAccountTypes(collectionName)
 
 	if e != nil {
