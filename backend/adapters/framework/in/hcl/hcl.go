@@ -2,6 +2,7 @@ package hcl
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -33,6 +34,7 @@ func NewAdapter(logger l) *Adapter {
 func (a *Adapter) GetConfig(path []byte) ([]byte, error) {
 	wd, e := os.Getwd()
 	if e != nil {
+		a.log("error", fmt.Sprintf("os errorr: %v", e))
 		return []byte{}, e
 	}
 
@@ -40,12 +42,14 @@ func (a *Adapter) GetConfig(path []byte) ([]byte, error) {
 	e = hclsimple.DecodeFile(configFileLocation, nil, &a.config)
 
 	if e != nil {
+		a.log("error", fmt.Sprintf("hcl decode error: %v", e))
 		return nil, e
 	}
 
 	b, e := json.Marshal(a.config)
 
 	if e != nil {
+		a.log("error", fmt.Sprintf("unmarshall error: %v", e))
 		return []byte{}, e
 	}
 

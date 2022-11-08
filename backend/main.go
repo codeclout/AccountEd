@@ -11,6 +11,7 @@ import (
 	"github.com/codeclout/AccountEd/adapters/framework/out/logger"
 	accountApiPort "github.com/codeclout/AccountEd/ports/app"
 	corePort "github.com/codeclout/AccountEd/ports/core"
+	hclFrameworkPort "github.com/codeclout/AccountEd/ports/framework/in/hcl"
 	httpFrameworkInPort "github.com/codeclout/AccountEd/ports/framework/in/http"
 	dbFrameworkOutPort "github.com/codeclout/AccountEd/ports/framework/out/db"
 	loggerPort "github.com/codeclout/AccountEd/ports/framework/out/logger"
@@ -23,6 +24,7 @@ func main() {
 		accountDbAdapter     dbFrameworkOutPort.AccountDbPort
 		accountAdapter       corePort.AccountPort
 		accountAPI           accountApiPort.AccountAPIPort
+		configAdapter        hclFrameworkPort.RuntimeConfigPort
 		httpFrameworkAdapter httpFrameworkInPort.HTTPPort
 		loggerAdapter        loggerPort.LoggerPort
 
@@ -34,7 +36,8 @@ func main() {
 	loggerAdapter = logger.NewAdapter()
 	go loggerAdapter.Initialize()
 
-	configAdapter := hclFrameworkAdapter.NewAdapter(loggerAdapter.Log)
+	configAdapter = hclFrameworkAdapter.NewAdapter(loggerAdapter.Log)
+
 	k, e := configAdapter.GetConfig(configFile)
 	if e != nil {
 		loggerAdapter.Log("fatal", fmt.Sprintf("Failed to get runtime config: %v", e))

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -32,7 +33,13 @@ type Adapter struct {
 func NewAdapter(c []byte, logger sl, uri string) (*Adapter, error) {
 	_ = json.Unmarshal(c, &config)
 
-	t := time.Duration(int64(config["DbConnectionTimeout"].(float64))) * time.Second
+	s, ok := config["DbConnectionTimeout"].(float64)
+	if !ok {
+		logger("error", fmt.Sprintf("Expecting float64 and received %T", s))
+		return &Adapter{}, errors.New("invalid type for limit")
+	}
+
+	t := time.Duration(int64(s)) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 
 	client, e := mongo.Connect(ctx, options.Client().ApplyURI(uri))
@@ -58,7 +65,6 @@ func NewAdapter(c []byte, logger sl, uri string) (*Adapter, error) {
 
 	logger("info", "db connected")
 	return &a, nil
-
 }
 
 func (a *Adapter) CloseConnection() {
@@ -94,8 +100,14 @@ func (a *Adapter) GetAccountTypes(collectionName string) ([]byte, error) {
 	var temp []bson.M
 
 	collection := a.db.Collection(collectionName)
+	limit, ok := a.config["DefaultListLimit"].(float64)
 
-	o := options.Find().SetLimit(int64(a.config["DefaultListLimit"].(float64)))
+	if !ok {
+		a.log("error", fmt.Sprintf("Expecting float64 and received %T", limit))
+		return []byte{}, errors.New("invalid type for limit")
+	}
+
+	o := options.Find().SetLimit(int64(limit))
 	cs, e := collection.Find(a.ctx, bson.M{}, o)
 
 	if e != nil {
