@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	ports "github.com/codeclout/AccountEd/ports/core"
+	ports "github.com/codeclout/AccountEd/ports/core/account-types"
 )
 
 // Adapter - Core adapter for the account pkg

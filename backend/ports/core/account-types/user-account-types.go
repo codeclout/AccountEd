@@ -1,6 +1,6 @@
-package ports
+package account_types
 
-type AccountPort interface {
+type UserAccountTypeCorePort interface {
 	NewAccountType(id interface{}, name string, timestamp string) (NewAccountTypeOutput, error)
 	ListAccountTypes(accountTypes []byte) ([]NewAccountTypeOutput, error)
 }

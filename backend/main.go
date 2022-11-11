@@ -3,58 +3,58 @@ package main
 import (
 	"fmt"
 
-	accountApiAdapter "github.com/codeclout/AccountEd/adapters/app/api/account"
-	accountCoreAdapter "github.com/codeclout/AccountEd/adapters/core/account"
-	hclFrameworkAdapter "github.com/codeclout/AccountEd/adapters/framework/in/hcl"
-	httpFrameworkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/http"
-	dbFrameworkOut "github.com/codeclout/AccountEd/adapters/framework/out/db"
+	acctTypeApiAdapter "github.com/codeclout/AccountEd/adapters/app/api/account-types"
+	acctTypeCoreAdapter "github.com/codeclout/AccountEd/adapters/core/account-types"
+	hclFramewkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/hcl"
+	httpFramewkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/http"
+	dbFramewkOutAdapter "github.com/codeclout/AccountEd/adapters/framework/out/db"
 	"github.com/codeclout/AccountEd/adapters/framework/out/logger"
-	accountApiPort "github.com/codeclout/AccountEd/ports/app"
-	corePort "github.com/codeclout/AccountEd/ports/core"
-	hclFrameworkPort "github.com/codeclout/AccountEd/ports/framework/in/hcl"
-	httpFrameworkInPort "github.com/codeclout/AccountEd/ports/framework/in/http"
-	dbFrameworkOutPort "github.com/codeclout/AccountEd/ports/framework/out/db"
-	loggerPort "github.com/codeclout/AccountEd/ports/framework/out/logger"
+	acctTypeApiPort "github.com/codeclout/AccountEd/ports/api/account-types"
+	acctTypeCorePort "github.com/codeclout/AccountEd/ports/core/account-types"
+	hclFramewkInPort "github.com/codeclout/AccountEd/ports/framework/in/hcl"
+	httpFramewkInPort "github.com/codeclout/AccountEd/ports/framework/in/http"
+	dbFramewkOutPort "github.com/codeclout/AccountEd/ports/framework/out/db"
+	loggerFramewkOutPort "github.com/codeclout/AccountEd/ports/framework/out/logger"
 )
 
 func main() {
 	var (
 		e error
 
-		accountDbAdapter     dbFrameworkOutPort.AccountDbPort
-		accountAdapter       corePort.AccountPort
-		accountAPI           accountApiPort.AccountAPIPort
-		configAdapter        hclFrameworkPort.RuntimeConfigPort
-		httpFrameworkAdapter httpFrameworkInPort.HTTPPort
-		loggerAdapter        loggerPort.LoggerPort
+		accountTypeDbAdapter   dbFramewkOutPort.UserAccountTypeDbPort
+		accountTypeCoreAdapter acctTypeCorePort.UserAccountTypeCorePort
+		accountTypeApiAdapter  acctTypeApiPort.UserAccountTypeApiPort
+		configAdapter          hclFramewkInPort.RuntimeConfigPort
+		httpFrameworkInAdapter httpFramewkInPort.HttpFrameworkInPort
+		logFrameworkOutAdapter loggerFramewkOutPort.LogFrameworkOutPort
 
 		configFile = []byte("config.hcl")
 	)
 
 	uri := "mongodb://db,db1,db2/accountEd?replicaSet=rs0"
 
-	loggerAdapter = logger.NewAdapter()
-	go loggerAdapter.Initialize()
+	logFrameworkOutAdapter = logger.NewAdapter()
+	go logFrameworkOutAdapter.Initialize()
 
-	configAdapter = hclFrameworkAdapter.NewAdapter(loggerAdapter.Log)
+	configAdapter = hclFramewkInAdapter.NewAdapter(logFrameworkOutAdapter.Log)
 
 	k, e := configAdapter.GetConfig(configFile)
 	if e != nil {
-		loggerAdapter.Log("fatal", fmt.Sprintf("Failed to get runtime config: %v", e))
+		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to get runtime config: %v", e))
 	}
 
-	accountDbAdapter, e = dbFrameworkOut.NewAdapter(k, loggerAdapter.Log, uri)
+	accountTypeDbAdapter, e = dbFramewkOutAdapter.NewAdapter(k, logFrameworkOutAdapter.Log, uri)
 	if e != nil {
-		loggerAdapter.Log("fatal", fmt.Sprintf("Failed to instantiate db connection: %v", e))
+		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to instantiate db connection: %v", e))
 	}
 
-	accountAdapter = accountCoreAdapter.NewAdapter(loggerAdapter.Log)
-	accountAPI = accountApiAdapter.NewAdapter(accountAdapter, accountDbAdapter, loggerAdapter.Log)
-	httpFrameworkAdapter = httpFrameworkInAdapter.NewAdapter(accountAPI, loggerAdapter.Log)
+	accountTypeCoreAdapter = acctTypeCoreAdapter.NewAdapter(logFrameworkOutAdapter.Log)
+	accountTypeApiAdapter = acctTypeApiAdapter.NewAdapter(accountTypeCoreAdapter, accountTypeDbAdapter, logFrameworkOutAdapter.Log)
+	httpFrameworkInAdapter = httpFramewkInAdapter.NewAdapter(accountTypeApiAdapter, logFrameworkOutAdapter.Log)
 
-	defer loggerAdapter.Sync()
-	defer accountDbAdapter.CloseConnection()
+	defer logFrameworkOutAdapter.Sync()
+	defer accountTypeDbAdapter.CloseConnection()
 
-	loggerAdapter.Log("info", "application starting")
-	httpFrameworkAdapter.Run(loggerAdapter.HttpMiddlewareLogger)
+	logFrameworkOutAdapter.Log("info", "application starting")
+	httpFrameworkInAdapter.Run(logFrameworkOutAdapter.HttpMiddlewareLogger)
 }

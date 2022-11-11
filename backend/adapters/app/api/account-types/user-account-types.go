@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"time"
 
-	ports "github.com/codeclout/AccountEd/ports/core"
+	ports "github.com/codeclout/AccountEd/ports/core/account-types"
 	dbport "github.com/codeclout/AccountEd/ports/framework/out/db"
 )
 
 type l func(l string, m string)
 
 type Adapter struct {
-	account ports.AccountPort
-	db      dbport.AccountDbPort
+	account ports.UserAccountTypeCorePort
+	db      dbport.UserAccountTypeDbPort
 	log     l
 }
 
-func NewAdapter(act ports.AccountPort, db dbport.AccountDbPort, logger l) *Adapter {
+func NewAdapter(act ports.UserAccountTypeCorePort, db dbport.UserAccountTypeDbPort, logger l) *Adapter {
 	return &Adapter{account: act, db: db, log: logger}
 }
 
@@ -32,7 +32,7 @@ func (a *Adapter) CreateAccountType(name string) (ports.NewAccountTypeOutput, er
 
 	payload, e := json.Marshal(in)
 
-	did, ex := a.db.InsertAccountType("account_type", payload)
+	did, ex := a.db.InsertAccountType(payload)
 
 	if ex != nil {
 		a.log("error", fmt.Sprintf("Account type creation failed: %v", ex))
@@ -49,8 +49,8 @@ func (a *Adapter) CreateAccountType(name string) (ports.NewAccountTypeOutput, er
 	return result, nil
 }
 
-func (a *Adapter) GetAccountTypes(collectionName string) ([]ports.NewAccountTypeOutput, error) {
-	b, e := a.db.GetAccountTypes(collectionName)
+func (a *Adapter) GetAccountTypes(v int64) ([]ports.NewAccountTypeOutput, error) {
+	b, e := a.db.GetAccountTypes(v)
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("Error retrieving account types: %v", e))

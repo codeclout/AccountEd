@@ -18,7 +18,8 @@ type m map[string]interface{}
 type sl func(level, msg string)
 
 var (
-	config m
+	accountTypeCollectionName = []byte("account_type")
+	config                    m
 )
 
 type Adapter struct {
@@ -74,10 +75,10 @@ func (a *Adapter) CloseConnection() {
 	}
 }
 
-func (a *Adapter) InsertAccountType(collectionName string, data []byte) (ports.InsertID, error) {
+func (a *Adapter) InsertAccountType(data []byte) (ports.InsertID, error) {
 	var in map[string]interface{}
 
-	collection := a.db.Collection(collectionName)
+	collection := a.db.Collection(string(accountTypeCollectionName))
 
 	e := json.Unmarshal(data, &in)
 	if e != nil {
@@ -95,16 +96,20 @@ func (a *Adapter) InsertAccountType(collectionName string, data []byte) (ports.I
 	return ports.InsertID{InsertedID: result.InsertedID}, nil
 }
 
-func (a *Adapter) GetAccountTypes(collectionName string) ([]byte, error) {
+func (a *Adapter) GetAccountTypes(v int64) ([]byte, error) {
 	// slice of map
 	var temp []bson.M
 
-	collection := a.db.Collection(collectionName)
+	collection := a.db.Collection(string(accountTypeCollectionName))
 	limit, ok := a.config["DefaultListLimit"].(float64)
 
 	if !ok {
 		a.log("error", fmt.Sprintf("Expecting float64 and received %T", limit))
 		return []byte{}, errors.New("invalid type for limit")
+	}
+
+	if v != -1 {
+		limit = float64(v)
 	}
 
 	o := options.Find().SetLimit(int64(limit))

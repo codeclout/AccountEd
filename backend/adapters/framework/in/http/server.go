@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"strings"
 
-	ports "github.com/codeclout/AccountEd/ports/app"
+	ports "github.com/codeclout/AccountEd/ports/api/account-types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 )
 
 type l func(level, msg string)
-type p ports.AccountAPIPort
+type p ports.UserAccountTypeApiPort
 
 type Adapter struct {
 	api p

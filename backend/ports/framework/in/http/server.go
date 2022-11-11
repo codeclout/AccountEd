@@ -1,5 +1,5 @@
 package ports
 
-type HTTPPort interface {
+type HttpFrameworkInPort interface {
 	Run(logger func(m ...interface{}))
 }

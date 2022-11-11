@@ -16,13 +16,19 @@ type CreateAccountTypeInput struct {
 func (a *Adapter) initUserRoutes() *fiber.App {
 	var accountType = fiber.New()
 
-	accountType.Post("/user-account-type", a.HandleCreateAccountType)
-	accountType.Get("/user-account-types", a.HandleListAccountTypes)
+	accountType.Post("/user-account-type", a.HandlePostAccountType)
+	accountType.Get("/user-account-types", a.HandleGetAccountTypes)
 
 	return accountType
 }
 
-func (a *Adapter) HandleCreateAccountType(c *fiber.Ctx) error {
+func (a *Adapter) HandlePostAccountType(c *fiber.Ctx) error {
+	return a.HandleCreateAccountType(c)
+}
+
+func (a *Adapter) HandleCreateAccountType(i interface{}) error {
+	c := i.(*fiber.Ctx)
+
 	var payload = c.Body()
 	var t CreateAccountTypeInput
 
@@ -64,8 +70,19 @@ func (a *Adapter) HandleCreateAccountType(c *fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-func (a *Adapter) HandleListAccountTypes(c *fiber.Ctx) error {
-	if result, e := a.api.GetAccountTypes("account_type"); e != nil {
+func (a *Adapter) HandleGetAccountTypes(c *fiber.Ctx) error {
+	return a.HandleListAccountTypes(c)
+}
+
+func (a *Adapter) HandleListAccountTypes(i interface{}) error {
+	var lmt int64
+
+	c := i.(*fiber.Ctx)
+	q := c.Query("limit")
+
+	lmt = a.getRequestLimit(q)
+
+	if result, e := a.api.GetAccountTypes(lmt); e != nil {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(500)
