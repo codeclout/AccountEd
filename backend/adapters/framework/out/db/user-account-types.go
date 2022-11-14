@@ -9,6 +9,7 @@ import (
 
 	ports "github.com/codeclout/AccountEd/ports/framework/out/db"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -98,7 +99,7 @@ func (a *Adapter) InsertAccountType(data []byte) (ports.InsertID, error) {
 
 func (a *Adapter) GetAccountTypes(v int64) ([]byte, error) {
 	// slice of map
-	var temp []bson.M
+	var t []bson.M
 
 	collection := a.db.Collection(string(accountTypeCollectionName))
 	limit, ok := a.config["DefaultListLimit"].(float64)
@@ -120,12 +121,29 @@ func (a *Adapter) GetAccountTypes(v int64) ([]byte, error) {
 		return []byte{}, e
 	}
 
-	if e = cs.All(a.ctx, &temp); e != nil {
+	if e = cs.All(a.ctx, &t); e != nil {
 		a.log("error", fmt.Sprintf("Results decode failed: %v", e))
 		return []byte{}, e
 	}
 
-	b, _ := json.Marshal(temp)
+	b, _ := json.Marshal(t)
 
 	return b, nil
+}
+
+func (a *Adapter) RemoveAccountType(id string) ([]byte, error) {
+	var s map[string]interface{}
+
+	collection := a.db.Collection(string(accountTypeCollectionName))
+	mid, _ := primitive.ObjectIDFromHex(id)
+
+	e := collection.FindOneAndDelete(a.ctx, bson.D{{"_id", mid}}, nil).Decode(&s)
+	v, e := json.Marshal(s)
+
+	if e != nil {
+		a.log("error", e.Error())
+		return v, e
+	}
+
+	return v, nil
 }

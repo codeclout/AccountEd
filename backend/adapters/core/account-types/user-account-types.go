@@ -38,7 +38,20 @@ func (a *Adapter) ListAccountTypes(accountTypes []byte) ([]ports.NewAccountTypeO
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("Invalid Data: %v", e))
-		return []ports.NewAccountTypeOutput{}, e
+		return out, e
+	}
+
+	return out, nil
+}
+
+func (a *Adapter) DeleteAccountType(in []byte) (ports.NewAccountTypeOutput, error) {
+	var out ports.NewAccountTypeOutput
+
+	e := json.Unmarshal(in, &out)
+
+	if e != nil {
+		a.log("error", e.Error())
+		return out, e
 	}
 
 	return out, nil

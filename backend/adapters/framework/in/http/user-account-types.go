@@ -3,14 +3,19 @@ package http
 import (
 	"encoding/json"
 
+	"github.com/codeclout/AccountEd/adapters/framework/in/http/helpers"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
-var validate *validator.Validate
+var v *validator.Validate
 
 type CreateAccountTypeInput struct {
 	AccountType string `json:"accountType" validate:"required,min=3"`
+}
+
+type AccountTypeInput struct {
+	Id string `json:"id" validate:"required"`
 }
 
 func (a *Adapter) initUserRoutes() *fiber.App {
@@ -18,6 +23,7 @@ func (a *Adapter) initUserRoutes() *fiber.App {
 
 	accountType.Post("/user-account-type", a.HandlePostAccountType)
 	accountType.Get("/user-account-types", a.HandleGetAccountTypes)
+	accountType.Delete("/user-account-type", a.HandleDeleteAccountType)
 
 	return accountType
 }
@@ -36,22 +42,22 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
-		return c.JSON(RequestErrorWithRetry{
-			Msg:         string(ErrorInvalidJSON),
-			ShouldRetry: ShouldRetryRequest(400),
+		return c.JSON(helpers.RequestErrorWithRetry{
+			Msg:         string(helpers.ErrorInvalidJSON),
+			ShouldRetry: helpers.ShouldRetryRequest(400),
 		})
 	}
 
 	cat := CreateAccountTypeInput{AccountType: t.AccountType}
-	validate = validator.New()
+	v = validator.New()
 
-	if e := validate.Struct(cat); e != nil {
+	if e := v.Struct(cat); e != nil {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
-		return c.JSON(RequestErrorWithRetry{
-			Msg:         string(ErrorFailedRequestValidation),
-			ShouldRetry: ShouldRetryRequest(400),
+		return c.JSON(helpers.RequestErrorWithRetry{
+			Msg:         string(helpers.ErrorFailedRequestValidation),
+			ShouldRetry: helpers.ShouldRetryRequest(400),
 		})
 	}
 
@@ -61,9 +67,9 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(500)
-		return c.JSON(RequestErrorWithRetry{
-			Msg:         string(ErrorFailedAction),
-			ShouldRetry: ShouldRetryRequest(500),
+		return c.JSON(helpers.RequestErrorWithRetry{
+			Msg:         string(helpers.ErrorFailedAction),
+			ShouldRetry: helpers.ShouldRetryRequest(500),
 		})
 	}
 
@@ -71,26 +77,72 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 }
 
 func (a *Adapter) HandleGetAccountTypes(c *fiber.Ctx) error {
-	return a.HandleListAccountTypes(c)
+	q := c.Query("limit")
+	limit := a.getRequestLimit(q)
+
+	return a.HandleListAccountTypes(limit, c)
 }
 
-func (a *Adapter) HandleListAccountTypes(i interface{}) error {
-	var lmt int64
-
+func (a *Adapter) HandleListAccountTypes(limit int64, i interface{}) error {
 	c := i.(*fiber.Ctx)
-	q := c.Query("limit")
 
-	lmt = a.getRequestLimit(q)
-
-	if result, e := a.api.GetAccountTypes(lmt); e != nil {
+	if result, e := a.api.GetAccountTypes(limit); e != nil {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(500)
-		return c.JSON(RequestErrorWithRetry{
-			Msg:         string(ErrorFailedAction),
-			ShouldRetry: ShouldRetryRequest(500),
+		return c.JSON(helpers.RequestErrorWithRetry{
+			Msg:         string(helpers.ErrorFailedAction),
+			ShouldRetry: helpers.ShouldRetryRequest(500),
 		})
 	} else {
 		return c.JSON(result)
 	}
+}
+
+func (a *Adapter) HandleDeleteAccountType(c *fiber.Ctx) error {
+	return a.HandleRemoveAccountType(c)
+}
+
+func (a *Adapter) HandleRemoveAccountType(i interface{}) error {
+	c := i.(*fiber.Ctx)
+	id := c.Body()
+
+	var t AccountTypeInput
+
+	if e := json.Unmarshal(id, &t); e != nil {
+		a.log("error", e.Error())
+
+		_ = c.SendStatus(400)
+		return c.JSON(helpers.RequestErrorWithRetry{
+			Msg:         string(helpers.ErrorInvalidJSON),
+			ShouldRetry: helpers.ShouldRetryRequest(400),
+		})
+	}
+
+	cat := AccountTypeInput{Id: t.Id}
+	v = validator.New()
+
+	if e := v.Struct(cat); e != nil {
+		a.log("error", e.Error())
+
+		_ = c.SendStatus(400)
+		return c.JSON(helpers.RequestErrorWithRetry{
+			Msg:         string(helpers.ErrorFailedRequestValidation),
+			ShouldRetry: helpers.ShouldRetryRequest(400),
+		})
+	}
+
+	result, e := a.api.RemoveAccountType(t.Id)
+
+	if e != nil {
+		a.log("error", e.Error())
+
+		_ = c.SendStatus(500)
+		return c.JSON(helpers.RequestErrorWithRetry{
+			Msg:         string(helpers.ErrorFailedAction),
+			ShouldRetry: helpers.ShouldRetryRequest(500),
+		})
+	}
+
+	return c.JSON(result)
 }

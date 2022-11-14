@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/codeclout/AccountEd/adapters/framework/in/http/middleware"
 	ports "github.com/codeclout/AccountEd/ports/api/account-types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
@@ -31,7 +32,7 @@ func (a *Adapter) Run(middlewareLogger func(msg ...interface{})) {
 	app := fiber.New(fiber.Config{})
 	accountRoutes := a.initUserRoutes()
 
-	app.Use(NewLoggerMiddleware(Config{
+	app.Use(middleware.NewLoggerMiddleware(middleware.Config{
 		Log: middlewareLogger,
 		ShouldSkip: func(c *fiber.Ctx) bool {
 			return false

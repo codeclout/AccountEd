@@ -12,13 +12,13 @@ import (
 type l func(l string, m string)
 
 type Adapter struct {
-	account ports.UserAccountTypeCorePort
-	db      dbport.UserAccountTypeDbPort
-	log     l
+	accountTypeCore ports.UserAccountTypeCorePort
+	db              dbport.UserAccountTypeDbPort
+	log             l
 }
 
 func NewAdapter(act ports.UserAccountTypeCorePort, db dbport.UserAccountTypeDbPort, logger l) *Adapter {
-	return &Adapter{account: act, db: db, log: logger}
+	return &Adapter{accountTypeCore: act, db: db, log: logger}
 }
 
 // CreateAccountType - The account_type field has a unique constraint, therefore an error might occur.
@@ -39,7 +39,7 @@ func (a *Adapter) CreateAccountType(name string) (ports.NewAccountTypeOutput, er
 		return ports.NewAccountTypeOutput{}, ex
 	}
 
-	result, e := a.account.NewAccountType(did.InsertedID, name, t)
+	result, e := a.accountTypeCore.NewAccountType(did.InsertedID, name, t)
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("Core account type processing failed: %v", e))
@@ -57,5 +57,17 @@ func (a *Adapter) GetAccountTypes(v int64) ([]ports.NewAccountTypeOutput, error)
 		return []ports.NewAccountTypeOutput{}, e
 	}
 
-	return a.account.ListAccountTypes(b)
+	return a.accountTypeCore.ListAccountTypes(b)
+}
+
+func (a *Adapter) RemoveAccountType(id string) (ports.NewAccountTypeOutput, error) {
+	v, e := a.db.RemoveAccountType(id)
+	p, e := a.accountTypeCore.DeleteAccountType(v)
+
+	if e != nil {
+		a.log("error", fmt.Sprintf("Error removing account type: %v", e))
+		return p, e
+	}
+
+	return p, nil
 }
