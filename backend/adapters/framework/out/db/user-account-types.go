@@ -80,12 +80,16 @@ func (a *Adapter) InsertAccountType(data []byte) (ports.InsertID, error) {
 	var in map[string]interface{}
 
 	collection := a.db.Collection(string(accountTypeCollectionName))
+	t := a.getTimeStamp()
 
 	e := json.Unmarshal(data, &in)
 	if e != nil {
 		a.log("error", fmt.Sprintf("invalid payload: %v", e))
 		return ports.InsertID{}, e
 	}
+
+	in["created_at"] = t
+	in["modified_at"] = t
 
 	result, e := collection.InsertOne(a.ctx, bson.M(in))
 
@@ -146,4 +150,50 @@ func (a *Adapter) RemoveAccountType(id string) ([]byte, error) {
 	}
 
 	return v, nil
+}
+
+func (a *Adapter) UpdateAccountType(in []byte) ([]byte, error) {
+	var m map[string]string
+
+	collection := a.db.Collection(string(accountTypeCollectionName))
+
+	e := json.Unmarshal(in, &m)
+	s := a.getTimeStamp()
+
+	x, _ := primitive.ObjectIDFromHex(m["id"])
+
+	f := bson.D{{"_id", x}}
+	u := bson.D{{"$set", bson.D{{"account_type", m["accountType"]}, {"modified_at", s}}}}
+
+	r, e := collection.UpdateOne(a.ctx, f, u)
+	b, e := json.Marshal(r)
+
+	if e != nil {
+		a.log("error", e.Error())
+		return in, e
+	}
+
+	return b, nil
+}
+
+func (a *Adapter) GetAccountTypeById(in []byte) ([]byte, error) {
+	var m map[string]string
+	var n map[string]interface{}
+	var e error
+
+	collection := a.db.Collection(string(accountTypeCollectionName))
+
+	e = json.Unmarshal(in, &m)
+	x, _ := primitive.ObjectIDFromHex(m["id"])
+
+	f := bson.D{{"_id", x}}
+	e = collection.FindOne(a.ctx, f).Decode(&n)
+
+	b, e := json.Marshal(n)
+	if e != nil {
+		a.log("error", e.Error())
+		return []byte{}, e
+	}
+
+	return b, e
 }

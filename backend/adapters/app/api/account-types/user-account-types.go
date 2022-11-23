@@ -27,8 +27,6 @@ func (a *Adapter) CreateAccountType(name string) (ports.NewAccountTypeOutput, er
 	t := time.Unix(time.Now().Unix(), 0).Format(time.RFC3339)
 
 	in.AccountType = name
-	in.CreatedAt = t
-	in.ModifiedAt = t
 
 	payload, e := json.Marshal(in)
 
@@ -70,4 +68,20 @@ func (a *Adapter) RemoveAccountType(id string) (ports.NewAccountTypeOutput, erro
 	}
 
 	return p, nil
+}
+
+func (a *Adapter) UpdateAccountType(in []byte) (ports.NewAccountTypeOutput, error) {
+	_, e := a.db.UpdateAccountType(in)
+
+	if e != nil {
+		a.log("error", fmt.Sprintf("Error saving update to account type: %v", e))
+		return ports.NewAccountTypeOutput{}, e
+	}
+
+	r, e := a.db.GetAccountTypeById(in)
+	o, e := a.accountTypeCore.UpdateAccountType(r)
+
+	fmt.Println(r)
+
+	return o, nil
 }
