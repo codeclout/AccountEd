@@ -2,9 +2,8 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 
-	"github.com/codeclout/AccountEd/adapters/framework/in/http/aux"
+	"github.com/codeclout/AccountEd/adapters/framework/in/http/auxiliary"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,10 +23,11 @@ type UpdateAccountTypeInput struct {
 	CreateAccountTypeInput
 }
 
+// initUserRoutes - Registers methods for the user account type routes
 func (a *Adapter) initUserRoutes() *fiber.App {
 	var accountType = fiber.New()
 
-	accountType.Post("/user-account-type", a.HandlePostAccountType)
+	accountType.Post("/user-account-type", a.handlePostAccountType)
 	accountType.Get("/user-account-types", a.HandleGetAccountTypes)
 	accountType.Delete("/user-account-type", a.HandleDeleteAccountType)
 	accountType.Put("/user-account-type", a.HandlePutAccountType)
@@ -35,11 +35,12 @@ func (a *Adapter) initUserRoutes() *fiber.App {
 	return accountType
 }
 
-func (a *Adapter) HandlePostAccountType(c *fiber.Ctx) error {
-	return a.HandleCreateAccountType(c)
+// HandlePostAccountType - wraps the handler to create a new account type
+func (a *Adapter) handlePostAccountType(c *fiber.Ctx) error {
+	return a.handleCreateAccountType(c)
 }
 
-func (a *Adapter) HandleCreateAccountType(i interface{}) error {
+func (a *Adapter) handleCreateAccountType(i interface{}) error {
 	c := i.(*fiber.Ctx)
 
 	var payload = c.Body()
@@ -49,9 +50,9 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
-		return c.JSON(aux.RequestErrorWithRetry{
-			Msg:         string(aux.ErrorInvalidJSON),
-			ShouldRetry: aux.ShouldRetryRequest(400),
+		return c.JSON(auxiliary.RequestErrorWithRetry{
+			Msg:         string(auxiliary.ErrorInvalidJSON),
+			ShouldRetry: auxiliary.ShouldRetryRequest(400),
 		})
 	}
 
@@ -62,9 +63,9 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
-		return c.JSON(aux.RequestErrorWithRetry{
-			Msg:         string(aux.ErrorFailedRequestValidation),
-			ShouldRetry: aux.ShouldRetryRequest(400),
+		return c.JSON(auxiliary.RequestErrorWithRetry{
+			Msg:         string(auxiliary.ErrorFailedRequestValidation),
+			ShouldRetry: auxiliary.ShouldRetryRequest(400),
 		})
 	}
 
@@ -74,9 +75,9 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(500)
-		return c.JSON(aux.RequestErrorWithRetry{
-			Msg:         string(aux.ErrorFailedAction),
-			ShouldRetry: aux.ShouldRetryRequest(500),
+		return c.JSON(auxiliary.RequestErrorWithRetry{
+			Msg:         string(auxiliary.ErrorFailedAction),
+			ShouldRetry: auxiliary.ShouldRetryRequest(500),
 		})
 	}
 
@@ -97,9 +98,9 @@ func (a *Adapter) HandleListAccountTypes(limit int64, i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(500)
-		return c.JSON(aux.RequestErrorWithRetry{
-			Msg:         string(aux.ErrorFailedAction),
-			ShouldRetry: aux.ShouldRetryRequest(500),
+		return c.JSON(auxiliary.RequestErrorWithRetry{
+			Msg:         string(auxiliary.ErrorFailedAction),
+			ShouldRetry: auxiliary.ShouldRetryRequest(500),
 		})
 	} else {
 		return c.JSON(result)
@@ -120,9 +121,9 @@ func (a *Adapter) HandleRemoveAccountType(i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
-		return c.JSON(aux.RequestErrorWithRetry{
-			Msg:         string(aux.ErrorInvalidJSON),
-			ShouldRetry: aux.ShouldRetryRequest(400),
+		return c.JSON(auxiliary.RequestErrorWithRetry{
+			Msg:         string(auxiliary.ErrorInvalidJSON),
+			ShouldRetry: auxiliary.ShouldRetryRequest(400),
 		})
 	}
 
@@ -133,9 +134,9 @@ func (a *Adapter) HandleRemoveAccountType(i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
-		return c.JSON(aux.RequestErrorWithRetry{
-			Msg:         string(aux.ErrorFailedRequestValidation),
-			ShouldRetry: aux.ShouldRetryRequest(400),
+		return c.JSON(auxiliary.RequestErrorWithRetry{
+			Msg:         string(auxiliary.ErrorFailedRequestValidation),
+			ShouldRetry: auxiliary.ShouldRetryRequest(400),
 		})
 	}
 
@@ -145,9 +146,9 @@ func (a *Adapter) HandleRemoveAccountType(i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(500)
-		return c.JSON(aux.RequestErrorWithRetry{
-			Msg:         string(aux.ErrorFailedAction),
-			ShouldRetry: aux.ShouldRetryRequest(500),
+		return c.JSON(auxiliary.RequestErrorWithRetry{
+			Msg:         string(auxiliary.ErrorFailedAction),
+			ShouldRetry: auxiliary.ShouldRetryRequest(500),
 		})
 	}
 
@@ -169,17 +170,14 @@ func (a *Adapter) HandleUpdateAccountType(id []byte, i interface{}) error {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
-		return c.JSON(aux.RequestErrorWithRetry{
-			Msg:         string(aux.ErrorInvalidJSON),
-			ShouldRetry: aux.ShouldRetryRequest(400),
+		return c.JSON(auxiliary.RequestErrorWithRetry{
+			Msg:         string(auxiliary.ErrorInvalidJSON),
+			ShouldRetry: auxiliary.ShouldRetryRequest(400),
 		})
 	}
 
 	b, e := json.Marshal(t)
 	r, e := a.api.UpdateAccountType(b)
-
-	fmt.Println(r)
-	fmt.Println(e.Error())
 
 	return c.JSON(r)
 }

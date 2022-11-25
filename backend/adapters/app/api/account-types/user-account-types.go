@@ -81,7 +81,5 @@ func (a *Adapter) UpdateAccountType(in []byte) (ports.NewAccountTypeOutput, erro
 	r, e := a.db.GetAccountTypeById(in)
 	o, e := a.accountTypeCore.UpdateAccountType(r)
 
-	fmt.Println(r)
-
 	return o, nil
 }
