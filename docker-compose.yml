@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   db:
-    image: mongo:5.0.9
+    image: mongo:6.0.3
     command: --oplogSize 512 --replSet rs0 --bind_ip_all
     restart: unless-stopped
     expose:
@@ -18,7 +18,7 @@ services:
     networks:
       - accountEd-local
   db1:
-    image: mongo:5.0.9
+    image: mongo:6.0.3
     command: --oplogSize 512 --replSet rs0 --bind_ip_all
     restart: unless-stopped
     expose:
@@ -34,7 +34,7 @@ services:
     networks:
       - accountEd-local
   db2:
-    image: mongo:5.0.9
+    image: mongo:6.0.3
     command: --oplogSize 512 --replSet rs0 --bind_ip_all
     restart: unless-stopped
     expose:
@@ -50,7 +50,7 @@ services:
     networks:
       - accountEd-local
   mongo-init-replicas:
-    image: mongo:5.0.9
+    image: mongo:6.0.3
     entrypoint: ["/scripts/setup.sh"]
     restart: 'no'
     depends_on:
@@ -68,7 +68,7 @@ services:
     build:
       context: ./migrations
       dockerfile: Dockerfile
-    image: mongo/migrator:5.0.9
+    image: mongo/migrator:6.0.3
     networks:
       - accountEd-local
     depends_on:
@@ -77,17 +77,17 @@ services:
     volumes:
       - ./migrations/mongo/local/migration:/usr/local/migrate
 
-  app:
-    depends_on:
-      mongo-migrate:
-        condition: service_completed_successfully
-    image: accounted-${GOARCH:-amd64}-${ENV:-local}
-    networks:
-      - accountEd-local
-    ports:
-      - 8088:8088
-    command:
-      - /usr/ci-svc-usr/accountEd
+#  app:
+#    depends_on:
+#      mongo-migrate:
+#        condition: service_completed_successfully
+#    image: accounted-${GOARCH:-amd64}-${ENV:-local}
+#    networks:
+#      - accountEd-local
+#    ports:
+#      - 8088:8088
+#    command:
+#      - /usr/ci-svc-usr/accountEd
 
 
 networks:

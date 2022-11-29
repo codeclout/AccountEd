@@ -4,7 +4,7 @@ MONGODB1=db
 MONGODB2=db1
 MONGODB3=db2
 
-mongo --host ${MONGODB1}:27017 <<EOF
+mongosh --host ${MONGODB1}:27017 <<EOF
 var cfg = {
     "_id": "rs0",
     "protocolVersion": 1,
