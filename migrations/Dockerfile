@@ -15,4 +15,12 @@ RUN set -ex \
 RUN su - ci-svc-accountEd
 
 WORKDIR /usr/local/migrate
+
+COPY ./mongo/package*.json ./
+COPY ./mongo/.npmrc ./
+RUN npm i --omit=dev && npm cache clean --force
+
+COPY ./mongo/migrations/* ./migrations/
+COPY ./mongo/migrate-mongo-config.js ./
+
 CMD [ "npx", "migrate-mongo", "up" ]

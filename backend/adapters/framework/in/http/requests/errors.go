@@ -1,4 +1,4 @@
-package auxiliary
+package requests
 
 import "regexp"
 

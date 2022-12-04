@@ -74,8 +74,8 @@ services:
     depends_on:
       mongo-init-replicas:
         condition: service_completed_successfully
-    volumes:
-      - ./migrations/mongo/local/migration:/usr/local/migrate
+    # volumes:
+    #   - ./migrations/mongo/local/migration:/usr/local/migrate
 
 #  app:
 #    depends_on:

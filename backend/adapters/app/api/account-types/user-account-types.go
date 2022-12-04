@@ -60,6 +60,12 @@ func (a *Adapter) GetAccountTypes(v int64) ([]ports.NewAccountTypeOutput, error)
 
 func (a *Adapter) RemoveAccountType(id string) (ports.NewAccountTypeOutput, error) {
 	v, e := a.db.RemoveAccountType(id)
+
+	if e != nil {
+		a.log("error", e.Error())
+		return ports.NewAccountTypeOutput{}, e
+	}
+
 	p, e := a.accountTypeCore.DeleteAccountType(v)
 
 	if e != nil {

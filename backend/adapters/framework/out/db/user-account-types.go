@@ -141,9 +141,13 @@ func (a *Adapter) RemoveAccountType(id string) ([]byte, error) {
 	collection := a.db.Collection(string(accountTypeCollectionName))
 	mid, _ := primitive.ObjectIDFromHex(id)
 
-	e := collection.FindOneAndDelete(a.ctx, bson.D{{"_id", mid}}, nil).Decode(&s)
-	v, e := json.Marshal(s)
+	e := collection.FindOneAndDelete(a.ctx, bson.D{{Key: "_id", Value: mid}}, nil).Decode(&s)
+	if e != nil {
+		a.log("error", e.Error())
+		return []byte{}, e
+	}
 
+	v, e := json.Marshal(s)
 	if e != nil {
 		a.log("error", e.Error())
 		return v, e
@@ -157,17 +161,21 @@ func (a *Adapter) UpdateAccountType(in []byte) ([]byte, error) {
 
 	collection := a.db.Collection(string(accountTypeCollectionName))
 
-	e := json.Unmarshal(in, &m)
+	_ = json.Unmarshal(in, &m)
 	s := a.getTimeStamp()
 
 	x, _ := primitive.ObjectIDFromHex(m["id"])
 
-	f := bson.D{{"_id", x}}
-	u := bson.D{{"$set", bson.D{{"account_type", m["accountType"]}, {"modified_at", s}}}}
+	f := bson.D{{Key: "_id", Value: x}}
+	u := bson.D{{Key: "$set", Value: bson.D{{Key: "account_type", Value: m["accountType"]}, {Key: "modified_at", Value: s}}}}
 
 	r, e := collection.UpdateOne(a.ctx, f, u)
-	b, e := json.Marshal(r)
+	if e != nil {
+		a.log("error", e.Error())
+		return in, e
+	}
 
+	b, e := json.Marshal(r)
 	if e != nil {
 		a.log("error", e.Error())
 		return in, e
@@ -184,10 +192,19 @@ func (a *Adapter) GetAccountTypeById(in []byte) ([]byte, error) {
 	collection := a.db.Collection(string(accountTypeCollectionName))
 
 	e = json.Unmarshal(in, &m)
+	if e != nil {
+		a.log("error", e.Error())
+		return []byte{}, e
+	}
+
 	x, _ := primitive.ObjectIDFromHex(m["id"])
 
-	f := bson.D{{"_id", x}}
+	f := bson.D{{Key: "_id", Value: x}}
 	e = collection.FindOne(a.ctx, f).Decode(&n)
+	if e != nil {
+		a.log("error", e.Error())
+		return []byte{}, e
+	}
 
 	b, e := json.Marshal(n)
 	if e != nil {
