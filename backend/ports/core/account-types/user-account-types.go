@@ -1,10 +1,11 @@
 package account_types
 
 type UserAccountTypeCorePort interface {
-	NewAccountType(id interface{}, name string, timestamp string) (NewAccountTypeOutput, error)
-	ListAccountTypes(accountTypes []byte) ([]NewAccountTypeOutput, error)
-	DeleteAccountType(in []byte) (NewAccountTypeOutput, error)
+	NewAccountType(id interface{}, name string, timestamp string) (*NewAccountTypeOutput, error)
+	ListAccountTypes(accountTypes []byte) (*[]NewAccountTypeOutput, error)
+	DeleteAccountType(in []byte) (*NewAccountTypeOutput, error)
 	UpdateAccountType(in []byte) (NewAccountTypeOutput, error)
+	FetchAccountType(id []byte) (*NewAccountTypeOutput, error)
 }
 
 type NewAccountTypeOutput struct {

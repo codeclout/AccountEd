@@ -3,6 +3,7 @@ package requests
 import "regexp"
 
 var (
+	ErrorDuplicateKey            = []byte("duplicate")
 	ErrorFailedAction            = []byte("requested action failed")
 	ErrorFailedRequestValidation = []byte("payload received failed to validate")
 	ErrorInvalidJSON             = []byte("invalid json")

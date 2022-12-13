@@ -21,6 +21,7 @@ This system requires an environment with Docker (or Docker compatible environmen
 127.0.0.1 db1
 127.0.0.1 db2
 ```
+- **Local Connection String (MongoDB Compass)** - `mongodb://localhost:27017,localhost:27018,localhost:27019/accountEd?replicaSet=rs0`
 - Open a terminal and run `make init-local-environment` from the root of the project
 
 ### Getting Started

@@ -38,10 +38,7 @@ func main() {
 
 	configAdapter = hclFramewkInAdapter.NewAdapter(logFrameworkOutAdapter.Log)
 
-	k, e := configAdapter.GetConfig(configFile)
-	if e != nil {
-		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to get runtime config: %v", e))
-	}
+	k := configAdapter.GetConfig(configFile)
 
 	accountTypeDbAdapter, e = dbFramewkOutAdapter.NewAdapter(k, logFrameworkOutAdapter.Log, uri)
 	if e != nil {

@@ -1,5 +1,5 @@
 package hcl
 
 type RuntimeConfigPort interface {
-	GetConfig(p []byte) ([]byte, error)
+	GetConfig(p []byte) []byte
 }

@@ -7,7 +7,8 @@ import (
 )
 
 func (a *Adapter) getTimeStamp() primitive.DateTime {
-	t := time.UnixMicro(time.Now().Unix()).UTC()
+	now := time.Now()
+	t := time.Unix(0, now.UnixNano()).UTC()
 
 	return primitive.NewDateTimeFromTime(t)
 }

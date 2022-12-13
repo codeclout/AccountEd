@@ -22,8 +22,8 @@ func NewAdapter(logger func(level string, msg string)) *Adapter {
 }
 
 // NewAccountType - Responsible for returning the result of a new account type create.
-func (a *Adapter) NewAccountType(id interface{}, name string, timestamp string) (ports.NewAccountTypeOutput, error) {
-	return ports.NewAccountTypeOutput{
+func (a *Adapter) NewAccountType(id interface{}, name string, timestamp string) (*ports.NewAccountTypeOutput, error) {
+	return &ports.NewAccountTypeOutput{
 		AccountType: name,
 		CreatedAt:   timestamp,
 		ID:          id,
@@ -31,30 +31,30 @@ func (a *Adapter) NewAccountType(id interface{}, name string, timestamp string) 
 	}, nil
 }
 
-func (a *Adapter) ListAccountTypes(accountTypes []byte) ([]ports.NewAccountTypeOutput, error) {
+func (a *Adapter) ListAccountTypes(accountTypes []byte) (*[]ports.NewAccountTypeOutput, error) {
 	var out []ports.NewAccountTypeOutput
 
 	e := json.Unmarshal(accountTypes, &out)
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("Invalid Data: %v", e))
-		return out, e
+		return &out, e
 	}
 
-	return out, nil
+	return &out, nil
 }
 
-func (a *Adapter) DeleteAccountType(in []byte) (ports.NewAccountTypeOutput, error) {
+func (a *Adapter) DeleteAccountType(in []byte) (*ports.NewAccountTypeOutput, error) {
 	var out ports.NewAccountTypeOutput
 
 	e := json.Unmarshal(in, &out)
 
 	if e != nil {
 		a.log("error", e.Error())
-		return out, e
+		return &out, e
 	}
 
-	return out, nil
+	return &out, nil
 }
 
 func (a *Adapter) UpdateAccountType(in []byte) (ports.NewAccountTypeOutput, error) {
@@ -68,4 +68,17 @@ func (a *Adapter) UpdateAccountType(in []byte) (ports.NewAccountTypeOutput, erro
 	}
 
 	return out, nil
+}
+
+func (a *Adapter) FetchAccountType(in []byte) (*ports.NewAccountTypeOutput, error) {
+	var out ports.NewAccountTypeOutput
+
+	e := json.Unmarshal(in, &out)
+
+	if e != nil {
+		a.log("error", e.Error())
+		return &out, e
+	}
+
+	return &out, nil
 }

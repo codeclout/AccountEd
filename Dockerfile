@@ -1,4 +1,4 @@
-FROM golang:1.19.1-bullseye as build
+FROM golang:1.19.4-bullseye as build
 
 ARG ENV
 ENV ENVIRONMENT="${ENV}"
@@ -20,7 +20,7 @@ COPY ./backend .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s" -v -o ./accountEd ./
 
-FROM alpine:3.14.6 as prod
+FROM alpine:3.17.0 as prod
 
 RUN set -ex \
     && apk update \

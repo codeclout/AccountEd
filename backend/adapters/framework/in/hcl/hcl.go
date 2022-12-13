@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )
 
@@ -31,27 +32,27 @@ func NewAdapter(logger l) *Adapter {
 	}
 }
 
-func (a *Adapter) GetConfig(path []byte) ([]byte, error) {
-	wd, e := os.Getwd()
-	if e != nil {
-		a.log("error", fmt.Sprintf("os errorr: %v", e))
-		return []byte{}, e
-	}
+func (a *Adapter) GetConfig(path []byte) []byte {
+	wd, _ := os.Getwd()
 
 	configFileLocation := filepath.Join(wd, string(path))
-	e = hclsimple.DecodeFile(configFileLocation, nil, &a.config)
+	e := hclsimple.DecodeFile(configFileLocation, nil, &a.config)
 
 	if e != nil {
-		a.log("error", fmt.Sprintf("hcl decode error: %v", e))
-		return nil, e
+		x, ok := e.(hcl.Diagnostics)
+
+		if ok {
+			a.log("fatal", fmt.Sprintf("Failed to load runtime config: %s", e.(hcl.Diagnostics)[0].Summary))
+		} else {
+			a.log("fatal", fmt.Sprintf("Failed to get runtime config: %v", x))
+		}
 	}
 
 	b, e := json.Marshal(a.config)
 
 	if e != nil {
-		a.log("error", fmt.Sprintf("unmarshall error: %v", e))
-		return []byte{}, e
+		a.log("fatal", fmt.Sprintf("unmarshall error: %v", e))
 	}
 
-	return b, nil
+	return b
 }

@@ -2,8 +2,11 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/codeclout/AccountEd/adapters/framework/in/http/requests"
+	"github.com/codeclout/AccountEd/adapters/framework/out/db"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
@@ -15,7 +18,7 @@ type AccountTypeInput struct {
 }
 
 type CreateAccountTypeInput struct {
-	AccountType string `json:"accountType" validate:"required,min=3"`
+	AccountType *string `json:"accountType" validate:"required,min=3"`
 }
 
 type UpdateAccountTypeInput struct {
@@ -27,24 +30,26 @@ type UpdateAccountTypeInput struct {
 func (a *Adapter) initUserRoutes() *fiber.App {
 	var accountType = fiber.New()
 
+	accountType.Delete("/user-account-type", a.handleDeleteAccountType)
+	accountType.Get("/user-account-type", a.handleGetAccountType)
+	accountType.Get("/user-account-types", a.handleGetAccountTypes)
 	accountType.Post("/user-account-type", a.handlePostAccountType)
-	accountType.Get("/user-account-types", a.HandleGetAccountTypes)
-	accountType.Delete("/user-account-type", a.HandleDeleteAccountType)
-	accountType.Put("/user-account-type", a.HandlePutAccountType)
+	accountType.Put("/user-account-type", a.handlePutAccountType)
 
 	return accountType
 }
 
 // HandlePostAccountType - wraps the handler to create a new account type
 func (a *Adapter) handlePostAccountType(c *fiber.Ctx) error {
-	return a.handleCreateAccountType(c)
+	return a.HandleCreateAccountType(c)
 }
 
-func (a *Adapter) handleCreateAccountType(i interface{}) error {
-	c := i.(*fiber.Ctx)
-
-	var payload = c.Body()
+func (a *Adapter) HandleCreateAccountType(i interface{}) error {
+	var f string
 	var t CreateAccountTypeInput
+
+	c := i.(*fiber.Ctx)
+	var payload = c.Body()
 
 	if e := json.Unmarshal(payload, &t); e != nil {
 		a.log("error", e.Error())
@@ -56,10 +61,9 @@ func (a *Adapter) handleCreateAccountType(i interface{}) error {
 		})
 	}
 
-	cat := CreateAccountTypeInput{AccountType: t.AccountType}
 	v = validator.New()
 
-	if e := v.Struct(cat); e != nil {
+	if e := v.Struct(t); e != nil {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
@@ -74,20 +78,27 @@ func (a *Adapter) handleCreateAccountType(i interface{}) error {
 	if e != nil {
 		a.log("error", e.Error())
 
-		_ = c.SendStatus(500)
+		if strings.Contains(e.(db.WriteError).Message, "duplicate key") {
+			_ = c.SendStatus(400)
+			f = string(requests.ErrorDuplicateKey)
+		} else {
+			_ = c.SendStatus(500)
+			f = string(requests.ErrorFailedAction)
+		}
+
 		return c.JSON(requests.RequestErrorWithRetry{
-			Msg:         string(requests.ErrorFailedAction),
-			ShouldRetry: requests.ShouldRetryRequest(500),
+			Msg:         fmt.Sprintf("%s | %s", f, t.AccountType),
+			ShouldRetry: requests.ShouldRetryRequest(c.Response().StatusCode()),
 		})
 	}
 
 	return c.JSON(result)
 }
 
-func (a *Adapter) HandleGetAccountTypes(c *fiber.Ctx) error {
+func (a *Adapter) handleGetAccountTypes(c *fiber.Ctx) error {
 	q := c.Query("limit")
-	limit := a.getRequestLimit(q)
 
+	limit := a.getRequestLimit(q)
 	return a.HandleListAccountTypes(limit, c)
 }
 
@@ -107,7 +118,7 @@ func (a *Adapter) HandleListAccountTypes(limit int64, i interface{}) error {
 	}
 }
 
-func (a *Adapter) HandleDeleteAccountType(c *fiber.Ctx) error {
+func (a *Adapter) handleDeleteAccountType(c *fiber.Ctx) error {
 	return a.HandleRemoveAccountType(c)
 }
 
@@ -127,10 +138,9 @@ func (a *Adapter) HandleRemoveAccountType(i interface{}) error {
 		})
 	}
 
-	cat := AccountTypeInput{Id: t.Id}
 	v = validator.New()
 
-	if e := v.Struct(cat); e != nil {
+	if e := v.Struct(t); e != nil {
 		a.log("error", e.Error())
 
 		_ = c.SendStatus(400)
@@ -155,7 +165,7 @@ func (a *Adapter) HandleRemoveAccountType(i interface{}) error {
 	return c.JSON(result)
 }
 
-func (a *Adapter) HandlePutAccountType(c *fiber.Ctx) error {
+func (a *Adapter) handlePutAccountType(c *fiber.Ctx) error {
 	id := c.Body()
 	return a.HandleUpdateAccountType(id, c)
 }
@@ -164,6 +174,7 @@ func (a *Adapter) HandleUpdateAccountType(id []byte, i interface{}) error {
 	var t UpdateAccountTypeInput
 
 	c := i.(*fiber.Ctx)
+	json.Valid(id)
 	e := json.Unmarshal(id, &t)
 
 	if e != nil {
@@ -178,6 +189,37 @@ func (a *Adapter) HandleUpdateAccountType(id []byte, i interface{}) error {
 
 	b, e := json.Marshal(t)
 	r, e := a.api.UpdateAccountType(b)
+
+	return c.JSON(r)
+}
+
+func (a *Adapter) handleGetAccountType(c *fiber.Ctx) error {
+	return a.HandleFetchAccountType(c)
+}
+
+func (a *Adapter) HandleFetchAccountType(i interface{}) error {
+	var t AccountTypeInput
+
+	c := i.(*fiber.Ctx)
+
+	if e := c.QueryParser(&t); e != nil {
+		a.log("error", e.Error())
+
+		_ = c.SendStatus(400)
+
+		return c.JSON(requests.RequestErrorWithRetry{
+			Msg:         string(requests.ErrorInvalidJSON),
+			ShouldRetry: requests.ShouldRetryRequest(400),
+		})
+	}
+
+	b, _ := json.Marshal(t)
+	r, e := a.api.FetchAccountType(b)
+
+	if e != nil {
+		a.log("error", e.Error())
+		return e
+	}
 
 	return c.JSON(r)
 }
