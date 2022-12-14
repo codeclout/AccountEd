@@ -70,10 +70,9 @@ jobs:
       -
         name: Artifact
         uses: actions/upload-artifact@v3
-        working-directory: './backend'
         with:
-          name: accountEd
-          path: artifacts
+          name: backend/accountEd
+          path: backend/artifacts
           retention-days: 7
 
       #  -
