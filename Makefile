@@ -16,7 +16,6 @@ build-image:
 
 .PHONY: build-binary
 build-binary:
-	$(shell ls -alh && pwd)
 	CGO_ENABLED=0 GOOS=$(shell go env GOOS) GOARCH=$(shell go env GOARCH) go build -o accountEd -ldflags="-s" -v backend/
 
 .PHONY: update-go-packages
