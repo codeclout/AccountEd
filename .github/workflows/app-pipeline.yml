@@ -58,7 +58,7 @@ jobs:
       -
         working-directory: './backend'
         run: |
-          make build-binary
+          make -C ../ build-binary
 
       -
         name: Copy Binary
