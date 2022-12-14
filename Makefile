@@ -14,10 +14,6 @@ init-local-environment: build-image
 build-image:
 	$(shell docker buildx build --load --target=prod -t accounted-$(shell go env GOARCH)-$(shell echo $${ENV}) .)
 
-.PHONY: build-binary
-build-binary:
-	GO111MODULE=on CGO_ENABLED=0 GOOS=$(shell go env GOOS) GOARCH=$(shell go env GOARCH) go build -o accountEd -ldflags="-s" -v ./
-
 .PHONY: update-go-packages
 update-go-packages:
 	${MAKE} -C backend update-go-packages
