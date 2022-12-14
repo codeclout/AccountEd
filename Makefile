@@ -29,7 +29,7 @@ ci-buildx-register-image:
 	docker buildx use accountEdBuilder
 	docker buildx inspect accountEdBuilder --bootstrap
 	
-	docker buildx build --build-arg ENV=$${ENV} --target=prod --platform linux/amd64,linux/arm64 -t ghcr.io/$${GH_ACTOR}/$${ECR_REPOSITORY}:$(shell echo $${IMAGE_TAG} | cut -c 1-12) --push .
+	docker buildx build --build-arg ENV=$${ENV} --target=prod --platform linux/amd64,linux/arm64 -t ghcr.io/$${GH_REPOSITORY}:$(shell echo $${IMAGE_TAG} | cut -c 1-12) --push .
 	#docker buildx build --build-arg ENV=$${ENV} --target=prod --platform linux/amd64,linux/arm64 -t $${ECR_REGISTRY}/$${ECR_REPOSITORY}:$(shell echo $${IMAGE_TAG} | cut -c 1-12) --push .
 
 	docker logout ghcr.io/$${GH_ACTOR}

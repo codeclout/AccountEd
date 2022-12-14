@@ -45,6 +45,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       -
+        env:
+          GH_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_TAG: ${{ github.sha }}
+          
         run: |
           make ci-buildx-register-image
 
