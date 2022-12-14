@@ -27,7 +27,7 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: './backend/go.mod'
+          go-version-file: './backend/go.mod'
           cache: true
           cache-dependency-path: './backend/go.sum'
 
