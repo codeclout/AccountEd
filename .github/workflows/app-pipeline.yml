@@ -46,8 +46,8 @@ jobs:
 
       -
         env:
-          ENV: ${{ github.ref == 'refs/heads/develop' && 'dev' || 'prod'}}
-          GH_REPOSITORY: ${{ github.repository }} | awk '{print tolower($0)}'
+          ENV: ${{ github.ref_name == 'develop' && 'dev' || 'prod'}}
+          GH_REPOSITORY: 'codeclout/accounted'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_TAG: ${{ github.sha }}
           
