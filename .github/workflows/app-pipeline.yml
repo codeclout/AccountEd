@@ -47,6 +47,7 @@ jobs:
       -
         env:
           ENV: ${{ github.ref_name == 'develop' && 'dev' || 'prod'}}
+          GH_ACTOR: ${{ github.actor }}
           GH_REPOSITORY: 'codeclout/accounted'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_TAG: ${{ github.sha }}
