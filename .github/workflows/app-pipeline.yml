@@ -62,6 +62,7 @@ jobs:
 
       -
         name: Copy Binary
+        working-directory: './backend'
         run: |
           mkdir artifacts
           cp accountEd artifacts/.
@@ -69,6 +70,7 @@ jobs:
       -
         name: Artifact
         uses: actions/upload-artifact@v3
+        working-directory: './backend'
         with:
           name: accountEd
           path: artifacts
