@@ -38,10 +38,11 @@ jobs:
           cache-dependency-path: './backend/go.sum'
 
       -
+        working-directory: './backend'
         run: |
           go version
           go install golang.org/x/vuln/cmd/govulncheck@latest 
-          govulncheck -v ./backend/...
+          govulncheck -v ./...
 
       -
         name: Login to GHCR
