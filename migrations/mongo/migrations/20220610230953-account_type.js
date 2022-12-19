@@ -9,6 +9,11 @@ module.exports = {
         numericOrdering: true,
         strength: 2,
       },
+      clusteredIndex: {
+        key: { _id: 1 },
+        unique: true,
+        name: "account_type_idx",
+      },
     });
 
     const initialData = ["homeschooler", "organization", "study-group"];

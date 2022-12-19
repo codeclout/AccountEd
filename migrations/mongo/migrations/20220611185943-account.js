@@ -9,6 +9,11 @@ module.exports = {
         numericOrdering: true,
         strength: 2,
       },
+      clusteredIndex: {
+        key: { _id: 1 },
+        unique: true,
+        name: "user_account_idx",
+      },
     };
 
     await db.createCollection("account", collationConfig);

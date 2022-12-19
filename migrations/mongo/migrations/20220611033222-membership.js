@@ -10,6 +10,11 @@ module.exports = {
         numericOrdering: true,
         strength: 2,
       },
+      clusteredIndex: {
+        key: { _id: 1 },
+        unique: true,
+        name: "user_membership_idx",
+      },
     });
 
     await db.collection("counters").insertOne({ name: "membership", sid: 0 });
