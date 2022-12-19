@@ -18,6 +18,12 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ENV: ${{ github.ref_name == 'develop' && 'dev' || 'prod'}}
+      GH_ACTOR: ${{ github.actor }}
+      GH_REPOSITORY: 'codeclout/accounted'
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE_TAG: ${{ github.sha }}
     steps:
       -
         name: Checkout
@@ -34,6 +40,8 @@ jobs:
       -
         run: |
           go version
+          go install golang.org/x/vuln/cmd/govulncheck@latest 
+          govulncheck -v ./backend/...
 
       -
         name: Login to GHCR
@@ -44,14 +52,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      -
-        env:
-          ENV: ${{ github.ref_name == 'develop' && 'dev' || 'prod'}}
-          GH_ACTOR: ${{ github.actor }}
-          GH_REPOSITORY: 'codeclout/accounted'
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IMAGE_TAG: ${{ github.sha }}
-          
+      -          
         run: |
           make ci-buildx-register-image
 
@@ -74,12 +75,3 @@ jobs:
           name: accountEd
           path: backend/artifacts
           retention-days: 7
-
-      #  -
-      #    name: Configure AWS credentials
-      #    if: ${{ github.event_name != 'pull_request' }}
-      #    uses: aws-actions/configure-aws-credentials@v1
-      #    with:
-      #      role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-      #      aws-region: ${{ secrets.AWS_REGION }}
-      #      role-duration-seconds: 900
