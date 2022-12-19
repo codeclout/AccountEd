@@ -39,7 +39,7 @@ ci-buildx-register-image: build-data
 	--platform=linux/amd64,linux/arm64 \
 	--progress=plain \
 	--target=prod \
-	-t ghcr.io/$${GH_REPOSITORY}:$(shell echo $${{ENV}})-$(shell echo $${IMAGE_TAG} | cut -c 1-12) --push .
+	-t ghcr.io/$${GH_REPOSITORY}:$(shell echo $${ENV})-$(shell echo $${IMAGE_TAG} | cut -c 1-12) --push .
 
 	docker logout ghcr.io/$${GH_ACTOR}
 
