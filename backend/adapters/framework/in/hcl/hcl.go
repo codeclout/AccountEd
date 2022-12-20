@@ -24,6 +24,8 @@ type ENV struct {
 	AwsRegion          string
 	AwsRoleToAssume    string
 	AwsSecretAccessKey string
+	AwsSessionName     string
+	DbConnectionParam  string
 }
 
 type RuntimeConfig struct {
@@ -68,6 +70,8 @@ func (a *Adapter) GetConfig(path []byte) []byte {
 		AwsRegion:          os.Getenv("AWS_REGION"),
 		AwsRoleToAssume:    os.Getenv("AWS_ROLE_TO_ASSUME"),
 		AwsSecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		AwsSessionName:     os.Getenv("AWS_SESSION_NAME"),
+		DbConnectionParam:  os.Getenv("DB_CONNECTION_PARAM"),
 	}
 
 	a.runtime.Config = &config

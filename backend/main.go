@@ -6,14 +6,14 @@ import (
 
 	acctTypeApiAdapter "github.com/codeclout/AccountEd/adapters/app/api/account-types"
 	acctTypeCoreAdapter "github.com/codeclout/AccountEd/adapters/core/account-types"
-	cloud "github.com/codeclout/AccountEd/adapters/framework/in/aws"
+	cloudFramewkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/aws"
 	hclFramewkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/hcl"
 	httpFramewkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/http"
 	dbFramewkOutAdapter "github.com/codeclout/AccountEd/adapters/framework/out/db"
 	"github.com/codeclout/AccountEd/adapters/framework/out/logger"
 	acctTypeApiPort "github.com/codeclout/AccountEd/ports/api/account-types"
 	acctTypeCorePort "github.com/codeclout/AccountEd/ports/core/account-types"
-	cloudPort "github.com/codeclout/AccountEd/ports/framework/in/aws"
+	cloudFramewkInPort "github.com/codeclout/AccountEd/ports/framework/in/aws"
 	hclFramewkInPort "github.com/codeclout/AccountEd/ports/framework/in/hcl"
 	httpFramewkInPort "github.com/codeclout/AccountEd/ports/framework/in/http"
 	dbFramewkOutPort "github.com/codeclout/AccountEd/ports/framework/out/db"
@@ -31,15 +31,15 @@ func main() {
 		accountTypeDbAdapter   dbFramewkOutPort.UserAccountTypeDbPort
 		accountTypeCoreAdapter acctTypeCorePort.UserAccountTypeCorePort
 		accountTypeApiAdapter  acctTypeApiPort.UserAccountTypeApiPort
-		cloudAdapter           cloudPort.Credentials
+		cloudAdapter           cloudFramewkInPort.CredentialsPort
 		configAdapter          hclFramewkInPort.RuntimeConfigPort
 		httpFrameworkInAdapter httpFramewkInPort.HttpFrameworkInPort
 		logFrameworkOutAdapter loggerFramewkOutPort.LogFrameworkOutPort
+		parameterAdapter       cloudFramewkInPort.ParameterPort
 
-		configFile = []byte("config.hcl")
+		configFile        = []byte("config.hcl")
+		dbconnectionParam string
 	)
-
-	uri := "mongodb://db,db1,db2/accountEd?replicaSet=rs0"
 
 	logFrameworkOutAdapter = logger.NewAdapter()
 	go logFrameworkOutAdapter.Initialize()
@@ -48,21 +48,22 @@ func main() {
 	k := configAdapter.GetConfig(configFile)
 
 	e = json.Unmarshal(k, &config)
-
 	if e != nil {
 		logFrameworkOutAdapter.Log("fatal", e.Error())
 	}
 
-	cloudAdapter = cloud.NewAdapter(logFrameworkOutAdapter.Log, config)
-	c, _ := cloudAdapter.LoadCreds()
+	cloudAdapter = cloudFramewkInAdapter.NewAdapter(logFrameworkOutAdapter.Log, config)
+	c := cloudAdapter.LoadCreds()
 
-	e = json.Unmarshal(c, &config)
+	parameterAdapter = cloudFramewkInAdapter.NewAdapter(logFrameworkOutAdapter.Log, config)
+	dbconnectionParam = config["DbConnectionParam"].(string)
 
+	uri, e := parameterAdapter.GetSecret(c, &dbconnectionParam)
 	if e != nil {
-		logFrameworkOutAdapter.Log("fatal", e.Error())
+		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to get db secret: %v", e))
 	}
 
-	accountTypeDbAdapter, e = dbFramewkOutAdapter.NewAdapter(k, logFrameworkOutAdapter.Log, uri)
+	accountTypeDbAdapter, e = dbFramewkOutAdapter.NewAdapter(k, logFrameworkOutAdapter.Log, *uri)
 	if e != nil {
 		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to instantiate db connection: %v", e))
 	}

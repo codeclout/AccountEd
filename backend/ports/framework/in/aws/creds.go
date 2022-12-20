@@ -1,5 +1,7 @@
 package aws
 
-type Credentials interface {
-	LoadCreds() ([]byte, error)
+import "github.com/aws/aws-sdk-go-v2/aws"
+
+type CredentialsPort interface {
+	LoadCreds() *aws.Config
 }

@@ -43,8 +43,7 @@ func NewAdapter(c []byte, logger sl, uri string) (*Adapter, error) {
 
 	s, ok := config["DbConnectionTimeout"].(float64)
 	if !ok {
-		logger("error", fmt.Sprintf("Expecting float64 and received %T", s))
-		return &Adapter{}, errors.New("invalid type for limit")
+		logger("fatal", fmt.Sprintf("Expecting float64 and received %T", s))
 	}
 
 	t := time.Duration(int64(s)) * time.Second
