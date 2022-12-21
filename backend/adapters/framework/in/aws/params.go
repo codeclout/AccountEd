@@ -61,7 +61,8 @@ func (a *Adapter) GetSecret(in *aws.Config, id *string) (*string, error) {
 	}
 
 	result, e := client.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(*secretId.Parameter.Value),
+		SecretId:     aws.String(*secretId.Parameter.Value),
+		VersionStage: aws.String("AWSCURRENT"),
 	})
 
 	if e != nil {

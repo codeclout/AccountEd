@@ -74,7 +74,6 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 	}
 
 	result, e := a.api.CreateAccountType(t.AccountType)
-
 	if e != nil {
 		a.log("error", e.Error())
 
@@ -87,7 +86,7 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 		}
 
 		return c.JSON(requests.RequestErrorWithRetry{
-			Msg:         fmt.Sprintf("%s | %s", f, t.AccountType),
+			Msg:         fmt.Sprintf("%s | %s", f, *t.AccountType),
 			ShouldRetry: requests.ShouldRetryRequest(c.Response().StatusCode()),
 		})
 	}
@@ -175,8 +174,8 @@ func (a *Adapter) HandleUpdateAccountType(id []byte, i interface{}) error {
 
 	c := i.(*fiber.Ctx)
 	json.Valid(id)
-	e := json.Unmarshal(id, &t)
 
+	e := json.Unmarshal(id, &t)
 	if e != nil {
 		a.log("error", e.Error())
 
@@ -188,7 +187,26 @@ func (a *Adapter) HandleUpdateAccountType(id []byte, i interface{}) error {
 	}
 
 	b, e := json.Marshal(t)
+	if e != nil {
+		a.log("error", e.Error())
+
+		_ = c.SendStatus(400)
+		return c.JSON(requests.RequestErrorWithRetry{
+			Msg:         string(requests.ErrorInvalidJSON),
+			ShouldRetry: requests.ShouldRetryRequest(400),
+		})
+	}
+
 	r, e := a.api.UpdateAccountType(b)
+	if e != nil {
+		a.log("error", e.Error())
+
+		_ = c.SendStatus(500)
+		return c.JSON(requests.RequestErrorWithRetry{
+			Msg:         string(requests.ErrorFailedAction),
+			ShouldRetry: requests.ShouldRetryRequest(500),
+		})
+	}
 
 	return c.JSON(r)
 }
