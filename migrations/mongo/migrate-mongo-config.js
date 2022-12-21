@@ -2,7 +2,10 @@
 
 const config = {
   mongodb: {
-    url: "mongodb://db1:27017,db2:27018,db3:27019/accountEd?replicaSet=rs0",
+    url:
+      process.env.DB_STRING ||
+      "mongodb://db1:27017,db2:27018,db3:27019/accountEd?replicaSet=rs0",
+    databaseName: "accountEd",
 
     options: {
       useNewUrlParser: true, // removes a deprecation warning when connecting
