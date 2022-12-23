@@ -15,32 +15,38 @@ type (
 )
 
 type Adapter struct {
-	config c
-	log    l
+	cloudConfig *aws.Config
+	config      c
+	log         l
 }
 
-func NewAdapter(logger l, runtimeConfig c) *Adapter {
-	return &Adapter{
-		config: runtimeConfig,
-		log:    logger,
-	}
-}
-
-func (a *Adapter) LoadCreds() *aws.Config {
-	var (
-		roleArn = a.config["AwsRoleToAssume"].(string)
-	)
-
+func getCreds(logger l, roleArn string) *aws.Config {
 	cfg, e := config.LoadDefaultConfig(context.TODO())
-
 	if e != nil {
-		a.log("fatal", e.Error())
+		logger("fatal", e.Error())
 	}
 
 	client := sts.NewFromConfig(cfg)
-
 	creds := stscreds.NewAssumeRoleProvider(client, roleArn)
 	cfg.Credentials = aws.NewCredentialsCache(creds)
 
 	return &cfg
+}
+
+func NewAdapter(logger l, runtimeConfig c) *Adapter {
+	var (
+		roleArn = runtimeConfig["AwsRoleToAssume"].(string)
+	)
+
+	cfg := getCreds(logger, roleArn)
+
+	return &Adapter{
+		cloudConfig: cfg,
+		config:      runtimeConfig,
+		log:         logger,
+	}
+}
+
+func (a *Adapter) LoadCreds() *aws.Config {
+	return getCreds(a.log, a.config["AwsRoleToAssume"].(string))
 }

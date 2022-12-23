@@ -24,14 +24,14 @@ func (a *Adapter) FindParameter(c context.Context, api *ssm.Client, input *ssm.G
 	return api.GetParameter(c, input)
 }
 
-func (a *Adapter) GetParam(in *aws.Config, name *string) (*[]byte, error) {
+func (a *Adapter) GetParam(name *string) (*[]byte, error) {
 
-	client := ssm.NewFromConfig(*in)
+	client := ssm.NewFromConfig(*a.cloudConfig)
 	out := &ssm.GetParameterInput{
 		Name: name,
 	}
-	result, e := a.FindParameter(context.TODO(), client, out)
 
+	result, e := a.FindParameter(context.TODO(), client, out)
 	if e != nil {
 		a.log("fatal", e.Error())
 	}
@@ -41,15 +41,15 @@ func (a *Adapter) GetParam(in *aws.Config, name *string) (*[]byte, error) {
 	return &b, nil
 }
 
-func (a *Adapter) GetSecret(in *aws.Config, id *string) (*string, error) {
+func (a *Adapter) GetSecret(id *string) (*string, error) {
 	var (
 		e        error
 		secretId *ssm.GetParameterOutput
 	)
 
-	client := secretsmanager.NewFromConfig(*in)
+	client := secretsmanager.NewFromConfig(*a.cloudConfig)
 
-	s, e := a.GetParam(in, id)
+	s, e := a.GetParam(id)
 	if e != nil {
 		a.log("fatal", e.Error())
 	}

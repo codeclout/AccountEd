@@ -32,11 +32,10 @@ func main() {
 		accountTypeDbAdapter   dbFramewkOutPort.UserAccountTypeDbPort
 		accountTypeCoreAdapter acctTypeCorePort.UserAccountTypeCorePort
 		accountTypeApiAdapter  acctTypeApiPort.UserAccountTypeApiPort
-		cloudAdapter           cloudFramewkInPort.CredentialsPort
+		cloudAdapter           cloudFramewkInPort.ParameterPort
 		configAdapter          hclFramewkInPort.RuntimeConfigPort
 		httpFrameworkInAdapter httpFramewkInPort.HttpFrameworkInPort
 		logFrameworkOutAdapter loggerFramewkOutPort.LogFrameworkOutPort
-		parameterAdapter       cloudFramewkInPort.ParameterPort
 
 		configFile        = []byte("config.hcl")
 		dbconnectionParam string
@@ -54,12 +53,9 @@ func main() {
 	}
 
 	cloudAdapter = cloudFramewkInAdapter.NewAdapter(logFrameworkOutAdapter.Log, config)
-	c := cloudAdapter.LoadCreds()
-
-	parameterAdapter = cloudFramewkInAdapter.NewAdapter(logFrameworkOutAdapter.Log, config)
 	dbconnectionParam = config["DbConnectionParam"].(string)
 
-	uri, e := parameterAdapter.GetSecret(c, &dbconnectionParam)
+	uri, e := cloudAdapter.GetSecret(&dbconnectionParam)
 	if e != nil {
 		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to get db secret: %v", e))
 	}
