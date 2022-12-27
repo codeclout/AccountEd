@@ -65,3 +65,5 @@ node_modules
 
 # Ignore build stuff
 dist
+backend/__debug_bin
+/backend/accountEd

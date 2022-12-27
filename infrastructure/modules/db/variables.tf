@@ -41,6 +41,6 @@ variable "mongodb_version" {
 
 # IP Address Access
 variable "ip_address" {
-  type        = string
+  type        = list(string)
   description = "IP address used to access Atlas cluster"
 }
