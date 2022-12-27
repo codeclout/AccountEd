@@ -55,8 +55,3 @@ resource "mongodbatlas_advanced_cluster" "atlas_cluster" {
 
   mongo_db_major_version = "6.0"
 }
-
-# Use terraform output to display connection strings.
-output "connection_strings" {
-  value = mongodbatlas_cluster.atlas_cluster.connection_strings.0.standard_srv
-}

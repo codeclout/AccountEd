@@ -33,11 +33,13 @@ variable "atlas_cluster_instance_size" {
 }
 
 variable "aws_region" {
-  type = string
+  default = "us-east-2"
+  type    = string
 }
 
 variable "environment" {
-  type = string
+  default = "dev"
+  type    = string
 
   validation {
     condition     = can(regex("^dev$|^prod$", var.environment))

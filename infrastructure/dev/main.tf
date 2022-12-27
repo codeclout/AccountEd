@@ -17,7 +17,25 @@ provider "aws" {
   }
 }
 
+locals {
+  environment = "dev"
+}
+
 # GITHUB_TOKEN required in the environment to authenticate with GitHub
 provider "github" {
   token = var.GITHUB_TOKEN
+}
+
+module "database" {
+  source = "../modules/db"
+
+  ATLAS_ORG_ID       = var.ATLAS_ORG_ID
+  ATLAS_PROJECT_NAME = var.ATLAS_PROJECT_NAME
+
+  environment    = var.environment
+  ip_access_list = var.ip_access_list
+
+  mongo_db              = "accountEd"
+  mongo_db_cluster_name = var.mongo_db_cluster_name
+  mongo_db_role_arn     = var.mongo_db_role_arn
 }

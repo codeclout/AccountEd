@@ -1,4 +1,14 @@
 # Atlas Organization ID 
+variable "ATLAS_ORG_ID" {
+  type        = string
+  description = ""
+}
+
+variable "ATLAS_PROJECT_NAME" {
+  type        = string
+  description = ""
+}
+
 variable "atlas_org_id" {
   type        = string
   description = "Atlas Organization ID"
