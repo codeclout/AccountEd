@@ -34,7 +34,7 @@ resource "mongodbatlas_advanced_cluster" "atlas_cluster" {
   backup_enabled = true
 
   replication_specs {
-    regions_config {
+    region_configs {
 
       electable_specs {
         instance_size = var.atlas_cluster_instance_size
@@ -46,12 +46,12 @@ resource "mongodbatlas_advanced_cluster" "atlas_cluster" {
         node_count    = 1
       }
 
-      provider_name = "AWS"
+      provider_name = var.cloud_provider
       priority      = 1
-      region_name   = upper(var.aws_region)
+      region_name   = var.atlas_region
     }
 
   }
 
-  mongo_db_major_version = "6.0"
+  mongo_db_major_version = var.mongodb_version
 }

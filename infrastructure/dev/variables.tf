@@ -27,6 +27,11 @@ variable "GITHUB_TOKEN" {
   type = string
 }
 
+variable "MONGO_CLUSTER_NAME" {
+  type        = string
+  description = ""
+}
+
 variable "atlas_cluster_instance_size" {
   type    = string
   default = "M10"
@@ -66,3 +71,4 @@ variable "mongo_db_cluster_name" {
   type        = string
   description = "Atlas db cluster name"
 }
+

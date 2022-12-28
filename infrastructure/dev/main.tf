@@ -32,10 +32,11 @@ module "database" {
   ATLAS_ORG_ID       = var.ATLAS_ORG_ID
   ATLAS_PROJECT_NAME = var.ATLAS_PROJECT_NAME
 
-  environment    = var.environment
-  ip_access_list = var.ip_access_list
+  atlas_region = upper(var.aws_region)
+  environment  = var.environment
+  ip_address   = var.ip_access_list
 
-  mongo_db              = "accountEd"
-  mongo_db_cluster_name = var.mongo_db_cluster_name
-  mongo_db_role_arn     = var.mongo_db_role_arn
+  mongo_db_cluster_name = var.MONGO_CLUSTER_NAME
+  mongo_db_role_arn     = var.AWS_CI_ROLE_TO_ASSUME
+
 }
