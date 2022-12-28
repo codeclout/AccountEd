@@ -33,7 +33,7 @@ module "database" {
   ATLAS_PROJECT_NAME = var.ATLAS_PROJECT_NAME
 
   atlas_region = upper(var.aws_region)
-  environment  = var.environment
+  environment  = local.environment
   ip_address   = var.ip_access_list
 
   mongo_db_cluster_name = var.MONGO_CLUSTER_NAME
