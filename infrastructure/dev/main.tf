@@ -33,7 +33,7 @@ module "database" {
   ATLAS_ORG_ID       = var.ATLAS_ORG_ID
   ATLAS_PROJECT_NAME = var.ATLAS_PROJECT_NAME
 
-  atlas_region = upper(var.aws_region)
+  atlas_region = var.ATLAS_REGION
   environment  = local.environment
   ip_address   = var.ip_access_list
 

@@ -28,6 +28,11 @@ variable "AWS_SECRET_KEY_NO_CREDS" {
   description = "IAM user with no permissions"
 }
 
+variable "ATLAS_REGION" {
+  type        = string
+  description = ""
+}
+
 variable "GITHUB_TOKEN" {
   type = string
 }
