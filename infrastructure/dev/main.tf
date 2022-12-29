@@ -29,6 +29,7 @@ provider "github" {
 module "database" {
   source = "../modules/db"
 
+  ATLAS_API_KEY_ID   = var.ATLAS_API_KEY_ID
   ATLAS_ORG_ID       = var.ATLAS_ORG_ID
   ATLAS_PROJECT_NAME = var.ATLAS_PROJECT_NAME
 
