@@ -1,3 +1,8 @@
+variable "ATLAS_API_KEY_ID" {
+  type        = string
+  description = "Atlas org API key ID"
+}
+
 # Atlas Organization ID 
 variable "ATLAS_ORG_ID" {
   type        = string

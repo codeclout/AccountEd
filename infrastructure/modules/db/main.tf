@@ -7,8 +7,6 @@ terraform {
   }
 }
 
-provider "mongodbatlas" {}
-
 resource "mongodbatlas_project" "atlas_project" {
   name   = var.ATLAS_PROJECT_NAME
   org_id = var.ATLAS_ORG_ID
