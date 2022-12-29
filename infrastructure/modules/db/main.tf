@@ -7,9 +7,16 @@ terraform {
   }
 }
 
+provider "mongodbatlas" {}
+
 resource "mongodbatlas_project" "atlas_project" {
   name   = var.ATLAS_PROJECT_NAME
   org_id = var.ATLAS_ORG_ID
+
+  api_keys {
+    api_key_id = var.ATLAS_API_KEY_ID
+    role_names = ["GROUP_OWNER"]
+  }
 }
 
 # Create an Atlas Admin Database User

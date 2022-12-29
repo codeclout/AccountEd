@@ -57,11 +57,6 @@ variable "ip_access_list" {
   description = "List of ip addresses with access to the db"
 }
 
-variable "mongo_db_role_arn" {
-  type        = string
-  description = "ARN of role to assume for access to the db"
-}
-
 variable "mongo_db" {
   type    = string
   default = "accountEd"

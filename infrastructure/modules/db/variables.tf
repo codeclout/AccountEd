@@ -59,5 +59,5 @@ variable "mongo_db_cluster_name" {
 
 variable "mongo_db_role_arn" {
   type        = string
-  description = ""
+  description = "ARN of role to assume for access to the db"
 }
