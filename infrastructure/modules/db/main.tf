@@ -52,7 +52,7 @@ resource "mongodbatlas_advanced_cluster" "atlas_cluster" {
       }
 
       provider_name = var.cloud_provider
-      priority      = 1
+      priority      = 7
       region_name   = var.atlas_region
     }
 
