@@ -18,7 +18,9 @@ provider "aws" {
 }
 
 locals {
-  environment = "dev"
+  app_codename = "accountEd"
+  environment  = "dev"
+  param_suffix = "dbcs"
 }
 
 # GITHUB_TOKEN required in the environment to authenticate with GitHub
@@ -49,4 +51,10 @@ resource "aws_secretsmanager_secret" "db_secret_name" {
 resource "aws_secretsmanager_secret_version" "db_secret" {
   secret_id     = aws_secretsmanager_secret.db_secret_name.id
   secret_string = module.database.connection_strings
+}
+
+resource "aws_ssm_parameter" "db_secret_param" {
+  name  = "/${var.environment}/db/${local.app_codename}/${local.param_suffix}"
+  type  = "SecureString"
+  value = aws_secretsmanager_secret.db_secret_name.name
 }
