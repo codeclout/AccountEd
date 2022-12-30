@@ -41,3 +41,12 @@ module "database" {
   mongo_db_role_arn     = var.AWS_CI_ROLE_TO_ASSUME
 
 }
+
+resource "aws_secretsmanager_secret" "db_secret_name" {
+  name = "${var.environment}-${module.database.cluster_id}-${var.db_connection_string_secret_name}"
+}
+
+resource "aws_secretsmanager_secret_version" "db_secret" {
+  secret_id     = aws_secretsmanager_secret.db_secret_name.id
+  secret_string = module.database.connection_strings
+}

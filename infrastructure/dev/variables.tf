@@ -52,6 +52,11 @@ variable "aws_region" {
   type    = string
 }
 
+variable "db_connection_string_secret_name" {
+  type        = string
+  description = "Name of the DB connection string secret"
+}
+
 variable "environment" {
   default = "dev"
   type    = string
