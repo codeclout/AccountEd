@@ -3,6 +3,8 @@ package aws
 import (
 	"context"
 	"encoding/json"
+	"net/url"
+	"regexp"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
@@ -25,10 +27,12 @@ func (a *Adapter) FindParameter(c context.Context, api *ssm.Client, input *ssm.G
 }
 
 func (a *Adapter) GetParam(name *string) (*[]byte, error) {
+	var t = true
 
 	client := ssm.NewFromConfig(*a.cloudConfig)
 	out := &ssm.GetParameterInput{
-		Name: name,
+		Name:           name,
+		WithDecryption: &t,
 	}
 
 	result, e := a.FindParameter(context.TODO(), client, out)
@@ -70,4 +74,22 @@ func (a *Adapter) GetSecret(id *string) (*string, error) {
 	}
 
 	return result.SecretString, nil
+}
+
+func (a *Adapter) GetRoleConnectionString(in *string) (*string, error) {
+	var s *string
+
+	creds, _ := a.cloudConfig.Credentials.Retrieve(context.TODO())
+
+	r := regexp.MustCompile(`(?m)^(.+[+srv?]:\/\/)(.+)`)
+	g := r.FindStringSubmatch(*in)
+
+	if len(g) >= 3 {
+		uri := g[1] + creds.AccessKeyID + ":" + *aws.String(url.QueryEscape(creds.SecretAccessKey)) + "@" + g[2] + "/?authSource=%24external&authMechanism=MONGODB-AWS&retryWrites=true&w=majority&authMechanismProperties=AWS_SESSION_TOKEN:" + *aws.String(url.QueryEscape(creds.SessionToken))
+		s = &uri
+
+		return s, nil
+	}
+
+	return in, nil
 }

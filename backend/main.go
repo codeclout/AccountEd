@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 
 	acctTypeApiAdapter "github.com/codeclout/AccountEd/adapters/app/api/account-types"
 	acctTypeCoreAdapter "github.com/codeclout/AccountEd/adapters/core/account-types"
@@ -60,7 +59,9 @@ func main() {
 		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to get db secret: %v", e))
 	}
 
-	accountTypeDbAdapter, e = dbFramewkOutAdapter.NewAdapter(k, logFrameworkOutAdapter.Log, url.QueryEscape(*uri))
+	u, _ := cloudAdapter.GetRoleConnectionString(uri)
+
+	accountTypeDbAdapter, e = dbFramewkOutAdapter.NewAdapter(k, logFrameworkOutAdapter.Log, *u)
 	if e != nil {
 		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to instantiate db connection: %v", e))
 	}
