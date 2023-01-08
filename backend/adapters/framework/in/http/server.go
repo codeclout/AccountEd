@@ -8,13 +8,13 @@ import (
 	"strings"
 
 	"github.com/codeclout/AccountEd/adapters/framework/in/http/middleware"
-	ports "github.com/codeclout/AccountEd/ports/api/account-types"
+	port "github.com/codeclout/AccountEd/ports/api/account-types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 )
 
 type l func(level, msg string)
-type p ports.UserAccountTypeApiPort
+type p port.UserAccountTypeApiPort
 
 type Adapter struct {
 	api p

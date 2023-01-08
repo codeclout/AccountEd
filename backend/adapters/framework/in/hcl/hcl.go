@@ -12,11 +12,16 @@ import (
 
 type l func(level string, msg string)
 
-// Config represents the runtime configuration of the service
-type Config struct {
+// DatabaseConfig represents the static runtime configuration of the service
+type DatabaseConfig struct {
+	StaticDbConfig StaticDbConfig `hcl:"db,block"`
+}
+
+type StaticDbConfig struct {
 	DbConnectionTimeout int64  `hcl:"database_connection_timeout"`
 	DbName              string `hcl:"database_name"`
 	DefaultListLimit    int64  `hcl:"default_list_count_limit"`
+	UseMongoDb          bool   `hcl:"use_mongo_db"`
 }
 
 type ENV struct {
@@ -29,7 +34,7 @@ type ENV struct {
 }
 
 type RuntimeConfig struct {
-	*Config
+	*StaticDbConfig
 	*ENV
 }
 
@@ -37,7 +42,7 @@ type RequestConfig struct {
 }
 
 type Adapter struct {
-	config  Config
+	config  DatabaseConfig
 	log     l
 	runtime RuntimeConfig
 }
@@ -49,19 +54,19 @@ func NewAdapter(logger l) *Adapter {
 }
 
 func (a *Adapter) GetConfig(path []byte) []byte {
-	var config Config
+	var dbStaticConfig DatabaseConfig
 	wd, _ := os.Getwd()
 
 	configFileLocation := filepath.Join(wd, string(path))
-	e := hclsimple.DecodeFile(configFileLocation, nil, &config)
+	e := hclsimple.DecodeFile(configFileLocation, nil, &dbStaticConfig)
 
 	if e != nil {
 		x, ok := e.(hcl.Diagnostics)
 
 		if ok {
-			a.log("fatal", fmt.Sprintf("Failed to load runtime config: %s", e.(hcl.Diagnostics)[0].Summary))
+			a.log("fatal", fmt.Sprintf("Failed to load runtime dbStaticConfig: %s", e.(hcl.Diagnostics)[0].Summary))
 		} else {
-			a.log("fatal", fmt.Sprintf("Failed to get runtime config: %v", x))
+			a.log("fatal", fmt.Sprintf("Failed to get runtime dbStaticConfig: %v", x))
 		}
 	}
 
@@ -74,7 +79,7 @@ func (a *Adapter) GetConfig(path []byte) []byte {
 		DbConnectionParam:  os.Getenv("DB_CONNECTION_PARAM"),
 	}
 
-	a.runtime.Config = &config
+	a.runtime.StaticDbConfig = &dbStaticConfig.StaticDbConfig
 	a.runtime.ENV = &env
 
 	b, e := json.Marshal(a.runtime)

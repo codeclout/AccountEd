@@ -1,106 +1,38 @@
-package db
+package account_types
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
-	"time"
 
-	ports "github.com/codeclout/AccountEd/ports/framework/out/db"
+	"github.com/codeclout/AccountEd/adapters/framework/out/storage"
+	ports "github.com/codeclout/AccountEd/ports/framework/out/storage"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
-
-type m map[string]interface{}
-type sl func(level, msg string)
 
 var (
 	accountTypeCollectionName = []byte("account_type")
-	config                    m
 )
 
 type Adapter struct {
-	cancel context.CancelFunc
-	client *mongo.Client
-	config m
-	ctx    context.Context
-	db     *mongo.Database
-	log    sl
+	actions storage.MongoActions
+	log     func(level, msg string)
 }
 
-type WriteError struct {
-	mongo.WriteException
-	Message string
-}
-
-func NewAdapter(c []byte, logger sl, uri string) (*Adapter, error) {
-	_ = json.Unmarshal(c, &config)
-
-	s, ok := config["DbConnectionTimeout"].(float64)
-	if !ok {
-		logger("fatal", fmt.Sprintf("Expecting float64 and received %T", s))
-	}
-
-	t := time.Duration(int64(s)) * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), t)
-
-	client, e := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	if e != nil {
-		logger("fatal", fmt.Sprintf("db connection failed %v", e))
-	}
-
-	e = client.Ping(ctx, readpref.Primary())
-	if e != nil {
-		logger("fatal", fmt.Sprintf("db ping failed: %v", e))
-	}
-
-	database := client.Database(config["DbName"].(string))
-
-	a := Adapter{
-		cancel: cancel,
-		client: client,
-		config: config,
-		ctx:    context.TODO(),
-		db:     database,
-		log:    logger,
-	}
-
-	logger("info", "db connected")
-	return &a, nil
-}
-
-func (a *Adapter) CloseConnection() {
-	defer a.cancel()
-	if e := a.client.Disconnect(a.ctx); e != nil {
-		panic(e)
-	}
-}
-
-func (a WriteError) Error() string {
-	var x []string
-
-	if len(a.WriteException.WriteErrors) == 1 {
-		return a.WriteException.WriteErrors[0].Message
-	}
-
-	for i, v := range a.WriteException.WriteErrors {
-		x[i] = v.Message
-	}
-
-	return strings.Join(x[:], ",")
+func NewAdapter(m *storage.MongoActions, logger func(level, msg string)) *Adapter {
+	return &Adapter{actions: *m, log: logger}
 }
 
 func (a *Adapter) InsertAccountType(data []byte) (ports.InsertID, error) {
 	var in map[string]interface{}
 	var out ports.InsertID
 
-	collection := a.db.Collection(string(accountTypeCollectionName))
-	t := a.getTimeStamp()
+	collection := a.actions.Db.Collection(string(accountTypeCollectionName))
+	t := a.actions.GetTimeStamp()
 
 	e := json.Unmarshal(data, &in)
 	if e != nil {
@@ -111,13 +43,14 @@ func (a *Adapter) InsertAccountType(data []byte) (ports.InsertID, error) {
 	in["created_at"] = t
 	in["modified_at"] = t
 
-	result, e := collection.InsertOne(a.ctx, bson.M(in))
+	result, e := collection.InsertOne(context.TODO(), bson.M(in))
 
 	if e != nil {
 		a.log("error", e.Error())
 
 		mongoError := e.(mongo.WriteException)
-		return out, WriteError{Message: e.Error(), WriteException: mongoError}
+
+		return out, mongoError.WriteErrors
 	}
 
 	return ports.InsertID{InsertedID: result.InsertedID}, nil
@@ -127,8 +60,8 @@ func (a *Adapter) GetAccountTypes(v int64) ([]byte, error) {
 	// slice of map
 	var t []bson.M
 
-	collection := a.db.Collection(string(accountTypeCollectionName))
-	limit, ok := a.config["DefaultListLimit"].(float64)
+	collection := a.actions.Db.Collection(string(accountTypeCollectionName))
+	limit, ok := a.actions.StorageAdapter.RuntimeConfig["DefaultListLimit"].(float64)
 
 	if !ok {
 		a.log("error", fmt.Sprintf("Expecting float64 and received %T", limit))
@@ -140,14 +73,14 @@ func (a *Adapter) GetAccountTypes(v int64) ([]byte, error) {
 	}
 
 	o := options.Find().SetLimit(int64(limit))
-	cs, e := collection.Find(a.ctx, bson.M{}, o)
+	cs, e := collection.Find(context.TODO(), bson.M{}, o)
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("error inserting account type: %v", e))
 		return nil, e
 	}
 
-	if e = cs.All(a.ctx, &t); e != nil {
+	if e = cs.All(context.TODO(), &t); e != nil {
 		a.log("error", fmt.Sprintf("Results decode failed: %v", e))
 		return nil, e
 	}
@@ -160,7 +93,7 @@ func (a *Adapter) GetAccountTypes(v int64) ([]byte, error) {
 func (a *Adapter) RemoveAccountType(id string) ([]byte, error) {
 	var s map[string]interface{}
 
-	collection := a.db.Collection(string(accountTypeCollectionName))
+	collection := a.actions.Db.Collection(string(accountTypeCollectionName))
 	mid, e := primitive.ObjectIDFromHex(id)
 
 	if e != nil {
@@ -168,7 +101,7 @@ func (a *Adapter) RemoveAccountType(id string) ([]byte, error) {
 		return nil, e
 	}
 
-	e = collection.FindOneAndDelete(a.ctx, bson.D{{Key: "_id", Value: mid}}, nil).Decode(&s)
+	e = collection.FindOneAndDelete(context.TODO(), bson.D{{Key: "_id", Value: mid}}, nil).Decode(&s)
 	if e != nil {
 		a.log("error", e.Error())
 		return nil, e
@@ -186,10 +119,10 @@ func (a *Adapter) RemoveAccountType(id string) ([]byte, error) {
 func (a *Adapter) UpdateAccountType(in []byte) ([]byte, error) {
 	var s map[string]string
 
-	collection := a.db.Collection(string(accountTypeCollectionName))
+	collection := a.actions.Db.Collection(string(accountTypeCollectionName))
 
 	_ = json.Unmarshal(in, &s)
-	t := a.getTimeStamp()
+	t := a.actions.GetTimeStamp()
 
 	x, e := primitive.ObjectIDFromHex(s["id"])
 	if e != nil {
@@ -200,12 +133,12 @@ func (a *Adapter) UpdateAccountType(in []byte) ([]byte, error) {
 	f := bson.D{{Key: "_id", Value: x}}
 	u := bson.D{{Key: "$set", Value: bson.D{{Key: "account_type", Value: s["accountType"]}, {Key: "modified_at", Value: t}}}}
 
-	r, e := collection.UpdateOne(a.ctx, f, u)
+	r, e := collection.UpdateOne(context.TODO(), f, u)
 	if e != nil {
 		a.log("error", e.Error())
 
 		mongoError := e.(mongo.WriteException)
-		return nil, WriteError{Message: e.Error(), WriteException: mongoError}
+		return nil, mongoError.WriteErrors
 	}
 
 	b, e := json.Marshal(r)
@@ -224,7 +157,7 @@ func (a *Adapter) GetAccountTypeById(in []byte) ([]byte, error) {
 		s map[string]string
 	)
 
-	collection := a.db.Collection(string(accountTypeCollectionName))
+	collection := a.actions.Db.Collection(string(accountTypeCollectionName))
 
 	e = json.Unmarshal(in, &s)
 	if e != nil {
@@ -239,7 +172,7 @@ func (a *Adapter) GetAccountTypeById(in []byte) ([]byte, error) {
 	}
 
 	f := bson.D{{Key: "_id", Value: x}}
-	e = collection.FindOne(a.ctx, f).Decode(&n)
+	e = collection.FindOne(context.TODO(), f).Decode(&n)
 	if e != nil {
 		a.log("error", e.Error())
 		return nil, e

@@ -4,20 +4,25 @@ import (
 	"encoding/json"
 	"fmt"
 
-	acctTypeApiAdapter "github.com/codeclout/AccountEd/adapters/app/api/account-types"
-	acctTypeCoreAdapter "github.com/codeclout/AccountEd/adapters/core/account-types"
-	cloudFramewkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/aws"
-	hclFramewkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/hcl"
-	httpFramewkInAdapter "github.com/codeclout/AccountEd/adapters/framework/in/http"
-	dbFramewkOutAdapter "github.com/codeclout/AccountEd/adapters/framework/out/db"
+	cloudAdapterIn "github.com/codeclout/AccountEd/adapters/framework/in/aws"
+	hclAdapterIn "github.com/codeclout/AccountEd/adapters/framework/in/hcl"
+	httpAdapterIn "github.com/codeclout/AccountEd/adapters/framework/in/http"
+	cloudPortIn "github.com/codeclout/AccountEd/ports/framework/in/aws"
+	hclPortIn "github.com/codeclout/AccountEd/ports/framework/in/hcl"
+	httpPortIn "github.com/codeclout/AccountEd/ports/framework/in/http"
+
+	accountTypeAdapterAPI "github.com/codeclout/AccountEd/adapters/api/account-types"
+	accountTypeAdapterCore "github.com/codeclout/AccountEd/adapters/core/account-types"
+	accountTypeAdapterOut "github.com/codeclout/AccountEd/adapters/framework/out/account-types"
+
+	accountTypePortAPI "github.com/codeclout/AccountEd/ports/api/account-types"
+	accountTypePortCore "github.com/codeclout/AccountEd/ports/core/account-types"
+
+	storageAdapterOut "github.com/codeclout/AccountEd/adapters/framework/out/storage"
+	logPortOut "github.com/codeclout/AccountEd/ports/framework/out/logger"
+	storagePortOut "github.com/codeclout/AccountEd/ports/framework/out/storage"
+
 	"github.com/codeclout/AccountEd/adapters/framework/out/logger"
-	acctTypeApiPort "github.com/codeclout/AccountEd/ports/api/account-types"
-	acctTypeCorePort "github.com/codeclout/AccountEd/ports/core/account-types"
-	cloudFramewkInPort "github.com/codeclout/AccountEd/ports/framework/in/aws"
-	hclFramewkInPort "github.com/codeclout/AccountEd/ports/framework/in/hcl"
-	httpFramewkInPort "github.com/codeclout/AccountEd/ports/framework/in/http"
-	dbFramewkOutPort "github.com/codeclout/AccountEd/ports/framework/out/db"
-	loggerFramewkOutPort "github.com/codeclout/AccountEd/ports/framework/out/logger"
 )
 
 var (
@@ -28,51 +33,57 @@ func main() {
 	var (
 		e error
 
-		accountTypeDbAdapter   dbFramewkOutPort.UserAccountTypeDbPort
-		accountTypeCoreAdapter acctTypeCorePort.UserAccountTypeCorePort
-		accountTypeApiAdapter  acctTypeApiPort.UserAccountTypeApiPort
-		cloudAdapter           cloudFramewkInPort.ParameterPort
-		configAdapter          hclFramewkInPort.RuntimeConfigPort
-		httpFrameworkInAdapter httpFramewkInPort.HttpFrameworkInPort
-		logFrameworkOutAdapter loggerFramewkOutPort.LogFrameworkOutPort
+		accountTypeCoreAdapter    accountTypePortCore.UserAccountTypeCorePort
+		accountTypeApiAdapter     accountTypePortAPI.UserAccountTypeApiPort
+		cloudAdapter              cloudPortIn.ParameterPort
+		httpInAdapter             httpPortIn.HttpFrameworkInPort
+		logAdapterOut             logPortOut.LogFrameworkOutPort
+		runtimeConfigAdapter      hclPortIn.RuntimeConfigPort
+		storageDefaultAdapter     storagePortOut.StoragePort
+		storageAccountTypeAdapter storagePortOut.AccountTypeActionPort
 
 		configFile        = []byte("config.hcl")
 		dbconnectionParam string
 	)
 
-	logFrameworkOutAdapter = logger.NewAdapter()
-	go logFrameworkOutAdapter.Initialize()
+	logAdapterOut = logger.NewAdapter()
 
-	configAdapter = hclFramewkInAdapter.NewAdapter(logFrameworkOutAdapter.Log)
-	k := configAdapter.GetConfig(configFile)
+	go logAdapterOut.Initialize()
+	defer logAdapterOut.Sync()
 
-	e = json.Unmarshal(k, &config)
+	runtimeConfigAdapter = hclAdapterIn.NewAdapter(logAdapterOut.Log)
+	rtc := runtimeConfigAdapter.GetConfig(configFile)
+
+	e = json.Unmarshal(rtc, &config)
 	if e != nil {
-		logFrameworkOutAdapter.Log("fatal", e.Error())
+		logAdapterOut.Log("fatal", e.Error())
 	}
 
-	cloudAdapter = cloudFramewkInAdapter.NewAdapter(logFrameworkOutAdapter.Log, config)
+	cloudAdapter = cloudAdapterIn.NewAdapter(logAdapterOut.Log, config)
 	dbconnectionParam = config["DbConnectionParam"].(string)
 
 	uri, e := cloudAdapter.GetSecret(&dbconnectionParam)
 	if e != nil {
-		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to get db secret: %v", e))
+		logAdapterOut.Log("fatal", fmt.Sprintf("Failed to get db secret: %v", e))
 	}
 
-	u, _ := cloudAdapter.GetRoleConnectionString(uri)
-
-	accountTypeDbAdapter, e = dbFramewkOutAdapter.NewAdapter(k, logFrameworkOutAdapter.Log, *u)
+	u, e := cloudAdapter.GetRoleConnectionString(uri)
 	if e != nil {
-		logFrameworkOutAdapter.Log("fatal", fmt.Sprintf("Failed to instantiate db connection: %v", e))
+		logAdapterOut.Log("fatal", "unable to retrieve IAM role connection string")
 	}
 
-	accountTypeCoreAdapter = acctTypeCoreAdapter.NewAdapter(logFrameworkOutAdapter.Log)
-	accountTypeApiAdapter = acctTypeApiAdapter.NewAdapter(accountTypeCoreAdapter, accountTypeDbAdapter, logFrameworkOutAdapter.Log)
-	httpFrameworkInAdapter = httpFramewkInAdapter.NewAdapter(accountTypeApiAdapter, logFrameworkOutAdapter.Log)
+	storageAdapter, e := storageAdapterOut.NewAdapter(rtc, logAdapterOut.Log, u)
+	storageDefaultAdapter = storageAdapter
 
-	defer logFrameworkOutAdapter.Sync()
-	defer accountTypeDbAdapter.CloseConnection()
+	storageDefaultAdapter.Initialize()
+	defer storageDefaultAdapter.CloseConnection()
 
-	logFrameworkOutAdapter.Log("info", "application starting")
-	httpFrameworkInAdapter.Run(logFrameworkOutAdapter.HttpMiddlewareLogger)
+	storageAccountTypeAdapter = accountTypeAdapterOut.NewAdapter(storageAdapter.GetMongoAccountTypeActions(), logAdapterOut.Log)
+
+	accountTypeCoreAdapter = accountTypeAdapterCore.NewAdapter(logAdapterOut.Log)
+	accountTypeApiAdapter = accountTypeAdapterAPI.NewAdapter(accountTypeCoreAdapter, storageAccountTypeAdapter, logAdapterOut.Log)
+	httpInAdapter = httpAdapterIn.NewAdapter(accountTypeApiAdapter, logAdapterOut.Log)
+
+	logAdapterOut.Log("info", "application starting")
+	httpInAdapter.Run(logAdapterOut.HttpMiddlewareLogger)
 }
