@@ -15,7 +15,27 @@ type MongoActions struct {
 	Cancel         context.CancelFunc
 	Client         *mongo.Client
 	Db             *mongo.Database
+	WriteError     MongoWriteError
 	StorageAdapter *Adapter
+}
+
+type MongoWriteError struct {
+	Msg *mongo.WriteErrors
+}
+
+func (e MongoWriteError) Error() string {
+	var s string
+
+	for i, v := range *e.Msg {
+		if i == 0 {
+			s = v.Message
+			continue
+		}
+
+		s = s + "," + v.Message
+	}
+
+	return s
 }
 
 func (a *Adapter) NewMongoDb(srv string) *MongoActions {
@@ -48,25 +68,25 @@ func (a *Adapter) NewMongoDb(srv string) *MongoActions {
 	}
 }
 
-func (ma *MongoActions) GetTimeStamp() primitive.DateTime {
+func (m *MongoActions) GetTimeStamp() primitive.DateTime {
 	now := time.Now()
 	t := time.Unix(0, now.UnixNano()).UTC()
 
 	return primitive.NewDateTimeFromTime(t)
 }
 
-func (ma *MongoActions) Initialize() {
-	e := ma.Client.Ping(context.TODO(), readpref.Primary())
+func (m *MongoActions) Initialize() {
+	e := m.Client.Ping(context.TODO(), readpref.Primary())
 	if e != nil {
-		ma.StorageAdapter.log("fatal", fmt.Sprintf("db ping failed: %v", e))
+		m.StorageAdapter.log("fatal", fmt.Sprintf("db ping failed: %v", e))
 	}
 
-	ma.StorageAdapter.log("info", "successfully connected to the database")
+	m.StorageAdapter.log("info", "successfully connected to the database")
 }
 
-func (ma *MongoActions) CloseConnection() {
-	defer ma.Cancel()
-	if e := ma.Client.Disconnect(context.TODO()); e != nil {
+func (m *MongoActions) CloseConnection() {
+	defer m.Cancel()
+	if e := m.Client.Disconnect(context.TODO()); e != nil {
 		panic(e)
 	}
 }

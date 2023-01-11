@@ -24,12 +24,15 @@ type Adapter struct {
 }
 
 func NewAdapter(m *storage.MongoActions, logger func(level, msg string)) *Adapter {
-	return &Adapter{actions: *m, log: logger}
+	return &Adapter{
+		actions: *m,
+		log:     logger,
+	}
 }
 
-func (a *Adapter) InsertAccountType(data []byte) (ports.InsertID, error) {
+func (a *Adapter) InsertAccountType(data []byte) (*[]byte, error) {
 	var in map[string]interface{}
-	var out ports.InsertID
+	var out []byte
 
 	collection := a.actions.Db.Collection(string(accountTypeCollectionName))
 	t := a.actions.GetTimeStamp()
@@ -37,7 +40,7 @@ func (a *Adapter) InsertAccountType(data []byte) (ports.InsertID, error) {
 	e := json.Unmarshal(data, &in)
 	if e != nil {
 		a.log("error", fmt.Sprintf("invalid payload: %v", e))
-		return out, e
+		return &out, e
 	}
 
 	in["created_at"] = t
@@ -49,11 +52,17 @@ func (a *Adapter) InsertAccountType(data []byte) (ports.InsertID, error) {
 		a.log("error", e.Error())
 
 		mongoError := e.(mongo.WriteException)
+		a.actions.WriteError.Msg = &mongoError.WriteErrors
 
-		return out, mongoError.WriteErrors
+		return &out, errors.New(a.actions.WriteError.Error())
 	}
 
-	return ports.InsertID{InsertedID: result.InsertedID}, nil
+	id := ports.InsertId(result.InsertedID.(primitive.ObjectID).Hex())
+	r := ports.InsertAccountOutput{InsertId: &id, TimeStamp: &t}
+
+	out, _ = json.Marshal(&r)
+
+	return &out, nil
 }
 
 func (a *Adapter) GetAccountTypes(v int64) ([]byte, error) {
@@ -130,15 +139,17 @@ func (a *Adapter) UpdateAccountType(in []byte) ([]byte, error) {
 		return nil, e
 	}
 
-	f := bson.D{{Key: "_id", Value: x}}
-	u := bson.D{{Key: "$set", Value: bson.D{{Key: "account_type", Value: s["accountType"]}, {Key: "modified_at", Value: t}}}}
+	k := bson.D{{Key: "_id", Value: x}}
+	d := bson.D{{Key: "$set", Value: bson.D{{Key: "account_type", Value: s["accountType"]}, {Key: "modified_at", Value: t}}}}
 
-	r, e := collection.UpdateOne(context.TODO(), f, u)
+	r, e := collection.UpdateOne(context.TODO(), k, d)
 	if e != nil {
 		a.log("error", e.Error())
 
 		mongoError := e.(mongo.WriteException)
-		return nil, mongoError.WriteErrors
+		a.actions.WriteError.Msg = &mongoError.WriteErrors
+
+		return nil, errors.New(a.actions.WriteError.Error())
 	}
 
 	b, e := json.Marshal(r)

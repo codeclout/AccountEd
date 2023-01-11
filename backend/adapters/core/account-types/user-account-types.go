@@ -22,12 +22,12 @@ func NewAdapter(logger func(level string, msg string)) *Adapter {
 }
 
 // NewAccountType - Responsible for returning the result of a new account type create.
-func (a *Adapter) NewAccountType(id interface{}, name string, timestamp string) (*ports.NewAccountTypeOutput, error) {
+func (a *Adapter) NewAccountType(id *string, name *string, timestamp *string) (*ports.NewAccountTypeOutput, error) {
 	return &ports.NewAccountTypeOutput{
-		AccountType: name,
-		CreatedAt:   timestamp,
-		ID:          id,
-		ModifiedAt:  timestamp,
+		AccountType: *name,
+		CreatedAt:   *timestamp,
+		ID:          *id,
+		ModifiedAt:  *timestamp,
 	}, nil
 }
 

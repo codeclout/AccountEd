@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/codeclout/AccountEd/adapters/framework/in/http/requests"
 	"github.com/go-playground/validator/v10"
@@ -43,7 +44,7 @@ func (a *Adapter) handlePostAccountType(c *fiber.Ctx) error {
 }
 
 func (a *Adapter) HandleCreateAccountType(i interface{}) error {
-	var f string = "there was an issue"
+	var f string
 	var t CreateAccountTypeInput
 
 	c := i.(*fiber.Ctx)
@@ -75,13 +76,13 @@ func (a *Adapter) HandleCreateAccountType(i interface{}) error {
 	if e != nil {
 		a.log("error", e.Error())
 
-		// if strings.Contains(e.(storage.WriteError).Message, "duplicate key") {
-		// 	_ = c.SendStatus(400)
-		// 	f = string(requests.ErrorDuplicateKey)
-		// } else {
-		// 	_ = c.SendStatus(500)
-		// 	f = string(requests.ErrorFailedAction)
-		// }
+		if strings.Contains(e.Error(), "duplicate key") {
+			_ = c.SendStatus(400)
+			f = string(requests.ErrorDuplicateKey)
+		} else {
+			_ = c.SendStatus(500)
+			f = string(requests.ErrorFailedAction)
+		}
 
 		return c.JSON(requests.RequestErrorWithRetry{
 			Msg:         fmt.Sprintf("%s | %s", f, *t.AccountType),

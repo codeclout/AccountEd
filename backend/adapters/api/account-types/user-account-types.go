@@ -3,7 +3,7 @@ package account
 import (
 	"encoding/json"
 	"fmt"
-	"time"
+	"strconv"
 
 	port "github.com/codeclout/AccountEd/ports/core/account-types"
 	storagePort "github.com/codeclout/AccountEd/ports/framework/out/storage"
@@ -26,11 +26,12 @@ func NewAdapter(act port.UserAccountTypeCorePort, db storagePort.AccountTypeActi
 }
 
 // CreateAccountType - The account_type field has a unique constraint, therefore an error might occur.
-func (a *Adapter) CreateAccountType(name *string) (port.NewAccountTypeOutput, error) {
-	var in port.NewAccountTypeInput
-	var out port.NewAccountTypeOutput
-
-	t := time.Unix(time.Now().Unix(), 0).Format(time.RFC3339)
+func (a *Adapter) CreateAccountType(name *string) (*port.NewAccountTypeOutput, error) {
+	var (
+		in                  port.NewAccountTypeInput
+		out                 port.NewAccountTypeOutput
+		insertAccountOutput storagePort.InsertAccountOutput
+	)
 
 	in.AccountType = *name
 
@@ -38,24 +39,32 @@ func (a *Adapter) CreateAccountType(name *string) (port.NewAccountTypeOutput, er
 
 	if e != nil {
 		a.log("error", e.Error())
-		return out, e
+		return &out, e
 	}
 
-	insertId, e := a.db.InsertAccountType(payload)
+	insertOutput, e := a.db.InsertAccountType(payload)
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("Account type creation failed: %v", e))
-		return out, e
+		return &out, e
 	}
 
-	result, e := a.accountTypeCore.NewAccountType(insertId.InsertedID, *name, t)
+	e = json.Unmarshal(*insertOutput, &insertAccountOutput)
+	if e != nil {
+		a.log("error", fmt.Sprintf("Account type insert, output operation failed: %v", e))
+		return &out, e
+	}
+
+	id := string(*insertAccountOutput.InsertId)
+	t := strconv.FormatInt(int64(*insertAccountOutput.TimeStamp), 10)
+	result, e := a.accountTypeCore.NewAccountType(&id, name, &t)
 
 	if e != nil {
 		a.log("error", fmt.Sprintf("Core account type processing failed: %v", e))
-		return out, e
+		return &out, e
 	}
 
-	return *result, nil
+	return result, nil
 }
 
 func (a *Adapter) GetAccountTypes(v int64) ([]port.NewAccountTypeOutput, error) {
