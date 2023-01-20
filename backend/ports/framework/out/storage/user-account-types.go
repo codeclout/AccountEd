@@ -10,9 +10,9 @@ type InsertAccountOutput struct {
 }
 
 type AccountTypeActionPort interface {
-	GetAccountTypes(limit int64) ([]byte, error)
-	InsertAccountType(acctType []byte) (*[]byte, error)
-	RemoveAccountType(id string) ([]byte, error)
-	UpdateAccountType(in []byte) ([]byte, error)
-	GetAccountTypeById(in []byte) ([]byte, error)
+	GetAccountTypes(limit *int16) (*[]byte, error)
+	InsertAccountType(acctType *[]byte) (*[]byte, error)
+	RemoveAccountType(id *string) (*[]byte, error)
+	UpdateAccountType(accountTypeName, accountTypeId *string) (*int64, error)
+	GetAccountTypeById(id *string) (*[]byte, error)
 }

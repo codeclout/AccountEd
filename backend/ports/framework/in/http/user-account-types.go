@@ -1,9 +1,9 @@
 package ports
 
 type UserAccountPort interface {
-	HandleCreateAccountType(i interface{}) error
-	HandleListAccountTypes(limit int64, i interface{}) error
-	HandleRemoveAccountType(i interface{}) error
-	HandleUpdateAccountType(id []byte, i interface{}) error
-	HandleFetchAccountType(i interface{}) error
+	HandleCreateAccountType(createAccountTypeInput *string) (interface{}, error)
+	HandleListAccountTypes(listLimit *int16) (interface{}, error)
+	HandleRemoveAccountType(accountType *string) (interface{}, error)
+	HandleUpdateAccountType(newAccountType, accountTypeId *string) (interface{}, error)
+	HandleFetchAccountType(accountTypeId *string) (interface{}, error)
 }

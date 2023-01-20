@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 var v *validator.Validate
 
 type AccountTypeInput struct {
-	Id string `json:"id" validate:"required"`
+	Id *string `json:"id" validate:"required"`
 }
 
 type CreateAccountTypeInput struct {
@@ -25,218 +26,222 @@ type UpdateAccountTypeInput struct {
 	CreateAccountTypeInput
 }
 
-// initUserRoutes - Registers methods for the user account type routes
+// initUserRoutes - Registers handlers for the user account type routes
 func (a *Adapter) initUserRoutes() *fiber.App {
 	var accountType = fiber.New()
 
-	accountType.Delete("/user-account-type", a.handleDeleteAccountType)
-	accountType.Get("/user-account-type", a.handleGetAccountType)
-	accountType.Get("/user-account-types", a.handleGetAccountTypes)
-	accountType.Post("/user-account-type", a.handlePostAccountType)
-	accountType.Put("/user-account-type", a.handlePutAccountType)
+	accountType.Delete("/user-account-type", a.processDeleteAccountType)
+	accountType.Get("/user-account-type", a.processGetAccountType)
+	accountType.Get("/user-account-types", a.processListAccountTypes)
+	accountType.Post("/user-account-type", a.processPostAccountType)
+	accountType.Put("/user-account-type", a.processPutAccountType)
 
 	return accountType
 }
 
-// HandlePostAccountType - wraps the handler to create a new account type
-func (a *Adapter) handlePostAccountType(c *fiber.Ctx) error {
-	return a.HandleCreateAccountType(c)
-}
-
-func (a *Adapter) HandleCreateAccountType(i interface{}) error {
-	var f string
+func (a *Adapter) processPostAccountType(ctx *fiber.Ctx) error {
 	var t CreateAccountTypeInput
 
-	c := i.(*fiber.Ctx)
-	var payload = c.Body()
-
+	payload := ctx.Body()
 	if e := json.Unmarshal(payload, &t); e != nil {
 		a.log("error", e.Error())
 
-		_ = c.SendStatus(400)
-		return c.JSON(requests.RequestErrorWithRetry{
+		_ = ctx.SendStatus(400)
+		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         string(requests.ErrorInvalidJSON),
 			ShouldRetry: requests.ShouldRetryRequest(400),
 		})
 	}
 
 	v = validator.New()
-
 	if e := v.Struct(t); e != nil {
 		a.log("error", e.Error())
 
-		_ = c.SendStatus(400)
-		return c.JSON(requests.RequestErrorWithRetry{
+		_ = ctx.SendStatus(400)
+		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         string(requests.ErrorFailedRequestValidation),
 			ShouldRetry: requests.ShouldRetryRequest(400),
 		})
 	}
 
-	result, e := a.api.CreateAccountType(t.AccountType)
+	result, e := a.HandleCreateAccountType(t.AccountType)
+	if e != nil {
+		if e.Error() == "duplicate" {
+			_ = ctx.SendStatus(400)
+		} else {
+			_ = ctx.SendStatus(500)
+		}
+
+		return ctx.JSON(requests.RequestErrorWithRetry{
+			Msg:         fmt.Sprintf("%s | %s", e.Error(), *t.AccountType),
+			ShouldRetry: requests.ShouldRetryRequest(ctx.Response().StatusCode()),
+		})
+	}
+
+	return ctx.JSON(result)
+}
+
+func (a *Adapter) HandleCreateAccountType(in *string) (interface{}, error) {
+	var f []byte
+
+	result, e := a.api.CreateAccountType(in)
 	if e != nil {
 		a.log("error", e.Error())
 
 		if strings.Contains(e.Error(), "duplicate key") {
-			_ = c.SendStatus(400)
-			f = string(requests.ErrorDuplicateKey)
+			f = requests.ErrorDuplicateKey
 		} else {
-			_ = c.SendStatus(500)
-			f = string(requests.ErrorFailedAction)
+			f = requests.ErrorFailedAction
 		}
 
-		return c.JSON(requests.RequestErrorWithRetry{
-			Msg:         fmt.Sprintf("%s | %s", f, *t.AccountType),
-			ShouldRetry: requests.ShouldRetryRequest(c.Response().StatusCode()),
-		})
+		return nil, errors.New(string(f))
 	}
 
-	return c.JSON(result)
+	return result, nil
 }
 
-func (a *Adapter) handleGetAccountTypes(c *fiber.Ctx) error {
-	q := c.Query("limit")
+func (a *Adapter) processListAccountTypes(ctx *fiber.Ctx) error {
+	q := ctx.Query("limit")
 
-	limit := a.getRequestLimit(q)
-	return a.HandleListAccountTypes(limit, c)
-}
+	limit := a.getRequestLimit(&q)
+	result, e := a.HandleListAccountTypes(limit)
+	if e != nil {
+		_ = ctx.SendStatus(500)
 
-func (a *Adapter) HandleListAccountTypes(limit int64, i interface{}) error {
-	c := i.(*fiber.Ctx)
-
-	if result, e := a.api.GetAccountTypes(limit); e != nil {
-		a.log("error", e.Error())
-
-		_ = c.SendStatus(500)
-		return c.JSON(requests.RequestErrorWithRetry{
-			Msg:         string(requests.ErrorFailedAction),
+		return ctx.JSON(requests.RequestErrorWithRetry{
+			Msg:         e.Error(),
 			ShouldRetry: requests.ShouldRetryRequest(500),
 		})
-	} else {
-		return c.JSON(result)
 	}
+
+	return ctx.JSON(result)
 }
 
-func (a *Adapter) handleDeleteAccountType(c *fiber.Ctx) error {
-	return a.HandleRemoveAccountType(c)
+func (a *Adapter) HandleListAccountTypes(in *int16) (interface{}, error) {
+	result, e := a.api.GetAccountTypes(in)
+	if e != nil {
+		a.log("error", e.Error())
+		return nil, errors.New(string(requests.ErrorFailedAction))
+	}
+
+	return result, nil
 }
 
-func (a *Adapter) HandleRemoveAccountType(i interface{}) error {
+func (a *Adapter) processDeleteAccountType(ctx *fiber.Ctx) error {
 	var t AccountTypeInput
 
-	c := i.(*fiber.Ctx)
-	id := c.Body()
-
+	id := ctx.Body()
 	if e := json.Unmarshal(id, &t); e != nil {
 		a.log("error", e.Error())
 
-		_ = c.SendStatus(400)
-		return c.JSON(requests.RequestErrorWithRetry{
+		_ = ctx.SendStatus(400)
+		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         string(requests.ErrorInvalidJSON),
 			ShouldRetry: requests.ShouldRetryRequest(400),
 		})
 	}
 
 	v = validator.New()
-
 	if e := v.Struct(t); e != nil {
 		a.log("error", e.Error())
 
-		_ = c.SendStatus(400)
-		return c.JSON(requests.RequestErrorWithRetry{
+		_ = ctx.SendStatus(400)
+		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         string(requests.ErrorFailedRequestValidation),
 			ShouldRetry: requests.ShouldRetryRequest(400),
 		})
 	}
 
-	result, e := a.api.RemoveAccountType(t.Id)
-
+	result, e := a.HandleRemoveAccountType(t.Id)
 	if e != nil {
-		a.log("error", e.Error())
-
-		_ = c.SendStatus(500)
-		return c.JSON(requests.RequestErrorWithRetry{
-			Msg:         string(requests.ErrorFailedAction),
+		_ = ctx.SendStatus(500)
+		return ctx.JSON(requests.RequestErrorWithRetry{
+			Msg:         e.Error(),
 			ShouldRetry: requests.ShouldRetryRequest(500),
 		})
 	}
 
-	return c.JSON(result)
+	return ctx.JSON(result)
 }
 
-func (a *Adapter) handlePutAccountType(c *fiber.Ctx) error {
-	id := c.Body()
-	return a.HandleUpdateAccountType(id, c)
+func (a *Adapter) HandleRemoveAccountType(accountType *string) (interface{}, error) {
+	result, e := a.api.RemoveAccountType(accountType)
+	if e != nil {
+		a.log("error", e.Error())
+		return nil, errors.New(string(requests.ErrorFailedAction))
+	}
+
+	return result, nil
 }
 
-func (a *Adapter) HandleUpdateAccountType(id []byte, i interface{}) error {
+func (a *Adapter) processPutAccountType(ctx *fiber.Ctx) error {
 	var t UpdateAccountTypeInput
 
-	c := i.(*fiber.Ctx)
-	json.Valid(id)
-
+	id := ctx.Body()
 	e := json.Unmarshal(id, &t)
 	if e != nil {
 		a.log("error", e.Error())
 
-		_ = c.SendStatus(400)
-		return c.JSON(requests.RequestErrorWithRetry{
+		_ = ctx.SendStatus(400)
+		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         string(requests.ErrorInvalidJSON),
 			ShouldRetry: requests.ShouldRetryRequest(400),
 		})
 	}
 
-	b, e := json.Marshal(t)
+	result, e := a.HandleUpdateAccountType(t.AccountType, t.Id)
 	if e != nil {
-		a.log("error", e.Error())
-
-		_ = c.SendStatus(400)
-		return c.JSON(requests.RequestErrorWithRetry{
-			Msg:         string(requests.ErrorInvalidJSON),
-			ShouldRetry: requests.ShouldRetryRequest(400),
-		})
-	}
-
-	r, e := a.api.UpdateAccountType(b)
-	if e != nil {
-		a.log("error", e.Error())
-
-		_ = c.SendStatus(500)
-		return c.JSON(requests.RequestErrorWithRetry{
-			Msg:         string(requests.ErrorFailedAction),
+		_ = ctx.SendStatus(500)
+		return ctx.JSON(requests.RequestErrorWithRetry{
+			Msg:         e.Error(),
 			ShouldRetry: requests.ShouldRetryRequest(500),
 		})
 	}
 
-	return c.JSON(r)
+	return ctx.JSON(result)
 }
 
-func (a *Adapter) handleGetAccountType(c *fiber.Ctx) error {
-	return a.HandleFetchAccountType(c)
+func (a *Adapter) HandleUpdateAccountType(accountType, id *string) (interface{}, error) {
+	result, e := a.api.UpdateAccountType(accountType, id)
+	if e != nil {
+		a.log("error", e.Error())
+		return nil, errors.New(string(requests.ErrorFailedAction))
+	}
+
+	return result, nil
 }
 
-func (a *Adapter) HandleFetchAccountType(i interface{}) error {
+func (a *Adapter) processGetAccountType(ctx *fiber.Ctx) error {
 	var t AccountTypeInput
 
-	c := i.(*fiber.Ctx)
-
-	if e := c.QueryParser(&t); e != nil {
+	if e := ctx.QueryParser(&t); e != nil {
 		a.log("error", e.Error())
 
-		_ = c.SendStatus(400)
-
-		return c.JSON(requests.RequestErrorWithRetry{
+		_ = ctx.SendStatus(400)
+		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         string(requests.ErrorInvalidJSON),
 			ShouldRetry: requests.ShouldRetryRequest(400),
 		})
 	}
 
-	b, _ := json.Marshal(t)
-	r, e := a.api.FetchAccountType(b)
-
+	result, e := a.HandleFetchAccountType(t.Id)
 	if e != nil {
-		a.log("error", e.Error())
-		return e
+		_ = ctx.SendStatus(400)
+		return ctx.JSON(requests.RequestErrorWithRetry{
+			Msg:         e.Error(),
+			ShouldRetry: requests.ShouldRetryRequest(400),
+		})
 	}
 
-	return c.JSON(r)
+	return ctx.JSON(result)
+}
+
+func (a *Adapter) HandleFetchAccountType(id *string) (interface{}, error) {
+	result, e := a.api.FetchAccountType(id)
+	if e != nil {
+		a.log("error", e.Error())
+		return nil, errors.New(string(requests.ErrorFailedAction))
+	}
+
+	return result, nil
 }

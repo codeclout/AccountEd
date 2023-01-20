@@ -4,17 +4,17 @@ import (
 	"strconv"
 )
 
-func (a *Adapter) getRequestLimit(q string) int64 {
-	var limit int64
+func (a *Adapter) getRequestLimit(q *string) *int16 {
+	var limit int16 = -1
 
-	if len(q) > 0 {
-		n, e := strconv.ParseInt(q, 10, 16)
+	if len(*q) > 0 {
+		n, e := strconv.ParseInt(*q, 10, 16)
 		if e != nil {
-			limit = -1
+			return &limit
 		}
 
-		limit = n
+		limit = int16(n)
 	}
 
-	return limit
+	return &limit
 }
