@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/codeclout/AccountEd/adapters/framework/in/http/requests"
@@ -26,17 +27,16 @@ type UpdateAccountTypeInput struct {
 	CreateAccountTypeInput
 }
 
-// initUserRoutes - Registers handlers for the user account type routes
-func (a *Adapter) initUserRoutes() *fiber.App {
-	var accountType = fiber.New()
+// initUserAccountTypeRoutes - Registers handlers for the user account type routes
+func (a *Adapter) initUserAccountTypeRoutes(app *fiber.App) *fiber.App {
 
-	accountType.Delete("/user-account-type", a.processDeleteAccountType)
-	accountType.Get("/user-account-type", a.processGetAccountType)
-	accountType.Get("/user-account-types", a.processListAccountTypes)
-	accountType.Post("/user-account-type", a.processPostAccountType)
-	accountType.Put("/user-account-type", a.processPutAccountType)
+	app.Delete("/user-account-type", a.processDeleteAccountType)
+	app.Get("/user-account-type", a.processGetAccountType)
+	app.Get("/user-account-types", a.processListAccountTypes)
+	app.Post("/user-account-type", a.processPostAccountType)
+	app.Put("/user-account-type", a.processPutAccountType)
 
-	return accountType
+	return app
 }
 
 func (a *Adapter) processPostAccountType(ctx *fiber.Ctx) error {
@@ -84,7 +84,7 @@ func (a *Adapter) processPostAccountType(ctx *fiber.Ctx) error {
 func (a *Adapter) HandleCreateAccountType(in *string) (interface{}, error) {
 	var f []byte
 
-	result, e := a.api.CreateAccountType(in)
+	result, e := a.userAccountTypeApi.CreateAccountType(in)
 	if e != nil {
 		a.log("error", e.Error())
 
@@ -106,7 +106,7 @@ func (a *Adapter) processListAccountTypes(ctx *fiber.Ctx) error {
 	limit := a.getRequestLimit(&q)
 	result, e := a.HandleListAccountTypes(limit)
 	if e != nil {
-		_ = ctx.SendStatus(500)
+		_ = ctx.SendStatus(http.StatusInternalServerError)
 
 		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         e.Error(),
@@ -118,7 +118,7 @@ func (a *Adapter) processListAccountTypes(ctx *fiber.Ctx) error {
 }
 
 func (a *Adapter) HandleListAccountTypes(in *int16) (interface{}, error) {
-	result, e := a.api.GetAccountTypes(in)
+	result, e := a.userAccountTypeApi.GetAccountTypes(in)
 	if e != nil {
 		a.log("error", e.Error())
 		return nil, errors.New(string(requests.ErrorFailedAction))
@@ -165,7 +165,7 @@ func (a *Adapter) processDeleteAccountType(ctx *fiber.Ctx) error {
 }
 
 func (a *Adapter) HandleRemoveAccountType(accountType *string) (interface{}, error) {
-	result, e := a.api.RemoveAccountType(accountType)
+	result, e := a.userAccountTypeApi.RemoveAccountType(accountType)
 	if e != nil {
 		a.log("error", e.Error())
 		return nil, errors.New(string(requests.ErrorFailedAction))
@@ -182,19 +182,19 @@ func (a *Adapter) processPutAccountType(ctx *fiber.Ctx) error {
 	if e != nil {
 		a.log("error", e.Error())
 
-		_ = ctx.SendStatus(400)
+		_ = ctx.SendStatus(http.StatusBadRequest)
 		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         string(requests.ErrorInvalidJSON),
-			ShouldRetry: requests.ShouldRetryRequest(400),
+			ShouldRetry: requests.ShouldRetryRequest(http.StatusBadRequest),
 		})
 	}
 
 	result, e := a.HandleUpdateAccountType(t.AccountType, t.Id)
 	if e != nil {
-		_ = ctx.SendStatus(500)
+		_ = ctx.SendStatus(http.StatusInternalServerError)
 		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         e.Error(),
-			ShouldRetry: requests.ShouldRetryRequest(500),
+			ShouldRetry: requests.ShouldRetryRequest(http.StatusInternalServerError),
 		})
 	}
 
@@ -202,7 +202,7 @@ func (a *Adapter) processPutAccountType(ctx *fiber.Ctx) error {
 }
 
 func (a *Adapter) HandleUpdateAccountType(accountType, id *string) (interface{}, error) {
-	result, e := a.api.UpdateAccountType(accountType, id)
+	result, e := a.userAccountTypeApi.UpdateAccountType(accountType, id)
 	if e != nil {
 		a.log("error", e.Error())
 		return nil, errors.New(string(requests.ErrorFailedAction))
@@ -217,19 +217,19 @@ func (a *Adapter) processGetAccountType(ctx *fiber.Ctx) error {
 	if e := ctx.QueryParser(&t); e != nil {
 		a.log("error", e.Error())
 
-		_ = ctx.SendStatus(400)
+		_ = ctx.SendStatus(http.StatusBadRequest)
 		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         string(requests.ErrorInvalidJSON),
-			ShouldRetry: requests.ShouldRetryRequest(400),
+			ShouldRetry: requests.ShouldRetryRequest(http.StatusBadRequest),
 		})
 	}
 
 	result, e := a.HandleFetchAccountType(t.Id)
 	if e != nil {
-		_ = ctx.SendStatus(400)
+		_ = ctx.SendStatus(http.StatusBadRequest)
 		return ctx.JSON(requests.RequestErrorWithRetry{
 			Msg:         e.Error(),
-			ShouldRetry: requests.ShouldRetryRequest(400),
+			ShouldRetry: requests.ShouldRetryRequest(http.StatusBadRequest),
 		})
 	}
 
@@ -237,7 +237,7 @@ func (a *Adapter) processGetAccountType(ctx *fiber.Ctx) error {
 }
 
 func (a *Adapter) HandleFetchAccountType(id *string) (interface{}, error) {
-	result, e := a.api.FetchAccountType(id)
+	result, e := a.userAccountTypeApi.FetchAccountType(id)
 	if e != nil {
 		a.log("error", e.Error())
 		return nil, errors.New(string(requests.ErrorFailedAction))

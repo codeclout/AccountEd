@@ -9,28 +9,33 @@ import (
 
 	"github.com/codeclout/AccountEd/adapters/framework/in/http/middleware"
 	port "github.com/codeclout/AccountEd/ports/api/account-types"
+	postalCodePortAPI "github.com/codeclout/AccountEd/ports/api/postal-codes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 )
 
 type l func(level, msg string)
-type p port.UserAccountTypeApiPort
 
 type Adapter struct {
-	api p
-	log l
+	postalCodeApi      postalCodePortAPI.PostalCodeApiPort
+	userAccountTypeApi port.UserAccountTypeApiPort
+	log                l
 }
 
-func NewAdapter(api p, logger l) *Adapter {
+func NewAdapter(accountTypeApi port.UserAccountTypeApiPort, postalCodeApi postalCodePortAPI.PostalCodeApiPort, logger l) *Adapter {
 	return &Adapter{
-		api: api,
-		log: logger,
+		log:                logger,
+		postalCodeApi:      postalCodeApi,
+		userAccountTypeApi: accountTypeApi,
 	}
 }
 
 func (a *Adapter) Run(middlewareLogger func(msg ...interface{})) {
 	app := fiber.New(fiber.Config{})
-	accountRoutes := a.initUserRoutes()
+	api := fiber.New()
+
+	_ = a.initUserAccountTypeRoutes(api)
+	_ = a.initPostalCodeRoutes(api)
 
 	app.Use(middleware.NewLoggerMiddleware(middleware.Config{
 		Log: middlewareLogger,
@@ -41,7 +46,8 @@ func (a *Adapter) Run(middlewareLogger func(msg ...interface{})) {
 	app.Use(etag.New())
 	//app.Use(AirCollision412())
 
-	app.Mount("/v1/api", accountRoutes)
+	app.Mount("/v1/api", api)
+
 	log.Fatal(app.Listen(getPort()))
 }
 

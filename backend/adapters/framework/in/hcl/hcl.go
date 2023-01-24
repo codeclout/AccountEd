@@ -31,6 +31,7 @@ type ENV struct {
 	AwsSecretAccessKey string
 	AwsSessionName     string
 	DbConnectionParam  string
+	MapKey             string
 }
 
 type RuntimeConfig struct {
@@ -77,6 +78,7 @@ func (a *Adapter) GetConfig(path []byte) []byte {
 		AwsSecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
 		AwsSessionName:     os.Getenv("AWS_SESSION_NAME"),
 		DbConnectionParam:  os.Getenv("DB_CONNECTION_PARAM"),
+		MapKey:             os.Getenv("GCP_MAP_API_KEY"),
 	}
 
 	a.runtime.StaticDbConfig = &dbStaticConfig.StaticDbConfig

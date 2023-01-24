@@ -49,6 +49,7 @@ func (a *Adapter) Initialize() {
 		a.mongoActions = dbActions
 	}
 }
+
 func (a *Adapter) CloseConnection() {
 	if a.RuntimeConfig["UseMongoDb"].(bool) && a.isRegisteredMongo {
 		a.mongoActions.CloseConnection()
