@@ -3,7 +3,7 @@ package http
 import (
   "net/http"
 
-  "github.com/codeclout/AccountEd/adapters/framework/in/http/requests"
+  "github.com/codeclout/AccountEd/internal/adapters/framework/in/http/requests"
   "github.com/gofiber/fiber/v2"
 )
 

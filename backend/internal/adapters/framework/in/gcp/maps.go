@@ -12,6 +12,7 @@ import (
 type Adapter struct {
   client        *maps.Client
   log           func(level, msg string)
+  mapApiKey     string
   runtimeConfig map[string]interface{}
 }
 
@@ -29,15 +30,21 @@ func NewAdapter(runtimeConfig map[string]interface{}, logger func(level, msg str
   return &Adapter{
     client:        client,
     log:           logger,
+    mapApiKey:     mapKey,
     runtimeConfig: runtimeConfig,
   }
 }
 
 func (a *Adapter) GetAddressDetails(address *string) (map[string]interface{}, error) {
   var data map[string]interface{}
-  var uri = "https://maps.googleapis.com/maps/api/geocode/json?" + "address=" + url.QueryEscape(*address) + "&" + "key=" + a.runtimeConfig["MapKey"].(string)
+  var host = "https://maps.googleapis.com/maps/api/geocode/json?"
+  var query = "address=" + url.QueryEscape(*address) + "&" + "key=" + a.mapApiKey
 
-  resp, _ := http.Get(uri)
+  resp, e := http.Get(host + query)
+  if e != nil {
+    a.log("error", e.Error())
+    return nil, e
+  }
 
   defer func(Body io.ReadCloser) {
     e := Body.Close()
@@ -46,7 +53,11 @@ func (a *Adapter) GetAddressDetails(address *string) (map[string]interface{}, er
     }
   }(resp.Body)
 
-  b, _ := io.ReadAll(resp.Body)
+  b, e := io.ReadAll(resp.Body)
+  if e != nil {
+    a.log("error", e.Error())
+    return nil, e
+  }
 
   _ = json.Unmarshal(b, &data)
   results := data["results"].([]interface{})

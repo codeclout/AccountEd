@@ -1,6 +1,8 @@
 package postal_codes
 
-import port "github.com/codeclout/AccountEd/ports/core/postal-codes"
+import (
+  port "github.com/codeclout/AccountEd/internal/ports/core/postal-codes"
+)
 
 type Adapter struct {
   log func(level, msg string)

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	port "github.com/codeclout/AccountEd/ports/core/account-types"
-	storagePort "github.com/codeclout/AccountEd/ports/framework/out/storage"
+	port "github.com/codeclout/AccountEd/internal/ports/core/account-types"
+	storagePort "github.com/codeclout/AccountEd/internal/ports/framework/out/storage"
 )
 
 type l func(l string, m string)

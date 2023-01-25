@@ -1,7 +1,7 @@
 package account_types
 
 import (
-	ports "github.com/codeclout/AccountEd/ports/core/account-types"
+  ports "github.com/codeclout/AccountEd/internal/ports/core/account-types"
 )
 
 type UserAccountTypeApiPort interface {

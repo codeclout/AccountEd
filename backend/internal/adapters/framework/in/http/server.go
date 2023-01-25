@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/codeclout/AccountEd/adapters/framework/in/http/middleware"
-	port "github.com/codeclout/AccountEd/ports/api/account-types"
-	postalCodePortAPI "github.com/codeclout/AccountEd/ports/api/postal-codes"
+	"github.com/codeclout/AccountEd/internal/adapters/framework/in/http/middleware"
+	port "github.com/codeclout/AccountEd/internal/ports/api/account-types"
+	postalCodePortAPI "github.com/codeclout/AccountEd/internal/ports/api/postal-codes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 )

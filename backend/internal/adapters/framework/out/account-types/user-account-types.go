@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/codeclout/AccountEd/adapters/framework/out/storage"
-	ports "github.com/codeclout/AccountEd/ports/framework/out/storage"
+	"github.com/codeclout/AccountEd/internal/adapters/framework/out/storage"
+	"github.com/codeclout/AccountEd/internal/ports/framework/out/storage"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

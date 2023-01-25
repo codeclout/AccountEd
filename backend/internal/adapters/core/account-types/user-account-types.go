@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	ports "github.com/codeclout/AccountEd/ports/core/account-types"
+	ports "github.com/codeclout/AccountEd/internal/ports/core/account-types"
 )
 
 // Adapter - Core adapter for the account pkg

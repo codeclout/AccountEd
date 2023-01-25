@@ -1,8 +1,8 @@
 package postal_codes
 
 import (
-  ports "github.com/codeclout/AccountEd/ports/core/postal-codes"
-  "github.com/codeclout/AccountEd/ports/framework/in/gcp"
+  ports "github.com/codeclout/AccountEd/internal/ports/core/postal-codes"
+  "github.com/codeclout/AccountEd/internal/ports/framework/in/gcp"
 )
 
 type Adapter struct {

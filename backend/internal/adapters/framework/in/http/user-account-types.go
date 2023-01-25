@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/codeclout/AccountEd/adapters/framework/in/http/requests"
+	"github.com/codeclout/AccountEd/internal/adapters/framework/in/http/requests"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
