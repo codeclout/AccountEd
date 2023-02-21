@@ -6,9 +6,8 @@ resource "aws_iam_policy" "bucket-role-access" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:*"
+        Effect = "Deny"
+        Action = "s3:*"
         Resource = [
           "arn:aws:s3:::${var.role_access_bucket_name}",
           "arn:aws:s3:::${var.role_access_bucket_name}/*"
