@@ -85,7 +85,12 @@ func (a *Adapter) GetRoleConnectionString(in *string) (*string, error) {
 	g := r.FindStringSubmatch(*in)
 
 	if len(g) >= 3 {
-		uri := g[1] + creds.AccessKeyID + ":" + *aws.String(url.QueryEscape(creds.SecretAccessKey)) + "@" + g[2] + "/?authSource=%24external&authMechanism=MONGODB-AWS&retryWrites=true&w=majority&authMechanismProperties=AWS_SESSION_TOKEN:" + *aws.String(url.QueryEscape(creds.SessionToken))
+		uri := g[1] + creds.AccessKeyID +
+			":" + *aws.String(url.QueryEscape(creds.SecretAccessKey)) +
+			"@" + g[2] +
+			"/?authSource=%24external&authMechanism=MONGODB-AWS&retryWrites=true&w=majority&readPreference=secondaryPreferred&maxStalenessSeconds=7&authMechanismProperties=AWS_SESSION_TOKEN:" +
+			*aws.String(url.QueryEscape(creds.SessionToken))
+
 		s = &uri
 
 		return s, nil

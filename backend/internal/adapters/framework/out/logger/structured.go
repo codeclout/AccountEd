@@ -67,7 +67,7 @@ func (a *Adapter) Initialize() {
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 	sl := <-s
 
-	a.Logger.Warn("Signal %s - shutting down", sl)
+	a.Logger.Warn("Signal %s - shutting down: ", sl)
 }
 
 func (a *Adapter) Log(level string, msg string) {

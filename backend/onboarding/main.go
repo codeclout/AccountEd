@@ -47,7 +47,7 @@ func main() {
 		storageDefaultAdapter     ports.StoragePort
 		storageAccountTypeAdapter ports.AccountTypeActionPort
 
-		configFile        = []byte("config.hcl")
+		configFile        = []byte("./config.hcl")
 		dbconnectionParam string
 	)
 

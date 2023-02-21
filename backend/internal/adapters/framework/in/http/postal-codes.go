@@ -18,11 +18,21 @@ func (a *Adapter) processGetPostalCodeDetails(ctx *fiber.Ctx) error {
 
   result, e := a.HandleFetchPostalCodeDetails(&q)
   if e != nil {
+    if e.Error() == "ZERO_RESULTS" || e.Error() == "INVALID_REQUEST" {
+      _ = ctx.SendStatus(http.StatusNotFound)
+
+      return ctx.JSON(requests.RequestErrorWithRetry{
+        Msg:         e.Error(),
+        ShouldRetry: requests.ShouldRetryRequest(http.StatusNotFound),
+      })
+
+    }
+
     _ = ctx.SendStatus(http.StatusInternalServerError)
 
     return ctx.JSON(requests.RequestErrorWithRetry{
       Msg:         e.Error(),
-      ShouldRetry: requests.ShouldRetryRequest(500),
+      ShouldRetry: requests.ShouldRetryRequest(http.StatusInternalServerError),
     })
   }
 
