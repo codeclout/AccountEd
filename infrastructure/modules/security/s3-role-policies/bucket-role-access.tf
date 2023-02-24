@@ -1,4 +1,4 @@
-resource "aws_iam_policy" "bucket-role-access" {
+resource "aws_iam_policy" "bucket_role_access" {
   name        = "s3bucketRoleAccess"
   description = "Allows access to and S3 bucket from the root user and a role"
 
