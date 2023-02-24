@@ -49,8 +49,7 @@ module "storage" {
   source = "../../../modules/storage/s3"
 
   buckets_unencrypted = local.unencrypted_buckets
-
-  is_object_locked = [false]
+  is_object_locked    = [false]
 }
 
 module "s3_role_policies" {
@@ -60,4 +59,9 @@ module "s3_role_policies" {
   acccount_id             = data.aws_caller_identity.current.account_id
   bucket_role_id          = data.aws_iam_role.s3_access_role_id.unique_id
   role_access_bucket_name = module.storage.bucket_name[count.index]
+}
+
+resource "aws_s3_bucket_policy" "name" {
+  bucket = module.storage.bucket_name
+  policy = module.s3_access_role_id.policy
 }
