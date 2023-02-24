@@ -65,5 +65,5 @@ resource "aws_s3_bucket_policy" "unencrypted_bucket_policy" {
   count = length(local.unencrypted_buckets)
 
   bucket = module.storage.bucket_name[count.index]
-  policy = module.s3_role_policies.policy_unencrypted_bucket[count.index]
+  policy = module.s3_role_policies.policy_unencrypted_bucket[count.index].policy
 }
