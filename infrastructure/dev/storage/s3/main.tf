@@ -63,5 +63,5 @@ module "s3_role_policies" {
 
 resource "aws_s3_bucket_policy" "name" {
   bucket = module.storage.bucket_name
-  policy = module.s3_access_role_id.policy
+  policy = module.s3_role_policies.policy
 }
