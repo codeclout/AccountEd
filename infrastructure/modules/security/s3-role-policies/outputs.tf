@@ -1,3 +1,3 @@
 output "policy_unencrypted_bucket" {
-  value = aws_iam_policy.bucket_role_access[*].policy
+  value = data.aws_iam_policy_document.unencrypted_bucket_role_access[*].json
 }
