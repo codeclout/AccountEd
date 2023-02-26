@@ -20,7 +20,7 @@ data "aws_iam_policy_document" "unencrypted_bucket_role_access" {
       variable = "aws:userid"
 
       values = [
-        "${var.bucket_role_id}",
+        "${var.bucket_role_id}:*",
         "${var.acccount_id}"
       ]
     }
