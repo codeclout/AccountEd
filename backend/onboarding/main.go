@@ -4,27 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 
-	accountTypeAdapterAPI "github.com/codeclout/AccountEd/internal/adapters/api/account-types"
 	postalCodeAdapterAPI "github.com/codeclout/AccountEd/internal/adapters/api/postal-codes"
-	accountTypeAdapterCore "github.com/codeclout/AccountEd/internal/adapters/core/account-types"
 	postalCodeAdapterCore "github.com/codeclout/AccountEd/internal/adapters/core/postal-codes"
-	cloudAdapterIn "github.com/codeclout/AccountEd/internal/adapters/framework/in/aws"
 	mapAdapterIn "github.com/codeclout/AccountEd/internal/adapters/framework/in/gcp"
-	hclAdapterIn "github.com/codeclout/AccountEd/internal/adapters/framework/in/hcl"
-	httpAdapterIn "github.com/codeclout/AccountEd/internal/adapters/framework/in/http"
-	accountTypeAdapterOut "github.com/codeclout/AccountEd/internal/adapters/framework/out/account-types"
-	"github.com/codeclout/AccountEd/internal/adapters/framework/out/logger"
-	storageAdapterOut "github.com/codeclout/AccountEd/internal/adapters/framework/out/storage"
-	accountTypePortAPI "github.com/codeclout/AccountEd/internal/ports/api/account-types"
 	postalCodePortAPI "github.com/codeclout/AccountEd/internal/ports/api/postal-codes"
-	accountTypePortCore "github.com/codeclout/AccountEd/internal/ports/core/account-types"
 	postalCodePortCore "github.com/codeclout/AccountEd/internal/ports/core/postal-codes"
-	cloudPortIn "github.com/codeclout/AccountEd/internal/ports/framework/in/aws"
 	mapPortIn "github.com/codeclout/AccountEd/internal/ports/framework/in/gcp"
-	hclPortIn "github.com/codeclout/AccountEd/internal/ports/framework/in/hcl"
-	httpPortIn "github.com/codeclout/AccountEd/internal/ports/framework/in/http"
-	logPortOut "github.com/codeclout/AccountEd/internal/ports/framework/out/logger"
-	"github.com/codeclout/AccountEd/internal/ports/framework/out/storage"
+	"github.com/codeclout/AccountEd/monitoring/adapters/framework/out/logger"
+	logPortOut "github.com/codeclout/AccountEd/monitoring/ports/framework/out/logger"
+	accountTypeAdapterAPI "github.com/codeclout/AccountEd/onboarding/internal/adapters/api/account-types"
+	accountTypeAdapterCore "github.com/codeclout/AccountEd/onboarding/internal/adapters/core/account-types"
+	httpAdapterIn "github.com/codeclout/AccountEd/onboarding/internal/adapters/framework/in/http"
+	accountTypeAdapterOut "github.com/codeclout/AccountEd/onboarding/internal/adapters/framework/out/account-types"
+	accountTypePortAPI "github.com/codeclout/AccountEd/onboarding/internal/ports/api/account-types"
+	accountTypePortCore "github.com/codeclout/AccountEd/onboarding/internal/ports/core/account-types"
+	hclPortIn "github.com/codeclout/AccountEd/onboarding/internal/ports/framework/in/hcl"
+	httpPortIn "github.com/codeclout/AccountEd/onboarding/internal/ports/framework/in/http"
+	"github.com/codeclout/AccountEd/onboarding/internal/ports/framework/out/storage"
+	"github.com/codeclout/AccountEd/onboarding/service-config"
+	cloudAdapterIn "github.com/codeclout/AccountEd/service-identity/adapters/framework/in"
+	cloudPortIn "github.com/codeclout/AccountEd/service-identity/ports/framework/in"
+	storageAdapterOut "github.com/codeclout/AccountEd/storage/adapters/framework/out"
+	"github.com/codeclout/AccountEd/storage/ports/framework/out"
 )
 
 var (
@@ -37,18 +38,19 @@ func main() {
 
 		accountTypeCoreAdapter    accountTypePortCore.UserAccountTypeCorePort
 		accountTypeApiAdapter     accountTypePortAPI.UserAccountTypeApiPort
-		cloudAdapter              cloudPortIn.ParameterPort
-		httpInAdapter             httpPortIn.HttpFrameworkInPort
+		cloudCredentialsAdapter   cloudPortIn.CredentialsPort
+		cloudParamsAdapter        cloudPortIn.ParameterPort
+		httpInAdapter             httpPortIn.ServerFrameworkPort
 		logAdapterOut             logPortOut.LogFrameworkOutPort
 		mapAdapter                mapPortIn.PostalCodeFrameworkIn
 		postalCodeCoreAdapter     postalCodePortCore.PostalCodeCorePort
 		postalCodeApiAdapter      postalCodePortAPI.PostalCodeApiPort
 		runtimeConfigAdapter      hclPortIn.RuntimeConfigPort
-		storageDefaultAdapter     ports.StoragePort
-		storageAccountTypeAdapter ports.AccountTypeActionPort
+		storageDefaultAdapter     out.StoragePort
+		storageAccountTypeAdapter storage.AccountTypeActionPort
 
-		configFile        = []byte("./config.hcl")
-		dbconnectionParam string
+		configFile      = []byte("./config.hcl")
+		connectionParam string
 	)
 
 	logAdapterOut = logger.NewAdapter()
@@ -56,7 +58,7 @@ func main() {
 	go logAdapterOut.Initialize()
 	defer logAdapterOut.Sync()
 
-	runtimeConfigAdapter = hclAdapterIn.NewAdapter(logAdapterOut.Log)
+	runtimeConfigAdapter = service_config.NewAdapter(logAdapterOut.Log)
 	rtc := runtimeConfigAdapter.GetConfig(configFile)
 
 	e = json.Unmarshal(rtc, &config)
@@ -64,20 +66,30 @@ func main() {
 		logAdapterOut.Log("fatal", e.Error())
 	}
 
-	cloudAdapter = cloudAdapterIn.NewAdapter(logAdapterOut.Log, config)
-	dbconnectionParam = config["DbConnectionParam"].(string)
+	cloudSession := cloudAdapterIn.NewAdapter(logAdapterOut.Log, config)
+	cloudCredentialsAdapter = cloudSession
+	cloudParamsAdapter = cloudSession
 
-	uri, e := cloudAdapter.GetSecret(&dbconnectionParam)
+	connectionParam = config["DbConnectionParam"].(string)
+
+	uri, e := cloudParamsAdapter.GetSecret(&connectionParam)
 	if e != nil {
 		logAdapterOut.Log("fatal", fmt.Sprintf("Failed to get db secret: %v", e))
 	}
 
-	u, e := cloudAdapter.GetRoleConnectionString(uri)
+	atlasConnectionString, e := cloudParamsAdapter.GetRoleConnectionString(uri)
 	if e != nil {
 		logAdapterOut.Log("fatal", "unable to retrieve IAM role connection string")
 	}
 
-	storageAdapter, e := storageAdapterOut.NewAdapter(rtc, logAdapterOut.Log, u)
+	serviceIdentity := cloudCredentialsAdapter.ExportCreds()
+
+	storageAdapter, e := storageAdapterOut.NewAdapter(
+		rtc,
+		logAdapterOut.Log,
+		atlasConnectionString,
+		serviceIdentity)
+
 	storageDefaultAdapter = storageAdapter
 
 	storageDefaultAdapter.Initialize()

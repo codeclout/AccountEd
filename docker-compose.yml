@@ -51,7 +51,7 @@ services:
       - accountEd-local
   mongo-init-replicas:
     image: mongo:6.0.3
-    entrypoint: ["/scripts/setup.sh"]
+    entrypoint: [ "/scripts/setup.sh" ]
     restart: 'no'
     depends_on:
       db:
@@ -74,21 +74,15 @@ services:
     depends_on:
       mongo-init-replicas:
         condition: service_completed_successfully
-    # volumes:
-    #   - ./migrations/mongo/local/migration:/usr/local/migrate
-
-#  app:
-#    depends_on:
-#      mongo-migrate:
-#        condition: service_completed_successfully
-#    image: accounted-${GOARCH:-amd64}-${ENV:-local}
-#    networks:
-#      - accountEd-local
-#    ports:
-#      - 8088:8088
-#    command:
-#      - /usr/ci-svc-usr/accountEd
-
+  dynamodb-local:
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    image: "amazon/dynamodb-local:latest"
+    container_name: dynamodb-local
+    ports:
+      - "4400:8000"
+    volumes:
+      - "./migrations/dynamodb:/home/dynamodblocal/data"
+    working_dir: /home/dynamodblocal
 
 networks:
   accountEd-local:

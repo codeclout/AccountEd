@@ -3,17 +3,17 @@ package http
 import (
   "net/http"
 
-  "github.com/codeclout/AccountEd/internal/adapters/framework/in/http/requests"
+  "github.com/codeclout/AccountEd/onboarding/internal/adapters/framework/in/http/requests"
   "github.com/gofiber/fiber/v2"
 )
 
-func (a *Adapter) initPostalCodeRoutes(app *fiber.App) *fiber.App {
+func (a *in.Adapter) initPostalCodeRoutes(app *fiber.App) *fiber.App {
   app.Get("/postal-code", a.processGetPostalCodeDetails)
 
   return app
 }
 
-func (a *Adapter) processGetPostalCodeDetails(ctx *fiber.Ctx) error {
+func (a *in.Adapter) processGetPostalCodeDetails(ctx *fiber.Ctx) error {
   q := ctx.Query("address")
 
   result, e := a.HandleFetchPostalCodeDetails(&q)
@@ -39,6 +39,6 @@ func (a *Adapter) processGetPostalCodeDetails(ctx *fiber.Ctx) error {
   return ctx.JSON(result)
 }
 
-func (a *Adapter) HandleFetchPostalCodeDetails(address *string) (interface{}, error) {
+func (a *in.Adapter) HandleFetchPostalCodeDetails(address *string) (interface{}, error) {
   return a.postalCodeApi.FetchPostalCodeDetails(address)
 }
