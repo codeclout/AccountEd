@@ -1,56 +1,46 @@
 package account
 
 import (
-	"fmt"
+	"context"
 
+	"github.com/codeclout/AccountEd/onboarding/internal"
 	accountTypeCorePort "github.com/codeclout/AccountEd/onboarding/internal/ports/core/account-types"
-	storageFrameworkPort "github.com/codeclout/AccountEd/onboarding/internal/ports/framework/out/storage"
 )
 
 type coreAdapterPort accountTypeCorePort.UserAccountTypeCorePort
 type logger func(l string, m string)
-type storageAccountTypePort storageFrameworkPort.AccountTypeActionPort
 
 type Adapter struct {
 	accountTypeCore coreAdapterPort
-	storage         storageAccountTypePort
 	log             logger
 }
 
-func NewAdapter(act coreAdapterPort, store storageAccountTypePort, l logger) *Adapter {
+func NewAdapter(act coreAdapterPort, l logger) *Adapter {
 	return &Adapter{
 		accountTypeCore: act,
-		storage:         store,
 		log:             l,
 	}
 }
 
-func (a *Adapter) GetAccountTypes(limit *int16) (*[]accountTypeCorePort.NewAccountTypeOutput, error) {
+func (a *Adapter) GetAccountTypes(ctx context.Context, limit int16, ch chan *[]internal.AccountTypeOut) error {
 
-	getAccountTypeListResult, e := a.storage.GetAccountTypes(limit)
+	result, e := a.accountTypeCore.ListAccountTypes(ctx, limit)
 	if e != nil {
-		return nil, e
+		return e
 	}
 
-	result, e := a.accountTypeCore.ListAccountTypes(getAccountTypeListResult)
-	if e != nil {
-		return nil, e
-	}
+	ch <- result
 
-	return result, nil
+	return nil
 }
 
-func (a *Adapter) FetchAccountType(id *string) (*accountTypeCorePort.NewAccountTypeOutput, error) {
-	var out accountTypeCorePort.NewAccountTypeOutput
+func (a *Adapter) FetchAccountType(ctx context.Context, in internal.AccountTypeIn, ch chan *internal.AccountTypeOut) error {
 
-	b, e := a.storage.GetAccountTypeById(id)
-
+	result, e := a.accountTypeCore.FetchAccountType(ctx, in)
 	if e != nil {
-		a.log("warn", fmt.Sprintf("Unable to retrieve account type %s: %v", *id, e))
-		return &out, e
+		return e
 	}
 
-	r, _ := a.accountTypeCore.FetchAccountType(b)
-
-	return r, nil
+	ch <- result
+	return nil
 }

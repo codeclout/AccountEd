@@ -1,10 +1,12 @@
 package account_types
 
 import (
-	ports "github.com/codeclout/AccountEd/onboarding/internal/ports/core/account-types"
+	"context"
+
+	"github.com/codeclout/AccountEd/onboarding/internal"
 )
 
 type UserAccountTypeApiPort interface {
-	GetAccountTypes(limit *int16) (*[]ports.NewAccountTypeOutput, error)
-	FetchAccountType(id *string) (*ports.NewAccountTypeOutput, error)
+	GetAccountTypes(ctx context.Context, limit int16, ch chan *[]internal.AccountTypeOut) error
+	FetchAccountType(ctx context.Context, in internal.AccountTypeIn, ch chan *internal.AccountTypeOut) error
 }

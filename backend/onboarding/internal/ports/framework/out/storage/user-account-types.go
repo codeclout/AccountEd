@@ -1,6 +1,12 @@
 package storage
 
+import (
+	"context"
+
+	"github.com/codeclout/AccountEd/onboarding/internal"
+)
+
 type AccountTypeActionPort interface {
-	GetAccountTypes(limit *int16) (*[]byte, error)
-	GetAccountTypeById(id *string) (*[]byte, error)
+	GetAccountTypes(ctx context.Context, limit int16) (*[]internal.AccountTypeOut, error)
+	GetAccountTypeById(ctx context.Context, in internal.AccountTypeIn) (*internal.AccountTypeOut, error)
 }
