@@ -1,3 +1,7 @@
+app {
+  default_response_sla = 2
+}
+
 db {
   database_connection_timeout = 7
   database_name               = "accountEd"
