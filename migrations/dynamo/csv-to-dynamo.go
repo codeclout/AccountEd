@@ -234,8 +234,10 @@ func closeConnection(seedData *s3.GetObjectOutput) {
 }
 
 func writeItem(wid int, client *dynamodb.Client, processedItems <-chan dataCharacteristics, tableName string, wg *sync.WaitGroup) {
-	defer wg.Done()
+
 	for v := range processedItems {
+		log.Println("worker", wid, "started job", v.ID, "with", len(processedItems), "jobs left")
+
 		record, e := attributevalue.MarshalMap(v)
 		log.Println("WriteItemWorker", wid, "started job", v, "with", len(processedItems), "jobs left")
 
@@ -243,7 +245,7 @@ func writeItem(wid int, client *dynamodb.Client, processedItems <-chan dataChara
 			log.Printf("Error marshalling record %v", record)
 		}
 
-		out, e := client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+		_, e = client.PutItem(context.TODO(), &dynamodb.PutItemInput{
 			Item:      record,
 			TableName: aws.String(tableName),
 		})
@@ -251,18 +253,20 @@ func writeItem(wid int, client *dynamodb.Client, processedItems <-chan dataChara
 			log.Printf("Error storing record %v", record)
 		}
 
-		log.Printf("Put item result %v", out)
+		log.Println("worker", wid, "     finished job", v.ID)
 	}
+
+	wg.Done()
 }
 
 func main() {
 
-	var wg sync.WaitGroup
 	const dbItems = 100722
 
 	extractCh := make(chan []string, dbItems)
 	processCh := make(chan dataCharacteristics, dbItems)
 	tableName := os.Getenv("DYNAMODB_TABLE_NAME")
+	wg := &sync.WaitGroup{}
 
 	cfg := getCredentials()
 	seedData := getS3Object(cfg)
@@ -273,7 +277,7 @@ func main() {
 	reader := csv.NewReader(seedData.Body)
 	parseHeader(reader)
 
-	for workerId := 1; workerId <= 6; workerId++ {
+	for workerId := 1; workerId <= 1; workerId++ {
 		go processCSV(workerId, extractCh, processCh)
 	}
 
@@ -295,9 +299,9 @@ func main() {
 
 	close(extractCh)
 
-	for workId := 1; workId <= 3; workId++ {
+	for workId := 1; workId <= 12; workId++ {
 		wg.Add(1)
-		go writeItem(workId, dbClient, processCh, tableName, &wg)
+		go writeItem(workId, dbClient, processCh, tableName, wg)
 	}
 
 	wg.Wait()
@@ -456,4 +460,6 @@ func processCSV(wid int, ch <-chan []string, processCh chan<- dataCharacteristic
 		log.Println(record.ID, record.LSTATE, record.NMCNTY, record.LZIP, record.SCHNAME)
 		processCh <- record
 	}
+
+	close(processCh)
 }
