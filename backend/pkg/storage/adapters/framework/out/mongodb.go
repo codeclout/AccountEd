@@ -12,6 +12,7 @@ import (
 )
 
 type MongoActions struct {
+	BulkWriteError MongoBulkWriteError
 	Cancel         context.CancelFunc
 	Client         *mongo.Client
 	Db             *mongo.Database
@@ -20,13 +21,30 @@ type MongoActions struct {
 }
 
 type MongoWriteError struct {
-	Msg *mongo.WriteErrors
+	WriteErrorMsg *mongo.WriteErrors
+}
+
+type MongoBulkWriteError struct {
+	BulkWriteErrorExceptionMsg *mongo.BulkWriteException
+}
+
+func (e MongoBulkWriteError) Error() (s string) {
+	for i, v := range e.BulkWriteErrorExceptionMsg.WriteErrors {
+		if i == 0 {
+			s = v.Message
+			continue
+		}
+
+		s = s + "," + v.Message
+	}
+
+	return s
 }
 
 func (e MongoWriteError) Error() string {
 	var s string
 
-	for i, v := range *e.Msg {
+	for i, v := range *e.WriteErrorMsg {
 		if i == 0 {
 			s = v.Message
 			continue
