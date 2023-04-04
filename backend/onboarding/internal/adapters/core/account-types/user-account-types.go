@@ -1,50 +1,43 @@
 package account_types
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
+	"context"
 
-	accountTypePortCore "github.com/codeclout/AccountEd/onboarding/internal/ports/core/account-types"
+	"github.com/codeclout/AccountEd/onboarding/internal"
+	"github.com/codeclout/AccountEd/onboarding/internal/ports/framework/out/storage"
 )
 
+type logger func(level, msg string)
+type storageOut storage.AccountTypeActionPort
+
 type Adapter struct {
-	log func(level string, msg string)
+	log                 logger
+	frameworkOutStorage storage.AccountTypeActionPort
 }
 
-// NewAdapter - Creates a new Adapter for the account pkg
-func NewAdapter(logger func(level string, msg string)) *Adapter {
+func NewAdapter(s storageOut, l logger) *Adapter {
 	return &Adapter{
-		log: logger,
+		log:                 l,
+		frameworkOutStorage: s,
 	}
 }
 
-func (a *Adapter) ListAccountTypes(accountTypes *[]byte) (*[]accountTypePortCore.NewAccountTypeOutput, error) {
-	var out []accountTypePortCore.NewAccountTypeOutput
+func (a *Adapter) ListAccountTypes(ctx context.Context, limit int16) (*[]internal.AccountTypeOut, error) {
 
-	e := json.Unmarshal(*accountTypes, &out)
+	ts, e := a.frameworkOutStorage.GetAccountTypes(ctx, limit)
 	if e != nil {
-		a.log("error", fmt.Sprintf("core - invalid account type list: %v", e))
 		return nil, e
 	}
 
-	if len(out) == 0 {
-		a.log("error", "0 account types exist")
-		return nil, errors.New("0 account types are in the system")
-	}
-
-	return &out, nil
+	return ts, nil
 }
 
-func (a *Adapter) FetchAccountType(in *[]byte) (*accountTypePortCore.NewAccountTypeOutput, error) {
-	var out accountTypePortCore.NewAccountTypeOutput
+func (a *Adapter) FetchAccountType(ctx context.Context, in internal.AccountTypeIn) (*internal.AccountTypeOut, error) {
 
-	e := json.Unmarshal(*in, &out)
-
+	ts, e := a.frameworkOutStorage.GetAccountTypeById(ctx, in)
 	if e != nil {
-		a.log("error", e.Error())
-		return &out, e
+		return nil, e
 	}
 
-	return &out, nil
+	return ts, nil
 }

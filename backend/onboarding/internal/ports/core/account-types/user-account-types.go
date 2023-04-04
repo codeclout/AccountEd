@@ -1,13 +1,12 @@
 package account_types
 
-type UserAccountTypeCorePort interface {
-	ListAccountTypes(accountTypes *[]byte) (*[]NewAccountTypeOutput, error)
-	FetchAccountType(id *[]byte) (*NewAccountTypeOutput, error)
-}
+import (
+	"context"
 
-type NewAccountTypeOutput struct {
-	AccountType string `json:"account_type"`
-	CreatedAt   string `json:"created_at"`
-	ID          string `json:"_id"`
-	ModifiedAt  string `json:"modified_at"`
+	"github.com/codeclout/AccountEd/onboarding/internal"
+)
+
+type UserAccountTypeCorePort interface {
+	ListAccountTypes(ctx context.Context, limit int16) (*[]internal.AccountTypeOut, error)
+	FetchAccountType(ctx context.Context, in internal.AccountTypeIn) (*internal.AccountTypeOut, error)
 }
