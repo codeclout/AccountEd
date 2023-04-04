@@ -31,7 +31,7 @@ func NewAdapter(atcp coreAdapterPort, store storageAccountTypePort, l logger) *A
 func (a *Adapter) CreateAccountType(name *string) (*accountTypeCorePort.NewAccountTypeOutput, error) {
 	var (
 		in                  accountTypeCorePort.NewAccountTypeInput
-		insertAccountOutput storage.InsertAccountOutput
+		insertAccountOutput storage.MongoInsertOutput
 		out                 accountTypeCorePort.NewAccountTypeOutput
 	)
 
