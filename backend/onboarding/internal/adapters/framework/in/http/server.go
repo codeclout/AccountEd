@@ -7,26 +7,36 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/etag"
+
 	postalCodePortAPI "github.com/codeclout/AccountEd/internal/ports/api/postal-codes"
 	"github.com/codeclout/AccountEd/onboarding/internal/adapters/framework/in/http/middleware"
 	accountTypeApiPort "github.com/codeclout/AccountEd/onboarding/internal/ports/api/account-types"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/etag"
+	"github.com/codeclout/AccountEd/onboarding/internal/ports/api/workflows"
 )
 
+type homeschoolOnboard workflows.OnboardHomeschoolApiPort
 type logger func(level, msg string)
 
 type Adapter struct {
-	postalCodeApi      postalCodePortAPI.PostalCodeApiPort
-	userAccountTypeApi accountTypeApiPort.UserAccountTypeApiPort
-	log                logger
+	homeschoolOnboardApi homeschoolOnboard
+	postalCodeApi        postalCodePortAPI.PostalCodeApiPort
+	userAccountTypeApi   accountTypeApiPort.UserAccountTypeApiPort
+	log                  logger
 }
 
-func NewAdapter(accountTypeApi accountTypeApiPort.UserAccountTypeApiPort, postalCodeApi postalCodePortAPI.PostalCodeApiPort, logger logger) *Adapter {
+func NewAdapter(
+	accountTypeApi accountTypeApiPort.UserAccountTypeApiPort,
+	postalCodeApi postalCodePortAPI.PostalCodeApiPort,
+	hsOnboardApi homeschoolOnboard,
+	logger logger) *Adapter {
+
 	return &Adapter{
-		log:                logger,
-		postalCodeApi:      postalCodeApi,
-		userAccountTypeApi: accountTypeApi,
+		homeschoolOnboardApi: hsOnboardApi,
+		log:                  logger,
+		postalCodeApi:        postalCodeApi,
+		userAccountTypeApi:   accountTypeApi,
 	}
 }
 
@@ -35,6 +45,7 @@ func (a *Adapter) Run(middlewareLogger func(msg ...interface{})) {
 	api := fiber.New()
 
 	_ = a.initUserAccountTypeRoutes(api)
+	_ = a.initHomeSchoolRoutes(api)
 	// _ = a.initPostalCodeRoutes(api)
 
 	app.Use(middleware.NewLoggerMiddleware(middleware.Config{

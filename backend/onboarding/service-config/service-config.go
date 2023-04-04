@@ -12,9 +12,14 @@ import (
 
 type l func(level string, msg string)
 
-// DatabaseConfig represents the static runtime configuration of the service
-type DatabaseConfig struct {
-	StaticDbConfig StaticDbConfig `hcl:"db,block"`
+// StaticConfig represents the static runtime configuration of the service
+type StaticConfig struct {
+	StaticAppConfig StaticAppConfig `hcl:"app,block"`
+	StaticDbConfig  StaticDbConfig  `hcl:"db,block"`
+}
+
+type StaticAppConfig struct {
+	ResponseTimeSLA int64 `hcl:"default_response_sla"`
 }
 
 type StaticDbConfig struct {
@@ -40,13 +45,11 @@ type ENV struct {
 type RuntimeConfig struct {
 	*StaticDbConfig
 	*ENV
-}
-
-type RequestConfig struct {
+	*StaticAppConfig
 }
 
 type Adapter struct {
-	config  DatabaseConfig
+	config  StaticConfig
 	log     l
 	runtime RuntimeConfig
 }
@@ -58,19 +61,19 @@ func NewAdapter(logger l) *Adapter {
 }
 
 func (a *Adapter) GetConfig(path []byte) []byte {
-	var dbStaticConfig DatabaseConfig
+	var staticConfig StaticConfig
 	wd, _ := os.Getwd()
 
 	configFileLocation := filepath.Join(wd, string(path))
-	e := hclsimple.DecodeFile(configFileLocation, nil, &dbStaticConfig)
+	e := hclsimple.DecodeFile(configFileLocation, nil, &staticConfig)
 
 	if e != nil {
 		x, ok := e.(hcl.Diagnostics)
 
 		if ok {
-			a.log("fatal", fmt.Sprintf("Failed to load runtime dbStaticConfig: %s", e.(hcl.Diagnostics)[0].Summary))
+			a.log("fatal", fmt.Sprintf("Failed to load runtime staticConfig: %s", e.(hcl.Diagnostics)[0].Summary))
 		} else {
-			a.log("fatal", fmt.Sprintf("Failed to get runtime dbStaticConfig: %v", x))
+			a.log("fatal", fmt.Sprintf("Failed to get runtime staticConfig: %v", x))
 		}
 	}
 
@@ -86,7 +89,8 @@ func (a *Adapter) GetConfig(path []byte) []byte {
 		MapKey:             os.Getenv("GCP_MAP_API_KEY"),
 	}
 
-	a.runtime.StaticDbConfig = &dbStaticConfig.StaticDbConfig
+	a.runtime.StaticDbConfig = &staticConfig.StaticDbConfig
+	a.runtime.StaticAppConfig = &staticConfig.StaticAppConfig
 	a.runtime.ENV = &env
 
 	b, e := json.Marshal(a.runtime)

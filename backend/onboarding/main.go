@@ -10,22 +10,26 @@ import (
 	postalCodePortAPI "github.com/codeclout/AccountEd/internal/ports/api/postal-codes"
 	postalCodePortCore "github.com/codeclout/AccountEd/internal/ports/core/postal-codes"
 	mapPortIn "github.com/codeclout/AccountEd/internal/ports/framework/in/gcp"
-	"github.com/codeclout/AccountEd/monitoring/adapters/framework/out/logger"
-	logPortOut "github.com/codeclout/AccountEd/monitoring/ports/framework/out/logger"
 	accountTypeAdapterAPI "github.com/codeclout/AccountEd/onboarding/internal/adapters/api/account-types"
+	onboardingApiAdapter "github.com/codeclout/AccountEd/onboarding/internal/adapters/api/workflows"
 	accountTypeAdapterCore "github.com/codeclout/AccountEd/onboarding/internal/adapters/core/account-types"
+	onboardingCoreAdapter "github.com/codeclout/AccountEd/onboarding/internal/adapters/core/workflows"
 	httpAdapterIn "github.com/codeclout/AccountEd/onboarding/internal/adapters/framework/in/http"
-	accountTypeAdapterOut "github.com/codeclout/AccountEd/onboarding/internal/adapters/framework/out/account-types"
+	frameworkOutStorage "github.com/codeclout/AccountEd/onboarding/internal/adapters/framework/out/storage"
 	accountTypePortAPI "github.com/codeclout/AccountEd/onboarding/internal/ports/api/account-types"
+	onboardingApiPort "github.com/codeclout/AccountEd/onboarding/internal/ports/api/workflows"
 	accountTypePortCore "github.com/codeclout/AccountEd/onboarding/internal/ports/core/account-types"
+	"github.com/codeclout/AccountEd/onboarding/internal/ports/core/workflows"
 	hclPortIn "github.com/codeclout/AccountEd/onboarding/internal/ports/framework/in/hcl"
 	httpPortIn "github.com/codeclout/AccountEd/onboarding/internal/ports/framework/in/http"
 	"github.com/codeclout/AccountEd/onboarding/internal/ports/framework/out/storage"
-	"github.com/codeclout/AccountEd/onboarding/service-config"
-	cloudAdapterIn "github.com/codeclout/AccountEd/service-identity/adapters/framework/in"
-	cloudPortIn "github.com/codeclout/AccountEd/service-identity/ports/framework/in"
-	storageAdapterOut "github.com/codeclout/AccountEd/storage/adapters/framework/out"
-	"github.com/codeclout/AccountEd/storage/ports/framework/out"
+	service_config "github.com/codeclout/AccountEd/onboarding/service-config"
+	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/out/logger"
+	logPortOut "github.com/codeclout/AccountEd/pkg/monitoring/ports/framework/out/logger"
+	cloudAdapterIn "github.com/codeclout/AccountEd/pkg/service-identity/adapters/framework/in"
+	"github.com/codeclout/AccountEd/pkg/service-identity/ports/framework/in"
+	storageAdapterOut "github.com/codeclout/AccountEd/pkg/storage/adapters/framework/out"
+	"github.com/codeclout/AccountEd/pkg/storage/ports/framework/out"
 )
 
 var (
@@ -36,18 +40,21 @@ func main() {
 	var (
 		e error
 
-		accountTypeCoreAdapter    accountTypePortCore.UserAccountTypeCorePort
-		accountTypeApiAdapter     accountTypePortAPI.UserAccountTypeApiPort
-		cloudCredentialsAdapter   cloudPortIn.CredentialsPort
-		cloudParamsAdapter        cloudPortIn.ParameterPort
-		httpInAdapter             httpPortIn.ServerFrameworkPort
-		logAdapterOut             logPortOut.LogFrameworkOutPort
-		mapAdapter                mapPortIn.PostalCodeFrameworkIn
-		postalCodeCoreAdapter     postalCodePortCore.PostalCodeCorePort
-		postalCodeApiAdapter      postalCodePortAPI.PostalCodeApiPort
-		runtimeConfigAdapter      hclPortIn.RuntimeConfigPort
-		storageDefaultAdapter     out.StoragePort
-		storageAccountTypeAdapter storage.AccountTypeActionPort
+		accountTypeCoreAdapter       accountTypePortCore.UserAccountTypeCorePort
+		accountTypeApiAdapter        accountTypePortAPI.UserAccountTypeApiPort
+		cloudCredentialsAdapter      in.CredentialsPort
+		cloudParamsAdapter           in.ParameterPort
+		httpInAdapter                httpPortIn.ServerFrameworkPort
+		logAdapterOut                logPortOut.LogFrameworkOutPort
+		mapAdapter                   mapPortIn.PostalCodeFrameworkIn
+		postalCodeCoreAdapter        postalCodePortCore.PostalCodeCorePort
+		postalCodeApiAdapter         postalCodePortAPI.PostalCodeApiPort
+		runtimeConfigAdapter         hclPortIn.RuntimeConfigPort
+		storageDefaultAdapter        out.StoragePort
+		storageAccountTypeOutAdapter storage.AccountTypeActionPort
+		storageHomeSchoolAdapter     storage.HomeschoolActionPort
+		homeschoolOnboardCoreAdapter workflows.HomeSchoolCorePort
+		homeschoolOnboardApiAdapter  onboardingApiPort.OnboardHomeschoolApiPort
 
 		configFile      = []byte("./config.hcl")
 		connectionParam string
@@ -95,16 +102,31 @@ func main() {
 	storageDefaultAdapter.Initialize()
 	defer storageDefaultAdapter.CloseConnection()
 
-	storageAccountTypeAdapter = accountTypeAdapterOut.NewAdapter(storageAdapter.GetMongoAccountTypeActions(), logAdapterOut.Log)
+	storageAccountTypeOutAdapter = frameworkOutStorage.NewAdapter(
+		storageAdapter.GetMongoActions(),
+		logAdapterOut.Log)
 
-	accountTypeCoreAdapter = accountTypeAdapterCore.NewAdapter(logAdapterOut.Log)
-	accountTypeApiAdapter = accountTypeAdapterAPI.NewAdapter(accountTypeCoreAdapter, storageAccountTypeAdapter, logAdapterOut.Log)
+	storageHomeSchoolAdapter = frameworkOutStorage.NewAdapter(
+		storageAdapter.GetMongoActions(),
+		logAdapterOut.Log)
+
+	accountTypeCoreAdapter = accountTypeAdapterCore.NewAdapter(storageAccountTypeOutAdapter, logAdapterOut.Log)
+	accountTypeApiAdapter = accountTypeAdapterAPI.NewAdapter(
+		accountTypeCoreAdapter,
+		logAdapterOut.Log)
 
 	mapAdapter = mapAdapterIn.NewAdapter(config, logAdapterOut.Log)
 	postalCodeCoreAdapter = postalCodeAdapterCore.NewAdapter(logAdapterOut.Log)
 	postalCodeApiAdapter = postalCodeAdapterAPI.NewAdapter(postalCodeCoreAdapter, mapAdapter, logAdapterOut.Log)
 
-	httpInAdapter = httpAdapterIn.NewAdapter(accountTypeApiAdapter, postalCodeApiAdapter, logAdapterOut.Log)
+	homeschoolOnboardCoreAdapter = onboardingCoreAdapter.NewAdapter(logAdapterOut.Log, storageHomeSchoolAdapter, storageAdapter.GetMongoActions())
+	homeschoolOnboardApiAdapter = onboardingApiAdapter.NewAdapter(homeschoolOnboardCoreAdapter, logAdapterOut.Log)
+
+	httpInAdapter = httpAdapterIn.NewAdapter(
+		accountTypeApiAdapter,
+		postalCodeApiAdapter,
+		homeschoolOnboardApiAdapter,
+		logAdapterOut.Log)
 
 	logAdapterOut.Log("info", "application starting")
 	httpInAdapter.Run(logAdapterOut.HttpMiddlewareLogger)
