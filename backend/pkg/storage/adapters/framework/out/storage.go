@@ -72,6 +72,6 @@ func (a *Adapter) CloseConnection() {
 	}
 }
 
-func (a *Adapter) GetMongoAccountTypeActions() *MongoActions {
+func (a *Adapter) GetMongoActions() *MongoActions {
 	return a.mongoActions
 }
