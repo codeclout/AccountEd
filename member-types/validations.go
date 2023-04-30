@@ -1,15 +1,35 @@
-package internal
+package memberTypes
 
 import (
 	"errors"
 	"fmt"
 	"net/mail"
 	"regexp"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var v *validator.Validate
+
+func TrimString(s *string) *string {
+	b := strings.Trim(*s, " ")
+
+	return &b
+}
+
+func ValidateName(name *string) bool {
+	c := cases.Title(language.English, cases.NoLower)
+	t := TrimString(name)
+
+	if ok, e := regexp.MatchString(`(?m)[\p{Sm}\p{Nd}\p{Sc}\p{Sk}\p{Sm}\p{So}\p{Pe}\p{Ps}&#@*\\\/\.]`, c.String(*t)); e == nil && ok {
+		return false
+	}
+
+	return true
+}
 
 func ValidateAccountTypeId(id AccountTypeIn) (bool, error) {
 
@@ -36,13 +56,13 @@ func ValidateHomeschoolRegistration(p *ParentGuardian) bool {
 		return false
 	}
 
-	if ok := ValidateName(&p.FirstName); !ok {
-		return false
-	}
-
-	if ok := ValidateName(&p.LastName); !ok {
-		return false
-	}
+	//if ok := ValidateName(&p.FirstName); !ok {
+	//	return false
+	//}
+	//
+	//if ok := ValidateName(&p.LastName); !ok {
+	//	return false
+	//}
 
 	return true
 }
@@ -62,14 +82,6 @@ func ValidateEmail(email *string) (string, bool) {
 
 func ValidatePin(pin *string) bool {
 	if ok, e := regexp.MatchString(`(?m)\d+`, *pin); ok && e == nil {
-		return true
-	}
-
-	return false
-}
-
-func ValidateName(name *string) bool {
-	if ok, e := regexp.MatchString(`(?m)[a-zA-Z]+`, *name); ok && e == nil {
 		return true
 	}
 
