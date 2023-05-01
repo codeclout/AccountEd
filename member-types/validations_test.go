@@ -3,7 +3,7 @@ package memberTypes
 import "testing"
 
 func TestValidateName(t *testing.T) {
-  names := []string{"Brian", "<script>", "O'Brien", "López", "Gutiérrez", "De Jong", "Adébáyọ̀", "()"}
+  names := []string{"Brian", "<script>", "O'Brien", "López", "Gutiérrez", "De Jong", "Adébáyọ̀", "()", "Trey$"}
 
   tcases := []struct {
     result bool
@@ -15,6 +15,7 @@ func TestValidateName(t *testing.T) {
     {result: true},
     {result: true},
     {result: true},
+    {result: false},
     {result: false},
   }
 

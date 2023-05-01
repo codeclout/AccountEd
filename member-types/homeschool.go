@@ -1,6 +1,43 @@
-package internal
+package memberTypes
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import "time"
+
+type BirthCertificateGender int8
+
+const (
+	Female BirthCertificateGender = iota
+	Male
+)
+
+type Member struct {
+	AccountType         string `json:"account_type"`
+	County              string `json:"county" validate:"required"`
+	CreatedAt           int64  `json:"created_at"`
+	DisplayName         string `json:"display_name"`
+	FirstName           string `json:"first_name" validate:"required"`
+	IsActive            bool   `json:"is_active"`
+	IsMarkedForDeletion bool   `json:"is_marked_for_deletion"`
+	IsPending           bool   `json:"is_pending"`
+	LastName            string `json:"last_name" validate:"required"`
+	Pin                 string `json:"pin" validate:"required"`
+	UpdatedAt           int64  `json:"updated_at"`
+}
+
+type ParentGuardian struct {
+	Member
+	HomeSchoolRegistrationId string `json:"home_school_registration_id" bson:"home_school_registration_id" validate:"required"`
+	Phone                    string `json:"phone" bson:"phone" validate:"required"`
+	Username                 string `json:"username" bson:"username" validate:"required,email"`
+	Zipcode                  string `json:"zipcode" bson:"zipcode"`
+}
+
+type Student struct {
+	Member
+	BirthCertificateGender BirthCertificateGender `json:"birth_certificate_gender"`
+	DOB                    time.Time              `json:"dob"`
+	GradeTypeRequested     uint8                  `json:"grade_type_requested" validate:"required"`
+	PrincipalId            string                 `json:"principal_id"`
+}
 
 type HomeSchoolRegisterIn struct {
 	ParentGuardians []*ParentGuardian `json:"parent_guardians"`
@@ -21,44 +58,3 @@ type StudentOut struct {
 	ParentAccountId string `json:"parent_account_id" validate:"required"`
 }
 
-type ParentGuardian struct {
-	AccountType              string             `json:"account_type" bson:"account_type"`
-	County                   string             `json:"county" bson:"county" validate:"required"`
-	CreatedAt                primitive.DateTime `json:"created_at" bson:"created_at"`
-	FirstName                string             `json:"first_name" bson:"first_name" validate:"required"`
-	LastName                 string             `json:"last_name" bson:"last_name" validate:"required"`
-	HomeSchoolRegistrationId string             `json:"home_school_registration_id" bson:"home_school_registration_id" validate:"required"`
-	IsActive                 bool               `json:"is_active" bson:"is_active"`
-	IsMarkedForDeletion      bool               `json:"is_marked_for_deletion" bson:"is_marked_for_deletion"`
-	IsPending                bool               `json:"is_pending" bson:"is_pending"`
-	Phone                    string             `json:"phone" bson:"phone" validate:"required"`
-	Pin                      string             `json:"pin" bson:"pin" validate:"required"`
-	UpdatedAt                primitive.DateTime `json:"updated_at" bson:"updated_at"`
-	Username                 string             `json:"username" bson:"username" validate:"required,email"`
-	Zipcode                  string             `json:"zipcode" bson:"zipcode"`
-}
-
-type Student struct {
-	AccountType         string             `json:"account_type"`
-	County              string             `json:"county" validate:"required"`
-	CreatedAt           primitive.DateTime `json:"created_at"`
-	FirstName           string             `json:"first_name" validate:"required"`
-	GradeTypeRequested  uint8              `json:"grade_type_requested" validate:"required"`
-	LastName            string             `json:"last_name" validate:"required"`
-	IsActive            bool               `json:"is_active"`
-	IsMarkedForDeletion bool               `json:"is_marked_for_deletion"`
-	IsPending           bool               `json:"is_pending"`
-	Pin                 string             `json:"pin" validate:"required"`
-	PrincipalId         string             `json:"principal_id"`
-	UpdatedAt           primitive.DateTime `json:"updated_at"`
-	Username            string             `json:"username"`
-}
-
-type AccountTypeIn struct {
-	Id string `json:"id"`
-}
-
-type AccountTypeOut struct {
-	AccountType string `json:"account_type" bson:"account_type"`
-	Id          string `json:"id" bson:"_id"`
-}
