@@ -2,19 +2,23 @@ package memberTypes
 
 import "time"
 
-type BirthCertificateGender int8
+type Gender int8
 
 const (
-	Female BirthCertificateGender = iota
+	Female Gender = iota
 	Male
 )
 
 type Member struct {
-	AccountType         string `json:"account_type"`
-	County              string `json:"county" validate:"required"`
-	CreatedAt           int64  `json:"created_at"`
-	DisplayName         string `json:"display_name"`
-	FirstName           string `json:"first_name" validate:"required"`
+	AccountType         string   `json:"account_type"`
+	AuthorizedRoles     []string `json:"authorized_roles"`
+	Category            string   `json:"category"`
+	County              string   `json:"county" validate:"required"`
+	CreatedAt           int64    `json:"created_at"`
+	DisplayName         string   `json:"display_name"`
+	FirstName           string   `json:"first_name" validate:"required"`
+	GroupId             string   `json:"group_id"`
+	Id                  string
 	IsActive            bool   `json:"is_active"`
 	IsMarkedForDeletion bool   `json:"is_marked_for_deletion"`
 	IsPending           bool   `json:"is_pending"`
@@ -33,10 +37,11 @@ type ParentGuardian struct {
 
 type Student struct {
 	Member
-	BirthCertificateGender BirthCertificateGender `json:"birth_certificate_gender"`
-	DOB                    time.Time              `json:"dob"`
-	GradeTypeRequested     uint8                  `json:"grade_type_requested" validate:"required"`
-	PrincipalId            string                 `json:"principal_id"`
+	BirthCertificateGender Gender    `json:"birth_certificate_gender"`
+	DOB                    time.Time `json:"dob"`
+	Email                  string    `json:"email"`
+	GradeTypeRequested     uint8     `json:"grade_type_requested" validate:"required"`
+	PrincipalId            string    `json:"principal_id"`
 }
 
 type HomeSchoolRegisterIn struct {
@@ -49,9 +54,9 @@ type HomeSchoolRegisterOut struct {
 }
 
 type ParentGuardianOut struct {
-	AccountId string `json:"account_id" validate:"required"`
-	UserId    string `json:"user_id" validate:"required"`
-	Username  string `json:"username" validate:"required"`
+	GroupId  string `json:"account_id" validate:"required"`
+	Id       string `json:"user_id" validate:"required"`
+	Username string `json:"username" validate:"required"`
 }
 
 type StudentOut struct {
