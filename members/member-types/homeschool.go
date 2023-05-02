@@ -34,7 +34,7 @@ type MemberGroup struct {
 }
 
 type ParentGuardian struct {
-	Member
+  Member
 	Username string `json:"username" bson:"username" validate:"required,email"`
 }
 
