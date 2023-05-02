@@ -55,7 +55,6 @@ func ValidatePin(pin *string) (*string, bool) {
 }
 
 func ValidateHomeschoolRegistration(p *ParentGuardian) bool {
-
 }
 
 func ValidateRequestLimit(limit *string) bool {
