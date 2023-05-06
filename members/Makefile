@@ -43,6 +43,10 @@ ci-buildx-register-image: build-data
 
 	docker logout ghcr.io/$${GH_ACTOR}
 
+.PHONY: test-all
+test-all:
+	go test ./...
+
 .PHONY: build-data
 build-data:
 	@echo build-epoch $(BUILD_EPOCH)

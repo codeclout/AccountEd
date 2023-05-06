@@ -1,4 +1,4 @@
-package memberTypes
+package membertypes
 
 import (
 	"net/mail"
@@ -9,19 +9,15 @@ import (
 	"golang.org/x/text/language"
 )
 
-func TrimString(s *string) *string {
-	b := strings.Trim(*s, " ")
-
-	return &b
-}
+const INVALID = "invalid"
 
 func ValidateName(name *string) (*string, bool) {
 	c := cases.Title(language.English, cases.NoLower)
-	t := TrimString(name)
+	t := strings.TrimSpace(*name)
 	p := `(?m)[\p{Sm}\p{Nd}\p{Sc}\p{Sk}\p{Sm}\p{So}\p{Pe}\p{Ps}&#@*\\\/\.]`
 
-	if ok, e := regexp.MatchString(p, c.String(*t)); e == nil && ok {
-		x := "invalid"
+	if ok, e := regexp.MatchString(p, c.String(t)); e == nil && ok {
+		x := INVALID
 		return &x, false
 	}
 
@@ -30,7 +26,7 @@ func ValidateName(name *string) (*string, bool) {
 }
 
 func ValidateEmail(email *string) (*string, bool) {
-	x := "invalid"
+	x := INVALID
 
 	a, e := mail.ParseAddress(*email)
 	if e != nil {
@@ -55,6 +51,7 @@ func ValidatePin(pin *string) (*string, bool) {
 }
 
 func ValidateHomeschoolRegistration(p *ParentGuardian) bool {
+	return true
 }
 
 func ValidateRequestLimit(limit *string) bool {

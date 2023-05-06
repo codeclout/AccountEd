@@ -1,4 +1,4 @@
-package memberTypes
+package membertypes
 
 import "time"
 

@@ -10,14 +10,14 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=7s --retries=3 \
 
 WORKDIR /usr/ci-svc-usr
 
-COPY ./backend/go.mod ./backend/go.sum ./
+COPY ./go.mod ./go.sum ./
 
 RUN go mod tidy
 RUN go mod verify
 
-COPY ./backend .
+COPY ./ .
 
-RUN CGO_ENABLED=0 GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) go build -ldflags="-s" -v -o ./accountEd ./
+RUN CGO_ENABLED=0 GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) go build -ldflags="-s -w" -v -o ./accountEd ./
 
 FROM alpine:3.17.0 as prod
 
