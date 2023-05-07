@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 
 type Adapter struct {
 	Logger    *slog.Logger
-	WaitGroup *sync.WaitGroup
 }
 
 func NewAdapter() *Adapter {
@@ -55,8 +53,6 @@ func (a *Adapter) Initialize() {
 	sl := <-s
 
 	a.Logger.Warn("Signal %s - shutting down: ", sl)
-	a.WaitGroup.Wait()
-
 }
 
 func (a *Adapter) HttpMiddlewareLogger(msg ...interface{}) {

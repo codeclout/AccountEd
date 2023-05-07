@@ -1,16 +1,30 @@
-package framework
+package protocol
 
 import (
   "fmt"
   "log"
   "os"
+  "os/signal"
   "strconv"
   "strings"
+  "sync"
+  "syscall"
   "time"
 
   "github.com/gofiber/fiber/v2"
   "golang.org/x/exp/slog"
 )
+
+func getPort() string {
+  p, ok := os.LookupEnv("PORT")
+  n, _ := strconv.Atoi(p)
+
+  if ok && len(strings.TrimSpace(p)) >= 4 && n >= 1024 && n <= 65535 {
+    return fmt.Sprintf(":%d", n)
+  }
+
+  return ":8088"
+}
 
 func isProd() bool {
   if env, ok := os.LookupEnv("ENVIRONMENT"); ok && strings.TrimSpace(env) == "prod" {
@@ -26,6 +40,7 @@ type Adapter struct {
   isApplicationGetOnly bool
   logger               *slog.Logger
   routePrefix          string
+  WaitGroup            *sync.WaitGroup
 }
 
 func NewAdapter(an, rp string, igo bool, l *slog.Logger) *Adapter {
@@ -41,8 +56,7 @@ func NewAdapter(an, rp string, igo bool, l *slog.Logger) *Adapter {
 }
 
 func (a *Adapter) Initialize(api []*fiber.App) {
-
-  isAppGetOnly := func() int { // FixMe - offer fix for type
+  isAppGetOnly := func() int { // FixMe - write buffer size
     if a.isApplicationGetOnly {
       return 0
     }
@@ -68,13 +82,15 @@ func (a *Adapter) Initialize(api []*fiber.App) {
   log.Fatal(app.Listen(getPort()))
 }
 
-func getPort() string {
-  p, ok := os.LookupEnv("PORT")
-  n, _ := strconv.Atoi(p)
+func (a *Adapter) PostInit(app *fiber.App) {
+  s := make(chan os.Signal, 1)
+  signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 
-  if ok && len(strings.TrimSpace(p)) >= 4 && n >= 1024 && n <= 65535 {
-    return fmt.Sprintf(":%d", n)
-  }
+  <-s
+  a.StopProtocolListener(app)
+  os.Exit(0)
+}
 
-  return ":8088"
+func (a *Adapter) StopProtocolListener(app *fiber.App) {
+  a.WaitGroup.Wait()
 }

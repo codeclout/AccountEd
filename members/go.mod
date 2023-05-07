@@ -9,6 +9,8 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230506190332-bb287399436f // indirect
+	github.com/codeclout/AccountEd/pkg/server v0.0.0-20230506190332-bb287399436f // indirect
 	github.com/gofiber/fiber/v2 v2.44.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect

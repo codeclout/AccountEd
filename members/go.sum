@@ -1,5 +1,9 @@
 github.com/andybalholm/brotli v1.0.5 h1:8uQZIdzKmjc/iuPu7O2ioW48L81FgatrcpfFmiq/cCs=
 github.com/andybalholm/brotli v1.0.5/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
+github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230506190332-bb287399436f h1:3TNK4cIXwgKLxRXL2fXxoK7wl1SHFrolc49Y/KtBrtA=
+github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230506190332-bb287399436f/go.mod h1:1N3I/d1Lt3zOLO6Cq1HszNKFJGgX2Ch3evy82+ui6Ek=
+github.com/codeclout/AccountEd/pkg/server v0.0.0-20230506190332-bb287399436f h1:KWsuT1oDzHhLp4MwiOAa4Slxd47FDKJRzrULBYXhv0E=
+github.com/codeclout/AccountEd/pkg/server v0.0.0-20230506190332-bb287399436f/go.mod h1:Pzl5/spLIhGXbg31qTwrd47r5W8HSq7gj2JN5UizYkg=
 github.com/gofiber/fiber/v2 v2.44.0 h1:Z90bEvPcJM5GFJnu1py0E1ojoerkyew3iiNJ78MQCM8=
 github.com/gofiber/fiber/v2 v2.44.0/go.mod h1:VTMtb/au8g01iqvHyaCzftuM/xmZgKOZCtFzz6CdV9w=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
