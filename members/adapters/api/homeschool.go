@@ -3,32 +3,31 @@ package api
 import (
   "context"
 
+  "github.com/pkg/errors"
+  "golang.org/x/exp/slog"
+
   memberTypes "github.com/codeclout/AccountEd/members/member-types"
+  "github.com/codeclout/AccountEd/members/ports/core"
+  "github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
-type Adapter struct{}
-
-func NewAdapter() *Adapter {
-  return &Adapter{}
+type Adapter struct {
+  core core.HomeschoolCore
+  log  *slog.Logger
 }
 
-func (a *Adapter) GetParentGuardiansByAccountId(ctx context.Context, id string, in chan<- []memberTypes.ParentGuardian) {
+func NewAdapter(core core.HomeschoolCore, monitor *monitoring.Adapter) *Adapter {
+  return &Adapter{
+    core: core,
+    log:  monitor.Logger,
+  }
 }
 
-func (a *Adapter) GetParentGuardianById(ctx context.Context, id string, in chan<- memberTypes.ParentGuardian) {
-}
+func (a *Adapter) RegisterAccount(ctx context.Context, data *memberTypes.HomeSchoolRegisterIn, ch chan memberTypes.HomeSchoolRegisterOut, ech chan error) {
+  out, e := a.core.Register(ctx, data)
+  if e != nil {
+    ech <- errors.Wrapf(e, "registerAccountAPI -> core.Register(%v)", data)
+  }
 
-func (a *Adapter) GetParentGuardianByUsername(ctx context.Context, username string, in chan<- memberTypes.ParentGuardian) {
-}
-
-func (a *Adapter) RegisterAccount(ctx context.Context, data memberTypes.HomeSchoolRegisterIn, in chan<- memberTypes.HomeSchoolRegisterOut) {
-}
-
-func (a *Adapter) GetStudentByMemberId(ctx context.Context, id string, in chan<- memberTypes.Student) {
-}
-
-func (a *Adapter) GetStudentByPin(ctx context.Context, pin string, principal memberTypes.Member, in chan<- memberTypes.Student) {
-}
-
-func (a *Adapter) GetStudentsByAccountId(ctx context.Context, id string, in chan<- []memberTypes.Student) {
+  ch <- out
 }

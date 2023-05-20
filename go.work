@@ -1,0 +1,8 @@
+go 1.20
+
+use (
+	./members
+	./pkg/monitoring
+	./pkg/server
+	./pkg/session
+)

@@ -1,5 +1,14 @@
 package membertypes
 
+import "github.com/google/uuid"
+
+const (
+  Female Gender = iota + 1
+  Male
+)
+
+type Gender int8
+
 type Member struct {
   AccountType         string   `json:"account_type"`
   AuthorizedRoles     []string `json:"authorized_roles"`
@@ -7,20 +16,20 @@ type Member struct {
   CreatedAt           int64    `json:"created"`
   DisplayName         string   `json:"display_name"`
   GroupID             string   `json:"group_id"`
-  ID                  string   `json:"id"`
+  ID                  MemberID `json:"id"`
   Image               any      `json:"image"` // FixMe
   IsActive            bool     `json:"is_active"`
   IsMarkedForDeletion bool     `json:"is_marked_for_deletion"`
   IsPending           bool     `json:"is_pending"`
   IsVerified          bool     `json:"is_verified"`
-  LegalFirstName      string   `json:"legal_first_namefirst_name" validate:"required"`
-  LegalLastName       string   `json:"legal_last_namelast_name" validate:"required"`
+  LegalFirstName      *string  `json:"legal_first_namefirst_name" validate:"required"`
+  LegalLastName       *string  `json:"legal_last_namelast_name" validate:"required"`
   MemberType          string   `json:"member_type"`
-  Pin                 string   `json:"pin" validate:"required"`
+  Pin                 *string  `json:"pin" validate:"required"`
   UpdatedAt           int64    `json:"updated"`
 }
 
-type MemberSession struct{}
+type MemberID string
 
 type MemberGroup struct {
   CreatedAt int64  `json:"created_at"`
@@ -28,15 +37,19 @@ type MemberGroup struct {
   UpdatedAt int64  `json:"updated_at"`
 }
 
+type MemberSession struct{}
+
 type MemberType struct {
   CreatedAt int64  `json:"created_at"`
   ID        string `json:"id"`
   UpdatedAt int64  `json:"updated_at"`
 }
 
-type Gender int8
+type PrimaryMemberStartRegisterIn struct {
+  Username *string `json:"username" bson:"username" validate:"required,email"`
+}
 
-const (
-  Female Gender = iota
-  Male
-)
+type PrimaryMemberStartRegisterOut struct {
+  Username       *string `json:"username" bson:"username" validate:"required,email"`
+  VerificationID uuid.UUID
+}

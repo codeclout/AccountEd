@@ -4,8 +4,8 @@ import "time"
 
 type ParentGuardian struct {
 	Member
-	Phone    string `json:"phone"`
-	Username string `json:"username" bson:"username" validate:"required,email"`
+	Phone    string  `json:"phone"`
+	Username *string `json:"username" bson:"username" validate:"required,email"`
 }
 
 type ParentGuardianCompliance struct {
@@ -28,12 +28,11 @@ type StudentCompliance struct {
 }
 
 type HomeSchoolRegisterIn struct {
-	ParentGuardians []*ParentGuardian `json:"parent_guardians"`
-	Students        []*Student        `json:"students"`
+	PrimaryMember *ParentGuardian `json:"parent_guardians"`
 }
 
 type HomeSchoolRegisterOut struct {
-	ParentGuardians []*ParentGuardianOut `json:"parent_guardians"`
+	PrimaryMember *ParentGuardianOut `json:"parent_guardians"`
 }
 
 type ParentGuardianOut struct {

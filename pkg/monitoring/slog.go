@@ -19,7 +19,7 @@ func NewAdapter() *Adapter {
 		Level: slog.LevelDebug,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
-				t := GetTimeStamp()
+				t := getTimeStamp()
 				a.Value = slog.TimeValue(t)
 			}
 			return a
@@ -39,11 +39,15 @@ func NewAdapter() *Adapter {
 	return &Adapter{Logger: logger}
 }
 
-func GetTimeStamp() time.Time {
+func getTimeStamp() time.Time {
 	now := time.Now()
 	t := time.Unix(0, now.UnixNano()).UTC()
 
 	return t
+}
+
+func (a *Adapter) GetTimeStamp() time.Time {
+	return getTimeStamp()
 }
 
 func (a *Adapter) Initialize() {

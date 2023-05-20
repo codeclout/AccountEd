@@ -4,54 +4,113 @@ import (
 	"net/mail"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 
+	"github.com/pkg/errors"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
 
-const INVALID = "invalid"
+var (
+	ErrorInvalidEmail = errors.New("invalid email")
+	ErrorMemberName   = errors.New("invalid name")
+	ErrorPayloadSize  = errors.New("invalid payload size")
+	ErrorPinInvalid   = errors.New("invalid pin")
+)
 
-func ValidateName(name *string) (*string, bool) {
+func ValidatePayloadSize(in []byte) error {
+	if len(in) > (1024 * 128) {
+		return ErrorPayloadSize
+	}
+
+	return nil
+}
+
+func ValidateName(name *string) (atomic.Value, error) {
+	var atom atomic.Value
+
 	c := cases.Title(language.English, cases.NoLower)
 	t := strings.TrimSpace(*name)
 	p := `(?m)[\p{Sm}\p{Nd}\p{Sc}\p{Sk}\p{Sm}\p{So}\p{Pe}\p{Ps}&#@*\\\/\.]`
 
 	if ok, e := regexp.MatchString(p, c.String(t)); e == nil && ok {
-		x := INVALID
-		return &x, false
+		atom.Store("")
+		return atom, ErrorMemberName
 	}
 
-	n := c.String(*name)
-	return &n, true
+	atom.Store(c.String(*name))
+	return atom, nil
 }
 
-func ValidateEmail(email *string) (*string, bool) {
-	x := INVALID
+func ValidateEmail(email *string) (atomic.Value, error) {
+	var atom atomic.Value
 
 	a, e := mail.ParseAddress(*email)
 	if e != nil {
-		return &x, false
+		atom.Store("")
+		return atom, ErrorInvalidEmail
 	}
 
 	if ok, _ := regexp.MatchString(`(?m)\.[a-z]{2,24}`, *email); !ok {
-		return &x, false
+		atom.Store("")
+		return atom, ErrorInvalidEmail
 	}
 
-	return &a.Address, true
+	atom.Store(a.Address)
+	return atom, nil
 }
 
-func ValidatePin(pin *string) (*string, bool) {
+func ValidatePin(pin *string) (*string, error) {
 	if ok, e := regexp.MatchString(`(?m)^[0-9]{7,10}$`, *pin); ok && e == nil {
 		x := "ok"
-		return &x, true
+		return &x, nil
 	}
 
-	y := "invalid"
-	return &y, false
+	y := ""
+	return &y, ErrorPinInvalid
 }
 
-func ValidateHomeschoolRegistration(p *ParentGuardian) bool {
-	return true
+func ValidatePrimaryMember(in *PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) error {
+	out := make(chan error, 1)
+
+	go func() {
+		defer wg.Done()
+
+		email, e := ValidateEmail(in.Username)
+		if e != nil {
+			out <- ErrorInvalidEmail
+		}
+
+		v := email.Load()
+		x := v.(string)
+		in.Username = &x
+
+		out <- nil
+	}()
+
+	return <-out
+}
+
+func ValidateParentGuardian(in *ParentGuardian, wg *sync.WaitGroup) error {
+	defer wg.Done()
+	out := make(chan error)
+
+	go func() {
+		names := []*string{in.Member.LegalFirstName, in.Member.LegalLastName}
+		for i, n := range names {
+			name, e := ValidateName(n)
+			if e != nil {
+				out <- errors.Wrap(e, "name validation failed")
+			}
+
+			v := name.Load()
+			x := v.(string)
+			names[i] = &x
+		}
+	}()
+
+	return <-out
 }
 
 func ValidateRequestLimit(limit *string) bool {

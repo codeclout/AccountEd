@@ -13,6 +13,8 @@ import (
 
   "github.com/gofiber/fiber/v2"
   "golang.org/x/exp/slog"
+
+  "github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 func getPort() string {
@@ -35,27 +37,27 @@ func isProd() bool {
 }
 
 type Adapter struct {
-  api                  *fiber.App
+  HTTP                 *fiber.App
+  WaitGroup            *sync.WaitGroup
   applicationName      string
   isApplicationGetOnly bool
   logger               *slog.Logger
   routePrefix          string
-  WaitGroup            *sync.WaitGroup
 }
 
-func NewAdapter(an, rp string, igo bool, l *slog.Logger) *Adapter {
+func NewAdapter(applicationName, routePrefix string, isAppGetOnly bool, monitor *monitoring.Adapter) *Adapter {
   api := fiber.New()
 
   return &Adapter{
-    api:                  api,
-    applicationName:      an,
-    isApplicationGetOnly: igo,
-    logger:               l,
-    routePrefix:          rp,
+    HTTP:                 api,
+    applicationName:      applicationName,
+    isApplicationGetOnly: isAppGetOnly,
+    logger:               monitor.Logger,
+    routePrefix:          routePrefix,
   }
 }
 
-func (a *Adapter) Initialize(api []*fiber.App) {
+func (a *Adapter) Initialize(api []*fiber.App) *fiber.App {
   isAppGetOnly := func() int { // FixMe - write buffer size
     if a.isApplicationGetOnly {
       return 0

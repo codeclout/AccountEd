@@ -1,30 +1,34 @@
 package membertypes
 
-import "testing"
+import (
+  "errors"
+  "sync"
+  "testing"
+)
 
 func TestValidateName(t *testing.T) {
   names := []string{"brian", "<script>", "O'Brien", "lópez", "Gutiérrez", "de jong", "Adébáyọ̀", "()", "Trey$"}
 
-  tcases := []struct {
+  cases := []struct {
     a string
-    b bool
+    b error
   }{
-    {a: "Brian", b: true},
-    {a: "invalid", b: false},
-    {a: "O'Brien", b: true},
-    {a: "López", b: true},
-    {a: "Gutiérrez", b: true},
-    {a: "De Jong", b: true},
-    {a: "Adébáyọ̀", b: true},
-    {a: "invalid", b: false},
-    {a: "invalid", b: false},
+    {a: "Brian", b: nil},
+    {a: "", b: ErrorMemberName},
+    {a: "O'Brien", b: nil},
+    {a: "López", b: nil},
+    {a: "Gutiérrez", b: nil},
+    {a: "De Jong", b: nil},
+    {a: "Adébáyọ̀", b: nil},
+    {a: "", b: ErrorMemberName},
+    {a: "", b: ErrorMemberName},
   }
 
-  for i, tc := range tcases {
+  for i, tc := range cases {
     c, ok := ValidateName(&names[i])
-    name := *c
+    name := c.Load()
 
-    if name != tc.a || tc.b != ok {
+    if name != tc.a || !errors.Is(tc.b, ok) {
       t.Errorf("expected name: %s %t \n received name: %s %t", name, ok, tc.a, tc.b)
     }
   }
@@ -33,24 +37,54 @@ func TestValidateName(t *testing.T) {
 func TestValidateEmail(t *testing.T) {
   addresses := []string{"x@example.com", "x@example", "x.y@example.com", "x-y@example.com", "x_y@example.com", "Barry Gibbs <bg@example.com>"}
 
-  tcases := []struct {
+  cases := []struct {
     a string
-    b bool
+    b error
   }{
-    {a: "x@example.com", b: true},
-    {a: "invalid", b: false},
-    {a: "x.y@example.com", b: true},
-    {a: "x-y@example.com", b: true},
-    {a: "x_y@example.com", b: true},
-    {a: "bg@example.com", b: true},
+    {a: "x@example.com", b: nil},
+    {a: "", b: ErrorInvalidEmail},
+    {a: "x.y@example.com", b: nil},
+    {a: "x-y@example.com", b: nil},
+    {a: "x_y@example.com", b: nil},
+    {a: "bg@example.com", b: nil},
   }
 
-  for i, address := range tcases {
+  for i, address := range cases {
     c, ok := ValidateEmail(&addresses[i])
-    email := *c
+    email := c.Load()
 
-    if email != address.a || ok != address.b {
+    if email != address.a || !errors.Is(ok, address.b) {
       t.Errorf("expected address: %s ok: %t \n received address: %s ok: %t", email, ok, address.a, address.b)
+    }
+  }
+}
+
+func TestValidatePrimaryMember(t *testing.T) {
+  var wg sync.WaitGroup
+
+  addresses := []string{"something.null", "x.y@example.com", "Barry Gibbs <bg@example.com>"}
+  prime := []*PrimaryMemberStartRegisterIn{
+    &PrimaryMemberStartRegisterIn{Username: &addresses[0]},
+    &PrimaryMemberStartRegisterIn{Username: &addresses[1]},
+    &PrimaryMemberStartRegisterIn{Username: &addresses[2]},
+  }
+
+  cases := []struct {
+    a string
+    b error
+  }{
+    {a: "", b: ErrorInvalidEmail},
+    {a: "x.y@example.com", b: nil},
+    {a: "bg@example.com", b: nil},
+  }
+
+  for i, address := range cases {
+    wg.Add(1)
+    e := ValidatePrimaryMember(prime[i], &wg)
+    wg.Wait()
+
+    if *prime[i].Username != address.a || !errors.Is(e, address.b) {
+      t.Errorf("expected address: %s e: %t \n received address: %s e: %t", *prime[i].Username, e, address.a, address.b)
     }
   }
 }
@@ -58,23 +92,23 @@ func TestValidateEmail(t *testing.T) {
 func TestValidatePin(t *testing.T) {
   pins := []string{"7472", "382023475", "301%132$", "472651", "4276291", "32824746169"}
 
-  tcases := []struct {
+  cases := []struct {
     a string
-    b bool
+    b error
   }{
-    {a: "invalid", b: false},
-    {a: "ok", b: true},
-    {a: "invalid", b: false},
-    {a: "invalid", b: false},
-    {a: "ok", b: true},
-    {a: "invalid", b: false},
+    {a: "", b: ErrorPinInvalid},
+    {a: "ok", b: nil},
+    {a: "", b: ErrorPinInvalid},
+    {a: "", b: ErrorPinInvalid},
+    {a: "ok", b: nil},
+    {a: "", b: ErrorPinInvalid},
   }
 
-  for i, pin := range tcases {
+  for i, pin := range cases {
     c, ok := ValidatePin(&pins[i])
     id := *c
 
-    if id != pin.a || ok != pin.b {
+    if id != pin.a || !errors.Is(ok, pin.b) {
       t.Errorf("expected pin: %s ok: %t \n received pin: %s ok: %t", id, ok, pin.a, pin.b)
     }
   }
