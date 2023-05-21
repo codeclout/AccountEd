@@ -6,6 +6,31 @@ import (
   "testing"
 )
 
+func TestValidatePayloadSize(t *testing.T) {
+  payloads := []string{
+    "caexdmsrhedwybldobabtviszgntitqccbdojmccptzyyvrp",
+    "kvgezovshbxphbgdbswlfomuhgvpjiigtklckimzzpxynrwwlbrdpghsiquheqcwribhnftcyqjrxyldwiqxlmzgqiwcotbvrwph",
+    "scwrkecuvbnyieytohbjchrrxkxfqvqcjzxbpidbjxuiityjdbbwseiqpdedkywfoujexznzpqdlaqzikeryfwgmqxbnknf",
+  }
+
+  cases := []struct {
+    a []byte
+    b error
+  }{
+    {a: []byte(payloads[0]), b: nil},
+    {a: []byte(payloads[1]), b: ErrorPayloadSize},
+    {a: []byte(payloads[2]), b: nil},
+  }
+
+  for _, v := range cases {
+    e := ValidatePayloadSize(v.a)
+
+    if !errors.Is(v.b, e) {
+      t.Errorf("expected error: %s\n received error: %s", ErrorPayloadSize.Error(), e.Error())
+    }
+  }
+}
+
 func TestValidateName(t *testing.T) {
   names := []string{"brian", "<script>", "O'Brien", "lópez", "Gutiérrez", "de jong", "Adébáyọ̀", "()", "Trey$"}
 

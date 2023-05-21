@@ -5,11 +5,10 @@ import (
 
   "github.com/gofiber/fiber/v2"
 
-  membertypes "github.com/codeclout/AccountEd/members/member-types"
+  mt "github.com/codeclout/AccountEd/members/member-types"
 )
 
 type HomeschoolDriverPort interface {
-  //HandleParentGuardiansByAccountId(ctx context.Context, id string) *membertypes.ParentGuardianOut
-  HandleRegistration(ctx context.Context, in *membertypes.HomeSchoolRegisterIn) (*membertypes.HomeSchoolRegisterOut, error)
+  HandlePreRegistration(ctx context.Context, in *mt.PrimaryMemberStartRegisterIn) (*mt.PrimaryMemberStartRegisterOut, error)
   InitializeAPI(app *fiber.App) []*fiber.App
 }

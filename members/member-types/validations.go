@@ -20,7 +20,7 @@ var (
 )
 
 func ValidatePayloadSize(in []byte) error {
-	if len(in) > (1024 * 128) {
+	if len(in) > 96 {
 		return ErrorPayloadSize
 	}
 
