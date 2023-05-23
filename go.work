@@ -3,6 +3,7 @@ go 1.20
 use (
 	./members
 	./pkg/monitoring
+	./pkg/notifications
 	./pkg/server
 	./pkg/session
 )

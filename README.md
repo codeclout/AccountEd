@@ -16,7 +16,7 @@ This system requires an environment with Docker (or Docker compatible environmen
 - `Mac`: Add the following to your `/etc/hosts` file to connect to the local MongDB replica set from a GUI such as MongoDB Compass
 ```bash
 # /etc/hosts
-# local mongo replica
+# local mongo replica map hostname
 127.0.0.1 db
 127.0.0.1 db1
 127.0.0.1 db2

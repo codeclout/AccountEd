@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package proto.v1;
+
+option go_package = "github.com/codeclout/AccountEd/pkg/notifications";
+
+import "v1/messages.proto";
+
+service EmailNotificationService {
+  rpc ValidateEmailAddress(ValidateEmailAddressRequest) returns (ValidateEmailAddressResponse);
+}

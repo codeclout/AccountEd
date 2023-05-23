@@ -41,7 +41,7 @@ type Adapter struct {
   WaitGroup            *sync.WaitGroup
   applicationName      string
   isApplicationGetOnly bool
-  logger               *slog.Logger
+  log                  *slog.Logger
   routePrefix          string
 }
 
@@ -52,7 +52,7 @@ func NewAdapter(applicationName, routePrefix string, isAppGetOnly bool, monitor 
     HTTP:                 api,
     applicationName:      applicationName,
     isApplicationGetOnly: isAppGetOnly,
-    logger:               monitor.Logger,
+    log:                  monitor.Logger,
     routePrefix:          routePrefix,
   }
 }
@@ -76,12 +76,14 @@ func (a *Adapter) Initialize(api []*fiber.App) *fiber.App {
   })
 
   for _, x := range api {
-    a.logger.Info("creating API routes")
+    a.log.Info("creating API routes")
     app.Mount(a.routePrefix, x)
   }
 
-  a.logger.Info("starting server")
+  a.log.Info("starting server")
   log.Fatal(app.Listen(getPort()))
+
+  return app
 }
 
 func (a *Adapter) PostInit(app *fiber.App) {
@@ -89,6 +91,7 @@ func (a *Adapter) PostInit(app *fiber.App) {
   signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 
   <-s
+  a.log.Warn("initializing shutdown")
   a.StopProtocolListener(app)
   os.Exit(0)
 }

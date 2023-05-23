@@ -3,6 +3,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"sync"
 	"time"
 
@@ -17,19 +18,22 @@ import (
 )
 
 type Adapter struct {
+	config     map[string]string
 	homeschool api.HomeschoolAPI
 	log        *slog.Logger
 }
 
-func NewAdapter(homeschoolAPI api.HomeschoolAPI, monitor *monitoring.Adapter) *Adapter {
+func NewAdapter(homeschoolAPI api.HomeschoolAPI, monitor *monitoring.Adapter, runtimeConfig map[string]string) *Adapter {
 	return &Adapter{
+		config:     runtimeConfig,
 		homeschool: homeschoolAPI,
 		log:        monitor.Logger,
 	}
 }
 
 func (a *Adapter) initHomeSchoolRoutes(app *fiber.App) *fiber.App {
-	app.Post("/registration-start", timeout.NewWithContext(a.processRegistration, 400*time.Millisecond))
+	b, _ := strconv.Atoi(a.config["sla_routePerformance"])
+	app.Post("/registration-start", timeout.NewWithContext(a.processRegistration, time.Duration(b)*time.Millisecond))
 
 	return app
 }
@@ -76,11 +80,11 @@ func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMemberStartRegisterIn) (*mt.PrimaryMemberStartRegisterOut, error) {
 	ch := make(chan *mt.PrimaryMemberStartRegisterOut, 1)
 	ctx, cancel := context.WithCancel(ctx)
-	ech := make(chan error, 1)
+	errorch := make(chan error, 1)
 
 	defer cancel()
 
-	a.homeschool.PreRegisterPrimaryMember(ctx, in, ch, ech)
+	a.homeschool.PreRegisterPrimaryMember(ctx, in, ch, errorch)
 
 	select {
 	case <-ctx.Done():
@@ -91,7 +95,7 @@ func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMembe
 		a.log.Info("info", "log the transaction ID") // @TODO - transaction ID
 		return out, nil
 
-	case e := <-ech:
+	case e := <-errorch:
 		a.log.ErrorCtx(ctx, errors.Cause(e).Error()) // @TODO - transaction ID
 		return nil, errors.New(fiber.ErrInternalServerError.Error())
 	}

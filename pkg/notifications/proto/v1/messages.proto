@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package proto.v1;
+
+option go_package = "github.com/codeclout/AccountEd/pkg/notifications";
+
+message ValidateEmailAddressRequest {
+  string address = 1;
+}
+
+message ValidateEmailAddressResponse {
+  UUID session_id = 1;
+  string address = 2;
+  bool is_disposable = 3;
+  bool is_role_address = 4;
+  repeated Reason reason = 5;
+  string result = 6;
+  string risk = 7;
+}
+
+message Reason {
+  string reason = 1;
+}
+
+message UUID {
+  string id = 1;
+}
