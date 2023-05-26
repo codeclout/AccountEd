@@ -1,7 +1,11 @@
 package core
 
-import "context"
+import (
+  "context"
 
-type NotificationEmailCore interface {
-  ProcessEmailValidation(ctx context.Context)
+  notification "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
+)
+
+type EmailCorePort interface {
+  ProcessEmailValidation(ctx context.Context) (notification.ValidateEmailOut, error)
 }

@@ -28,28 +28,25 @@ func main() {
 
   monitor := monitoring.NewAdapter()
   go monitor.Initialize()
-
   monitor.Logger.Info("starting application ->", monitor.GetTimeStamp())
 
   memberConfiguration = driverAdapterServerConfiguration.NewAdapter(monitor)
-  cfg := *memberConfiguration.LoadMemberConfig()
+  config := *memberConfiguration.LoadMemberConfig()
 
   protocolAdapter := protocol.NewAdapter(
-    cfg["applicationName"].(string),
-    cfg["routePrefix"].(string),
-    cfg["isAppGetOnly"].(bool),
+    config["applicationName"].(string),
+    config["routePrefix"].(string),
+    config["isAppGetOnly"].(bool),
     monitor)
 
   protocolDriver = protocolAdapter
 
   homeschoolApi = apiAdapter.NewAdapter(homeschoolCore, monitor)
-  homeschooDriver = driverAdapter.NewAdapter(homeschoolApi, monitor)
+  homeschooDriver = driverAdapter.NewAdapter(homeschoolApi, monitor, config)
   homeschoolCore = coreAdapter.NewAdapter(monitor)
-
   homeschoolRoutes := homeschooDriver.InitializeAPI(protocolAdapter.HTTP)
 
   sessionDriver, _ = driverAdapterSession.NewAdapter(monitor)
-
   http := protocolDriver.Initialize(homeschoolRoutes)
 
 }

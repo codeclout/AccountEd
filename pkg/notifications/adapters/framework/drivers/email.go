@@ -13,22 +13,22 @@ import (
 )
 
 type Adapter struct {
-	apiNotificationEmail api.EmailNotificationAPI
-	config               map[string]string
-	log                  *slog.Logger
+	apiEmail api.EmailApiPort
+	config   map[string]interface{}
+	log      *slog.Logger
 }
 
-func (a *Adapter) NewAdapter(api api.EmailNotificationAPI, config map[string]string, log *slog.Logger) *Adapter {
+func NewAdapter(api api.EmailApiPort, config map[string]interface{}, log *slog.Logger) *Adapter {
 	return &Adapter{
-		apiNotificationEmail: api,
-		config:               config,
-		log:                  log,
+		apiEmail: api,
+		config:   config,
+		log:      log,
 	}
 }
 
 func (a *Adapter) HandleValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error) {
 	address := email.GetAddress()
-	b, _ := strconv.Atoi(a.config["sla_routePerformance"])
+	b, _ := strconv.Atoi(a.config["sla_routePerformance"].(string))
 
 	ch := make(chan *pb.ValidateEmailAddressResponse, 1)
 	ctx = context.WithValue(ctx, "transactionID", address)
@@ -37,7 +37,7 @@ func (a *Adapter) HandleValidateEmailAddress(ctx context.Context, email *pb.Vali
 	defer cancel()
 
 	errorch := make(chan error, 1)
-	a.apiNotificationEmail.ValidateEmailAddress(ctx, address, ch, errorch)
+	a.apiEmail.ValidateEmailAddress(ctx, address, ch, errorch)
 
 	select {
 	case <-ctx.Done():
@@ -47,5 +47,10 @@ func (a *Adapter) HandleValidateEmailAddress(ctx context.Context, email *pb.Vali
 	case out := <-ch:
 		a.log.InfoCtx(ctx, "success")
 		return out, nil
+
+	case e := <-errorch:
+		a.log.ErrorCtx(ctx, "error")
+		return nil, e
 	}
+
 }

@@ -18,12 +18,12 @@ import (
 )
 
 type Adapter struct {
-	config     map[string]string
+	config     map[string]interface{}
 	homeschool api.HomeschoolAPI
 	log        *slog.Logger
 }
 
-func NewAdapter(homeschoolAPI api.HomeschoolAPI, monitor *monitoring.Adapter, runtimeConfig map[string]string) *Adapter {
+func NewAdapter(homeschoolAPI api.HomeschoolAPI, monitor *monitoring.Adapter, runtimeConfig map[string]interface{}) *Adapter {
 	return &Adapter{
 		config:     runtimeConfig,
 		homeschool: homeschoolAPI,
@@ -32,7 +32,7 @@ func NewAdapter(homeschoolAPI api.HomeschoolAPI, monitor *monitoring.Adapter, ru
 }
 
 func (a *Adapter) initHomeSchoolRoutes(app *fiber.App) *fiber.App {
-	b, _ := strconv.Atoi(a.config["sla_routePerformance"])
+	b, _ := strconv.Atoi(a.config["sla_routePerformance"].(string))
 	app.Post("/registration-start", timeout.NewWithContext(a.processRegistration, time.Duration(b)*time.Millisecond))
 
 	return app

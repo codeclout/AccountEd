@@ -12,6 +12,6 @@ type (
   IsProd    bool
 )
 
-type EmailNotificationDriver interface {
+type EmailDriverPort interface {
   HandleValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error)
 }
