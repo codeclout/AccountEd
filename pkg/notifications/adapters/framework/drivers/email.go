@@ -26,7 +26,7 @@ func NewAdapter(api api.EmailApiPort, config map[string]interface{}, log *slog.L
 	}
 }
 
-func (a *Adapter) HandleValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error) {
+func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error) {
 	address := email.GetAddress()
 	b, _ := strconv.Atoi(a.config["sla_routePerformance"].(string))
 

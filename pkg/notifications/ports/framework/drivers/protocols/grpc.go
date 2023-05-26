@@ -1,5 +1,5 @@
 package protocols
 
-type GRPC interface {
+type GRPCProtocolPort interface {
   Run()
 }

@@ -7,6 +7,8 @@ plugins:
   - plugin: buf.build/protocolbuffers/go
     out: gen
     opt: paths=source_relative
-  - plugin: buf.build/bufbuild/connect-go
+  - plugin: buf.build/grpc/go
     out: gen
-    opt: paths=source_relative
+    opt:
+    - paths=source_relative
+    - require_unimplemented_servers=false

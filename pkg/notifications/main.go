@@ -6,11 +6,13 @@ import (
   coreAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/core"
   driven2 "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/driven"
   driverAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/drivers"
+  protocolGrpcAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/drivers/protocols"
   configuration "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/drivers/server"
   apiEmail "github.com/codeclout/AccountEd/pkg/notifications/ports/api"
   "github.com/codeclout/AccountEd/pkg/notifications/ports/core"
   "github.com/codeclout/AccountEd/pkg/notifications/ports/framework/driven"
   "github.com/codeclout/AccountEd/pkg/notifications/ports/framework/drivers"
+  "github.com/codeclout/AccountEd/pkg/notifications/ports/framework/drivers/protocols"
   "github.com/codeclout/AccountEd/pkg/notifications/ports/framework/drivers/server"
 )
 
@@ -21,6 +23,7 @@ func main() {
     emailNotificationApi      apiEmail.EmailApiPort
     emailNotificationCore     core.EmailCorePort
     emailNotificationDriven   driven.EmailDrivenPort
+    grpcProtocol              protocols.GRPCProtocolPort
   )
 
   notificationConfiguration = configuration.NewAdapter()
@@ -29,8 +32,11 @@ func main() {
   monitor := monitoring.NewAdapter()
   go monitor.Initialize()
 
-  emailNotificationDriven = driven2.NewAdapter(notificationConfiguration)
+  emailNotificationDriven = driven2.NewAdapter(*config)
   emailNotificationCore = coreAdapter.NewAdapter(emailNotificationDriven)
   emailNotificationApi = api.NewAdapter(monitor.Logger, emailNotificationCore)
   emailNotificationDriver = driverAdapter.NewAdapter(emailNotificationApi, *config, monitor.Logger)
+
+  grpcProtocol = protocolGrpcAdapter.NewAdapter(*config, monitor.Logger, emailNotificationDriver)
+  grpcProtocol.Run()
 }

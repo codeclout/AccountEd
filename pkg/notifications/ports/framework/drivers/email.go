@@ -13,5 +13,5 @@ type (
 )
 
 type EmailDriverPort interface {
-  HandleValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error)
+  ValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error)
 }
