@@ -6,7 +6,9 @@ require (
 	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230506190332-bb287399436f
 	github.com/codeclout/AccountEd/pkg/server v0.0.0-20230507034457-d56a65a8a1c5
 	github.com/gofiber/fiber/v2 v2.44.0
+	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl/v2 v2.16.2
+	github.com/pkg/errors v0.9.1
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
 	golang.org/x/text v0.8.0
 )
@@ -16,7 +18,6 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect

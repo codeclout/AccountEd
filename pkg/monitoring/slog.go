@@ -1,6 +1,7 @@
 package monitoring
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -15,6 +16,8 @@ type Adapter struct {
 }
 
 func NewAdapter() *Adapter {
+	var logger *slog.Logger
+
 	o := slog.HandlerOptions{
 		Level: slog.LevelDebug,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
@@ -27,14 +30,16 @@ func NewAdapter() *Adapter {
 
 	if env, ok := os.LookupEnv("ENVIRONMENT"); ok && strings.TrimSpace(env) == "prod" {
 		o.Level = slog.LevelInfo
-		h := o.NewJSONHandler(os.Stdout)
+		h := slog.NewJSONHandler(os.Stdout, &o)
 
-		logger := slog.New(h)
-		return &Adapter{Logger: logger}
+		logger = slog.New(h)
+		slog.SetDefault(logger)
+
+	} else {
+		h := slog.NewJSONHandler(os.Stdout, &o)
+		logger = slog.New(h)
+		slog.SetDefault(logger)
 	}
-
-	h := o.NewJSONHandler(os.Stdout)
-	logger := slog.New(h)
 
 	return &Adapter{Logger: logger}
 }
@@ -56,7 +61,7 @@ func (a *Adapter) Initialize() {
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 	sl := <-s
 
-	a.Logger.Warn("Signal %s - shutting down: ", sl)
+	a.Logger.Warn(fmt.Sprintf("Signal %s - shutting down ", sl))
 }
 
 func (a *Adapter) HttpMiddlewareLogger(msg ...interface{}) {

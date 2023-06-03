@@ -4,7 +4,7 @@ import (
   "github.com/codeclout/AccountEd/pkg/monitoring"
   "github.com/codeclout/AccountEd/pkg/notifications/adapters/api"
   coreAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/core"
-  driven2 "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/driven"
+  drivenAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/driven"
   driverAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/drivers"
   protocolGrpcAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/drivers/protocols"
   configuration "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/drivers/server"
@@ -32,9 +32,9 @@ func main() {
   monitor := monitoring.NewAdapter()
   go monitor.Initialize()
 
-  emailNotificationDriven = driven2.NewAdapter(*config)
-  emailNotificationCore = coreAdapter.NewAdapter(emailNotificationDriven)
-  emailNotificationApi = api.NewAdapter(monitor.Logger, emailNotificationCore)
+  emailNotificationDriven = drivenAdapter.NewAdapter(*config)
+  emailNotificationCore = coreAdapter.NewAdapter(*config)
+  emailNotificationApi = api.NewAdapter(monitor.Logger, emailNotificationCore, emailNotificationDriven)
   emailNotificationDriver = driverAdapter.NewAdapter(emailNotificationApi, *config, monitor.Logger)
 
   grpcProtocol = protocolGrpcAdapter.NewAdapter(*config, monitor.Logger, emailNotificationDriver)

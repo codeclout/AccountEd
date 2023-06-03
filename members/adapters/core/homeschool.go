@@ -6,16 +6,15 @@ import (
   "golang.org/x/exp/slog"
 
   mt "github.com/codeclout/AccountEd/members/member-types"
-  "github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type Adapter struct {
   log *slog.Logger
 }
 
-func NewAdapter(monitor *monitoring.Adapter) *Adapter {
+func NewAdapter(log *slog.Logger) *Adapter {
   return &Adapter{
-    log: monitor.Logger,
+    log: log,
   }
 }
 

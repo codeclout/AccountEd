@@ -4,22 +4,33 @@ package proto.v1;
 
 option go_package = "github.com/codeclout/AccountEd/pkg/notifications";
 
+message ValidateEmailAddressResponse {
+  UUID session_id = 1;
+  string email = 2;
+  string autocorrect = 3;
+  string deliverability = 4;
+  string quality_score = 5;
+  EmailVerificationPayload is_valid_format = 6;
+  EmailVerificationPayload is_free_email = 7;
+  EmailVerificationPayload is_disposable_email = 8;
+  EmailVerificationPayload is_role_email = 9;
+  EmailVerificationPayload is_catchall_email = 10;
+  EmailVerificationPayload is_mx_found = 11;
+  EmailVerificationPayload is_smtp_valid = 12;
+}
+
+message EmailVerificationPayload {
+  string text = 1;
+  bool value = 2;
+}
+
 message ValidateEmailAddressRequest {
   string address = 1;
 }
 
-message ValidateEmailAddressResponse {
-  UUID session_id = 1;
-  string address = 2;
-  bool is_disposable = 3;
-  bool is_role_address = 4;
-  repeated Reason reason = 5;
-  string result = 6;
-  string risk = 7;
-}
-
-message Reason {
-  string reason = 1;
+message ValidFormat {
+  string text = 1;
+  bool value = 2;
 }
 
 message UUID {

@@ -2,7 +2,6 @@ package protocol
 
 import (
   "fmt"
-  "log"
   "os"
   "os/signal"
   "strconv"
@@ -13,8 +12,6 @@ import (
 
   "github.com/gofiber/fiber/v2"
   "golang.org/x/exp/slog"
-
-  "github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 func getPort() string {
@@ -45,14 +42,14 @@ type Adapter struct {
   routePrefix          string
 }
 
-func NewAdapter(applicationName, routePrefix string, isAppGetOnly bool, monitor *monitoring.Adapter) *Adapter {
+func NewAdapter(applicationName, routePrefix string, isAppGetOnly bool, log *slog.Logger) *Adapter {
   api := fiber.New()
 
   return &Adapter{
     HTTP:                 api,
     applicationName:      applicationName,
     isApplicationGetOnly: isAppGetOnly,
-    log:                  monitor.Logger,
+    log:                  log,
     routePrefix:          routePrefix,
   }
 }
@@ -69,7 +66,6 @@ func (a *Adapter) Initialize(api []*fiber.App) *fiber.App {
     AppName:                      a.applicationName,
     DisablePreParseMultipartForm: true,
     DisableStartupMessage:        isProd(),
-    ETag:                         true,
     IdleTimeout:                  2 * time.Second,
     ReadTimeout:                  2 * time.Second,
     WriteBufferSize:              isAppGetOnly(),
@@ -80,8 +76,8 @@ func (a *Adapter) Initialize(api []*fiber.App) *fiber.App {
     app.Mount(a.routePrefix, x)
   }
 
-  a.log.Info("starting server")
-  log.Fatal(app.Listen(getPort()))
+  //a.log.Info("starting server")
+  //log.Fatal(app.Listen(getPort()))
 
   return app
 }

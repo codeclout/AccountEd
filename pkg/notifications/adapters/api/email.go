@@ -8,45 +8,53 @@ import (
 
   pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
   "github.com/codeclout/AccountEd/pkg/notifications/ports/core"
+  "github.com/codeclout/AccountEd/pkg/notifications/ports/framework/driven"
 )
 
 type Adapter struct {
-  core core.EmailCorePort
-  log  *slog.Logger
+  core        core.EmailCorePort
+  drivenEmail driven.EmailDrivenPort
+  log         *slog.Logger
 }
 
-func NewAdapter(log *slog.Logger, core core.EmailCorePort) *Adapter {
+func NewAdapter(log *slog.Logger, core core.EmailCorePort, email driven.EmailDrivenPort) *Adapter {
   return &Adapter{
-    core: core,
-    log:  log,
+    core:        core,
+    drivenEmail: email,
+    log:         log,
   }
 }
 
 func (a *Adapter) ValidateEmailAddress(ctx context.Context, address string, ch chan *pb.ValidateEmailAddressResponse, errorch chan error) {
-  var reason []*pb.Reason
-
   ctx = context.WithValue(ctx, "address", address)
-  validated, e := a.core.ProcessEmailValidation(ctx)
-
+  coreEmailProcessor, e := a.core.ProcessEmailValidation(ctx)
   if e != nil {
     x := errors.Wrapf(e, "api-ValidateEmailAddress -> core.ProcessEmailValidation(%v)", ctx)
     errorch <- x
+    return
   }
 
-  for _, r := range validated.Reason {
-    x := &pb.Reason{Reason: r}
-    reason = append(reason, x)
+  validated, e := a.drivenEmail.EmailVerificationProcessor(ctx, coreEmailProcessor)
+  if e != nil {
+    x := errors.Wrapf(e, "api-ValidateEmailAddress -> drivenEmail.EmailVerificationProcessor(%v)", ctx)
+    errorch <- x
+    return
   }
 
-  out := &pb.ValidateEmailAddressResponse{
-    SessionId:     nil,
-    Address:       validated.Address,
-    IsDisposable:  validated.IsDisposable,
-    IsRoleAddress: validated.IsRoleAddress,
-    Reason:        reason,
-    Result:        validated.Result,
-    Risk:          validated.Risk,
+  out := pb.ValidateEmailAddressResponse{
+    SessionId:         &pb.UUID{Id: coreEmailProcessor.SessionID.String()},
+    Email:             validated.Email,
+    Autocorrect:       validated.Autocorrect,
+    Deliverability:    validated.Deliverability,
+    QualityScore:      validated.QualityScore,
+    IsValidFormat:     validated.IsValidFormat,
+    IsFreeEmail:       validated.IsFreeEmail,
+    IsDisposableEmail: validated.IsDisposableEmail,
+    IsRoleEmail:       validated.IsRoleEmail,
+    IsCatchallEmail:   validated.IsCatchallEmail,
+    IsMxFound:         validated.IsMxFound,
+    IsSmtpValid:       validated.IsSMTPValid,
   }
 
-  ch <- out
+  ch <- &out
 }

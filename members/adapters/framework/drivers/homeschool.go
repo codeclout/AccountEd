@@ -3,7 +3,6 @@ package drivers
 import (
 	"context"
 	"encoding/json"
-	"strconv"
 	"sync"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 
 	mt "github.com/codeclout/AccountEd/members/member-types"
 	"github.com/codeclout/AccountEd/members/ports/api"
-	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type Adapter struct {
@@ -23,16 +21,16 @@ type Adapter struct {
 	log        *slog.Logger
 }
 
-func NewAdapter(homeschoolAPI api.HomeschoolAPI, monitor *monitoring.Adapter, runtimeConfig map[string]interface{}) *Adapter {
+func NewAdapter(homeschoolAPI api.HomeschoolAPI, log *slog.Logger, runtimeConfig map[string]interface{}) *Adapter {
 	return &Adapter{
 		config:     runtimeConfig,
 		homeschool: homeschoolAPI,
-		log:        monitor.Logger,
+		log:        log,
 	}
 }
 
 func (a *Adapter) initHomeSchoolRoutes(app *fiber.App) *fiber.App {
-	b, _ := strconv.Atoi(a.config["sla_routePerformance"].(string))
+	b := int(a.config["sla_routes"].(float64))
 	app.Post("/registration-start", timeout.NewWithContext(a.processRegistration, time.Duration(b)*time.Millisecond))
 
 	return app
@@ -42,7 +40,7 @@ func (a *Adapter) InitializeAPI(http *fiber.App) []*fiber.App {
 	var out []*fiber.App
 
 	x := a.initHomeSchoolRoutes(http)
-	_ = append(out, x)
+	out = append(out, x)
 
 	return out
 }

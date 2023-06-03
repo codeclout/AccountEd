@@ -10,25 +10,24 @@ import (
   "github.com/hashicorp/hcl/v2"
   "github.com/hashicorp/hcl/v2/hclsimple"
   "golang.org/x/exp/slog"
-
-  "github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 const path = "./config.hcl"
 
 type Server struct {
-  GetOnlyConstraint bool   `hcl:"isAppGetOnly"`
-  Name              string `hcl:"applicationName"`
-  RoutePrefix       string `hcl:"routePrefix"`
+  GetOnlyConstraint bool    `hcl:"is_app_get_only" json:"is_app_get_only"`
+  Name              string  `hcl:"application_name" json:"application_name"`
+  RoutePrefix       string  `hcl:"route_prefix" json:"route_prefix"`
+  SLARoutes         float64 `hcl:"sla_routes" json:"sla_routes"`
 }
 
 type Adapter struct {
   log *slog.Logger
 }
 
-func NewAdapter(monitor *monitoring.Adapter) *Adapter {
+func NewAdapter(log *slog.Logger) *Adapter {
   return &Adapter{
-    log: monitor.Logger,
+    log: log,
   }
 }
 

@@ -1,12 +1,12 @@
-package http_middleware
+package httpmiddleware
 
 import (
 	"log"
 	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/exp/slog"
 )
 
 type Config struct {
@@ -20,13 +20,14 @@ var Internals = Config{
 }
 
 func NewLoggerMiddleware(c ...Config) fiber.Handler {
+	var r string
 	config := setConfig(c...)
 
 	return func(ctx *fiber.Ctx) error {
 		req := ctx.Request()
 		res := ctx.Response()
 
-		if config.ShouldSkip(ctx) == true {
+		if config.ShouldSkip(ctx) {
 			return ctx.Next()
 		}
 
@@ -35,7 +36,7 @@ func NewLoggerMiddleware(c ...Config) fiber.Handler {
 			log.Fatal(e)
 		}
 
-		r := string(req.Header.Peek(fiber.HeaderXRequestID))
+		r = string(req.Header.Peek(fiber.HeaderXRequestID))
 		if r == "" {
 			r = strings.Trim(string(uuid), "\n")
 		}
@@ -45,13 +46,15 @@ func NewLoggerMiddleware(c ...Config) fiber.Handler {
 			x = ctx.IP()
 		}
 
-		config.Log("host", string(req.Host()),
-			"method", ctx.Method(),
-			"path", string(req.URI().Path()),
-			"requestId", r,
-			"status", strconv.Itoa(res.StatusCode()),
-			"uri", string(req.RequestURI()),
-			"xforwarded", x)
+		config.Log("incoming request", slog.Group("request",
+			slog.String("host", string(req.Host())),
+			slog.String("method", ctx.Method()),
+			slog.String("path", string(req.URI().Path())),
+			slog.String("request_id", r),
+			slog.Int("status", res.StatusCode()),
+			slog.String("uri", string(req.RequestURI())),
+			slog.String("x_forward_for", x),
+		))
 
 		return ctx.Next()
 	}

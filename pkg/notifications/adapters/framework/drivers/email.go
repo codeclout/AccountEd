@@ -28,7 +28,7 @@ func NewAdapter(api api.EmailApiPort, config map[string]interface{}, log *slog.L
 
 func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error) {
 	address := email.GetAddress()
-	b, _ := strconv.Atoi(a.config["sla_routePerformance"].(string))
+	b, _ := strconv.Atoi(a.config["sla_route_performance"].(string))
 
 	ch := make(chan *pb.ValidateEmailAddressResponse, 1)
 	ctx = context.WithValue(ctx, "transactionID", address)
@@ -49,7 +49,7 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEm
 		return out, nil
 
 	case e := <-errorch:
-		a.log.ErrorCtx(ctx, "error")
+		a.log.ErrorCtx(ctx, e.Error())
 		return nil, e
 	}
 

@@ -1,52 +1,58 @@
-package members
+package main
 
 import (
   apiAdapter "github.com/codeclout/AccountEd/members/adapters/api"
   coreAdapter "github.com/codeclout/AccountEd/members/adapters/core"
   driverAdapter "github.com/codeclout/AccountEd/members/adapters/framework/drivers"
+  protocols2 "github.com/codeclout/AccountEd/members/adapters/framework/drivers/protocols"
   driverAdapterServerConfiguration "github.com/codeclout/AccountEd/members/adapters/framework/drivers/server"
   "github.com/codeclout/AccountEd/members/ports/api"
   "github.com/codeclout/AccountEd/members/ports/core"
   "github.com/codeclout/AccountEd/members/ports/framework/drivers"
+  httpMiddleware "github.com/codeclout/AccountEd/members/ports/framework/drivers/protocols/http-middleware"
   "github.com/codeclout/AccountEd/members/ports/framework/drivers/server"
   "github.com/codeclout/AccountEd/pkg/monitoring"
   "github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
   "github.com/codeclout/AccountEd/pkg/server/ports/framework/drivers/protocols"
-  driverAdapterSession "github.com/codeclout/AccountEd/pkg/session/adapter/framework/driver"
-  "github.com/codeclout/AccountEd/pkg/session/ports/framework/driver"
 )
 
 func main() {
   var (
-    homeschoolApi       api.HomeschoolAPI
+    homeschoolAPI       api.HomeschoolAPI
     homeschoolCore      core.HomeschoolCore
-    homeschooDriver     drivers.HomeschoolDriverPort
+    homeschoolDriver    drivers.HomeschoolDriverPort
     memberConfiguration server.MembersConfigurationPort
     protocolDriver      protocols.ProtocolPort
-    sessionDriver       driver.SessionPort
+    // sessionDriver       driver.SessionPort
   )
 
   monitor := monitoring.NewAdapter()
   go monitor.Initialize()
-  monitor.Logger.Info("starting application ->", monitor.GetTimeStamp())
 
-  memberConfiguration = driverAdapterServerConfiguration.NewAdapter(monitor)
+  memberConfiguration = driverAdapterServerConfiguration.NewAdapter(monitor.Logger)
   config := *memberConfiguration.LoadMemberConfig()
 
   protocolAdapter := protocol.NewAdapter(
-    config["applicationName"].(string),
-    config["routePrefix"].(string),
-    config["isAppGetOnly"].(bool),
-    monitor)
+    config["application_name"].(string),
+    config["route_prefix"].(string),
+    config["is_app_get_only"].(bool),
+    monitor.Logger)
 
   protocolDriver = protocolAdapter
 
-  homeschoolApi = apiAdapter.NewAdapter(homeschoolCore, monitor)
-  homeschooDriver = driverAdapter.NewAdapter(homeschoolApi, monitor, config)
-  homeschoolCore = coreAdapter.NewAdapter(monitor)
-  homeschoolRoutes := homeschooDriver.InitializeAPI(protocolAdapter.HTTP)
+  homeschoolCore = coreAdapter.NewAdapter(monitor.Logger)
+  homeschoolAPI = apiAdapter.NewAdapter(homeschoolCore, monitor.Logger)
+  homeschoolDriver = driverAdapter.NewAdapter(homeschoolAPI, monitor.Logger, config)
+  homeschoolRoutes := homeschoolDriver.InitializeAPI(protocolAdapter.HTTP)
 
-  sessionDriver, _ = driverAdapterSession.NewAdapter(monitor)
+  // sessionDriver, _ = driverAdapterSession.NewAdapter(monitor)
   http := protocolDriver.Initialize(homeschoolRoutes)
+  app := protocols2.NewAdapter(monitor.Logger, http)
+  
+  app.Run(httpMiddleware.NewLoggerMiddleware)
 
+  //connection, e := grpc.Dial("", grpc.WithTransportCredentials(insecure.NewCredentials()))
+  //defer connection.Close()
+  //
+  //client := protov1.NewEmailNotificationServiceClient(connection)
 }

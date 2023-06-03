@@ -8,7 +8,6 @@ import (
 
   mt "github.com/codeclout/AccountEd/members/member-types"
   "github.com/codeclout/AccountEd/members/ports/core"
-  "github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type Adapter struct {
@@ -16,10 +15,10 @@ type Adapter struct {
   log  *slog.Logger
 }
 
-func NewAdapter(core core.HomeschoolCore, monitor *monitoring.Adapter) *Adapter {
+func NewAdapter(core core.HomeschoolCore, log *slog.Logger) *Adapter {
   return &Adapter{
     core: core,
-    log:  monitor.Logger,
+    log:  log,
   }
 }
 

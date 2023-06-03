@@ -7,5 +7,5 @@ import (
 )
 
 type EmailCorePort interface {
-  ProcessEmailValidation(ctx context.Context) (notification.ValidateEmailOut, error)
+  ProcessEmailValidation(ctx context.Context) (*notification.EmailDrivenIn, error)
 }
