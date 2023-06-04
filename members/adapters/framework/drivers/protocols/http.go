@@ -10,23 +10,20 @@ import (
 )
 
 type Adapter struct {
-  app *fiber.App
-  log *slog.Logger
+  app              *fiber.App
+  log              *slog.Logger
+  middlewareLogger func(settings ...httpMiddleware.Config) fiber.Handler
 }
 
-func NewAdapter(log *slog.Logger, app *fiber.App) *Adapter {
+func NewAdapter(log *slog.Logger, app *fiber.App, middlewareLogger func(settings ...httpMiddleware.Config) fiber.Handler) *Adapter {
   return &Adapter{
-    app: app,
-    log: log,
+    app:              app,
+    log:              log,
+    middlewareLogger: middlewareLogger,
   }
 }
 
-func (a *Adapter) Run(middlewareLogger func(settings ...httpMiddleware.Config) fiber.Handler) {
+func (a *Adapter) Run(requestMiddleware func(message ...interface{})) {
   a.log.Info("starting server")
-
-  a.app.Use(middlewareLogger(httpMiddleware.Config{
-    Log:        middlewareLogger,
-    ShouldSkip: nil,
-  }))
   log.Fatal(a.app.Listen(":8088"))
 }

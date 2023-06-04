@@ -15,6 +15,8 @@ import (
 	"github.com/codeclout/AccountEd/members/ports/api"
 )
 
+type label string
+
 type Adapter struct {
 	config     map[string]interface{}
 	homeschool api.HomeschoolAPI
@@ -47,24 +49,28 @@ func (a *Adapter) InitializeAPI(http *fiber.App) []*fiber.App {
 
 func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 	var in *mt.PrimaryMemberStartRegisterIn
-	var wg *sync.WaitGroup
+	var wg sync.WaitGroup
 
-	if e := mt.ValidatePayloadSize(ctx.Body()); e != nil {
-		a.log.Error(e.Error())
+	if e := mt.ValidateUsernamePayloadSize(ctx.Body()); e != nil {
+		a.log.Error(e.Error(), "request_id", ctx.Locals("requestid"))
 		return ctx.JSON(ctx.Status(400))
 	}
 
 	if e := json.Unmarshal(ctx.Body(), &in); e != nil {
-		a.log.Error(e.Error())
+		a.log.Error(e.Error(), "request_id", ctx.Locals("requestid"))
 		return ctx.JSON(ctx.SendStatus(400))
 	}
 
-	if e := mt.ValidatePrimaryMember(in, wg); e != nil {
-		a.log.Error(e.Error())
+	if e := mt.ValidatePrimaryMember(in, &wg); e != nil {
+		a.log.Error(e.Error(), "request_id", ctx.Locals("requestid"))
 		return ctx.JSON(ctx.SendStatus(400))
 	}
 
-	out, x := a.HandlePreRegistration(ctx.UserContext(), in)
+	c := ctx.UserContext()
+	cstr := label("requestid")
+	cx := context.WithValue(c, cstr, ctx.Locals("requestid"))
+
+	out, x := a.HandlePreRegistration(cx, in)
 	if x != nil {
 		a.log.Error(x.Error())
 		ctx.Status(500)
@@ -86,15 +92,15 @@ func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMembe
 
 	select {
 	case <-ctx.Done():
-		a.log.ErrorCtx(ctx, "timeout exceeded", "") // @TODO - transaction ID
+		a.log.ErrorCtx(ctx, "timeout exceeded", "request_id", ctx.Value(label("requestid")))
 		return nil, ctx.Err()
 
 	case out := <-ch:
-		a.log.Info("info", "log the transaction ID") // @TODO - transaction ID
+		a.log.Info("completed", "request_id", ctx.Value(label("requestid")))
 		return out, nil
 
 	case e := <-errorch:
-		a.log.ErrorCtx(ctx, errors.Cause(e).Error()) // @TODO - transaction ID
+		a.log.Error(errors.Cause(e).Error(), "request_id", ctx.Value(label("requestid")))
 		return nil, errors.New(fiber.ErrInternalServerError.Error())
 	}
 }

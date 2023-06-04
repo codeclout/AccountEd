@@ -10,7 +10,7 @@ import (
 )
 
 type Config struct {
-	Log        func(msg ...interface{})
+	Log        func(msg string, attr slog.Attr)
 	ShouldSkip func(c *fiber.Ctx) bool
 }
 
@@ -39,6 +39,9 @@ func NewLoggerMiddleware(c ...Config) fiber.Handler {
 		r = string(req.Header.Peek(fiber.HeaderXRequestID))
 		if r == "" {
 			r = strings.Trim(string(uuid), "\n")
+			
+			ctx.Set(fiber.HeaderXRequestID, r)
+			ctx.Locals("requestid", r)
 		}
 
 		x := string(req.Header.Peek(fiber.HeaderXForwardedFor))

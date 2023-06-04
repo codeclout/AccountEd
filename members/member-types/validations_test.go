@@ -23,7 +23,7 @@ func TestValidatePayloadSize(t *testing.T) {
   }
 
   for _, v := range cases {
-    e := ValidatePayloadSize(v.a)
+    e := ValidateUsernamePayloadSize(v.a)
 
     if !errors.Is(v.b, e) {
       t.Errorf("expected error: %s\n received error: %s", ErrorPayloadSize.Error(), e.Error())

@@ -12,6 +12,8 @@ import (
 
   "github.com/gofiber/fiber/v2"
   "golang.org/x/exp/slog"
+
+  httpMiddleware "github.com/codeclout/AccountEd/members/ports/framework/drivers/protocols/http-middleware"
 )
 
 func getPort() string {
@@ -73,11 +75,18 @@ func (a *Adapter) Initialize(api []*fiber.App) *fiber.App {
 
   for _, x := range api {
     a.log.Info("creating API routes")
+
+    app.Use(httpMiddleware.NewLoggerMiddleware(httpMiddleware.Config{
+      Log: func(msg string, attr slog.Attr) {
+        a.log.Info(msg, attr)
+      },
+      ShouldSkip: func(c *fiber.Ctx) bool {
+        return false
+      },
+    }))
+
     app.Mount(a.routePrefix, x)
   }
-
-  //a.log.Info("starting server")
-  //log.Fatal(app.Listen(getPort()))
 
   return app
 }

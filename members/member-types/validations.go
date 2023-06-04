@@ -19,8 +19,8 @@ var (
 	ErrorPinInvalid   = errors.New("invalid pin")
 )
 
-func ValidatePayloadSize(in []byte) error {
-	if len(in) > 96 {
+func ValidateUsernamePayloadSize(in []byte) error {
+	if len(in) > 360 {
 		return ErrorPayloadSize
 	}
 
@@ -74,12 +74,15 @@ func ValidatePin(pin *string) (*string, error) {
 func ValidatePrimaryMember(in *PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) error {
 	out := make(chan error, 1)
 
+	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 
 		email, e := ValidateEmail(in.Username)
 		if e != nil {
 			out <- ErrorInvalidEmail
+			return
 		}
 
 		v := email.Load()
@@ -89,6 +92,7 @@ func ValidatePrimaryMember(in *PrimaryMemberStartRegisterIn, wg *sync.WaitGroup)
 		out <- nil
 	}()
 
+	wg.Wait()
 	return <-out
 }
 
