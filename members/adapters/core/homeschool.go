@@ -24,10 +24,15 @@ func NewAdapter(log *slog.Logger) *Adapter {
 	}
 }
 
+// useAutoCorrect determines if Autocorrect is applicable for the input autocorrectString. It returns true if the length of autocorrectString
+// is greater than 0, otherwise it returns false.
 func (i *isRegisterable) useAutoCorrect(autocorrectString string) bool {
 	return len(autocorrectString) > 0
 }
 
+// setRegistrationPending checks deliverability, quality score, existence of MX record, disposable status, and role-based status to set registration pending
+// for an email address. It returns false if the quality score is greater or equal to 0.80, delivery status is "DELIVERABLE", the email
+// is not disposable or role-based, and has an MX record. Returns true otherwise.
 func (i *isRegisterable) setRegistrationPending(delivery, qscore string, hasMX, isDisposable, isRole bool) bool {
 	quality, _ := strconv.ParseFloat(qscore, 32)
 
@@ -38,6 +43,10 @@ func (i *isRegisterable) setRegistrationPending(delivery, qscore string, hasMX, 
 	return true
 }
 
+// PreRegister performs the pre-registration process for an email address, determining if it is deliverable, has a valid MX record,
+// is not disposable, or a role-based email. It sets the registration state as pending based on these criteria and generates a session ID.
+// Returns a PrimaryMemberStartRegisterOut object with registration pending status, session ID, username, and a bool indicating if username is
+// pending autocorrection. An error is returned if any issue occurs during this process.
 func (a *Adapter) PreRegister(ctx context.Context, in mt.EmailValidationIn) (*mt.PrimaryMemberStartRegisterOut, error) {
 	var username *string
 	sessionID, _ := uuid.NewRandom()

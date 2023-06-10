@@ -19,6 +19,8 @@ var (
 	ErrorPinInvalid   = errors.New("invalid pin")
 )
 
+// ValidateUsernamePayloadSize checks if the size of the input byte slice is within the acceptable limit.
+// It returns an error if the input byte slice is larger than 360 bytes.
 func ValidateUsernamePayloadSize(in []byte) error {
 	if len(in) > 360 {
 		return ErrorPayloadSize
@@ -27,6 +29,9 @@ func ValidateUsernamePayloadSize(in []byte) error {
 	return nil
 }
 
+// ValidateName checks if the given name is valid by applying a transformation to Title case, removing trailing white spaces,
+// and verifying that the name does not contain prohibited characters. It returns an atomic.Value storing the transformed name and any
+// related errors, such as ErrorMemberName for prohibited characters. It accepts a string pointer as input.
 func ValidateName(name *string) (atomic.Value, error) {
 	var atom atomic.Value
 
@@ -43,6 +48,9 @@ func ValidateName(name *string) (atomic.Value, error) {
 	return atom, nil
 }
 
+// ValidateEmail checks if the provided email is valid. It accepts a string pointer to the email address as input.
+// The function returns an atomic.Value containing the parsed email address and an error which can be ErrorInvalidEmail.
+// The email address validation is performed using the net/mail.ParseAddress function and a regex check for the email domain's TLD.
 func ValidateEmail(email *string) (atomic.Value, error) {
 	var atom atomic.Value
 
@@ -61,6 +69,9 @@ func ValidateEmail(email *string) (atomic.Value, error) {
 	return atom, nil
 }
 
+// ValidatePin checks if the provided PIN is valid by matching it against a regular expression pattern.
+// It accepts a string pointer to the PIN as input and returns a pointer to the result and any related error.
+// If the validation fails, an error is returned as ErrorPinInvalid. Valid PINs should contain 7 to 10 digits.
 func ValidatePin(pin *string) (*string, error) {
 	if ok, e := regexp.MatchString(`(?m)^[0-9]{7,10}$`, *pin); ok && e == nil {
 		x := "ok"
@@ -71,6 +82,11 @@ func ValidatePin(pin *string) (*string, error) {
 	return &y, ErrorPinInvalid
 }
 
+// ValidatePrimaryMember takes a pointer to a PrimaryMemberStartRegisterIn object and a pointer to a sync.WaitGroup, and verifies
+// the primary member's email address. It returns an error if the provided email is invalid. The function creates a goroutine for validation,
+// adds to the wait group, and then signals its completion by invoking Done() before returning. The output channel delivers email validation results
+// in the form of error or nil. It waits for the validation to finish before returning the final result. This function accepts concurrency management
+// through the WaitGroup. The main purpose of this function is to ensure email validity before proceeding with further processing.
 func ValidatePrimaryMember(in *PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) error {
 	out := make(chan error, 1)
 

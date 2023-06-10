@@ -38,6 +38,8 @@ func (a *Adapter) initHomeSchoolRoutes(app *fiber.App) *fiber.App {
 	return app
 }
 
+// InitializeAPI method accepts a *fiber.App pointer as input and returns a slice of *fiber.App pointers. This method sets up the API routes for Homeschool
+// applications by calling the initHomeSchoolRoutes method. The returned *fiber.App pointer from the initHomeSchoolRoutes method is appended to the out slice and returned.
 func (a *Adapter) InitializeAPI(http *fiber.App) []*fiber.App {
 	var out []*fiber.App
 
@@ -47,6 +49,10 @@ func (a *Adapter) InitializeAPI(http *fiber.App) []*fiber.App {
 	return out
 }
 
+// processRegistration handles user registration by validating the payload and processing the pre-registration of primary members.
+// It takes a *fiber.Ctx as input and returns an error if the validation or pre-registration fails, or if there's an internal server issue.
+// The function makes use of sync.WaitGroup, JSON unmarshalling, and logging utility for detailed error tracking.
+// Context is used to pass around values pertaining to the current request including request ID.
 func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 	var in *mt.PrimaryMemberStartRegisterIn
 	var wg sync.WaitGroup
@@ -81,6 +87,9 @@ func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 	return ctx.JSON(out)
 }
 
+// HandlePreRegistration takes a context and a PrimaryMemberStartRegisterIn object as input, processes the pre-registration
+// of a primary member, and returns a PrimaryMemberStartRegisterOut object and an error. It leverages channels and context
+// to manage request timeouts and handle errors accordingly. It also logs relevant information for debugging purposes.
 func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMemberStartRegisterIn) (*mt.PrimaryMemberStartRegisterOut, error) {
 	ch := make(chan *mt.PrimaryMemberStartRegisterOut, 1)
 	ctx, cancel := context.WithCancel(ctx)

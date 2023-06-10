@@ -25,6 +25,8 @@ func NewAdapter(log *slog.Logger, core core.EmailCorePort, email driven.EmailDri
 	}
 }
 
+// ValidateEmailAddress takes a context, an email address, a channel for ValidateEmailAddressResponse, and an error channel and validates the email address.
+// The results are sent back through the respective channels. If an error occurs during the process, it is sent through the error channel.
 func (a *Adapter) ValidateEmailAddress(ctx context.Context, address string, ch chan *pb.ValidateEmailAddressResponse, errorch chan error) {
 	ctx = context.WithValue(ctx, "address", address)
 	coreEmailProcessor, e := a.core.ProcessEmailValidation(ctx)

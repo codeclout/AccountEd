@@ -26,6 +26,10 @@ func NewAdapter(api api.EmailApiPort, config map[string]interface{}, log *slog.L
 	}
 }
 
+// ValidateEmailAddress takes a context and a ValidateEmailAddressRequest, sends the request using the EmailApiPort, and returns a
+// ValidateEmailAddressResponse and an error if any. It sets a timeout for the request using the "sla_route_performance" config value, and listens for
+// a response using channels. If the context times out, it returns a "request timeout" error. If an error is received from the error channel, it is
+// logged and returned as is. Otherwise, the received response is returned with a success log message.
 func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error) {
 	address := email.GetAddress()
 	b, _ := strconv.Atoi(a.config["sla_route_performance"].(string))

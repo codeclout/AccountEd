@@ -64,6 +64,6 @@ func (a *Adapter) Initialize() {
 	a.Logger.Warn(fmt.Sprintf("Signal %s - shutting down ", sl))
 }
 
-func (a *Adapter) HttpMiddlewareLogger(msg ...interface{}) {
-	a.Logger.Info("request", msg...)
+func (a *Adapter) HttpMiddlewareLogger(msg string, attr slog.Attr) {
+	a.Logger.Info(msg, attr)
 }

@@ -28,6 +28,9 @@ func NewAdapter(core core.HomeschoolCore, grpc *protocols.ClientAdapter, log *sl
 	}
 }
 
+// PreRegisterPrimaryMember is a method of Adapter struct that pre-registers a primary member using provided data.
+// It validates the email address, and then passes the validation results and other data to the Core PreRegister
+// method. The output is sent to a channel and any errors are sent to an error channel.
 func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *mt.PrimaryMemberStartRegisterIn, ch chan *mt.PrimaryMemberStartRegisterOut, ech chan error) {
 	emailclient := *a.grpcProtocol.Emailclient
 	response, e := emailclient.ValidateEmailAddress(ctx, &pb.ValidateEmailAddressRequest{Address: *data.Username})

@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "type": "go",
+            "name": "members",
+            "goExecPath": "/opt/homebrew/bin/go",
+            "buildParams": [],
+            "environment": {
+            },
+            "workingDir": "members/"
+        }
+    ]
+}

@@ -22,6 +22,9 @@ func NewAdapterClientProtocolGRPC(log *slog.Logger) *ClientAdapter {
 	}
 }
 
+// InitializeClient connects to the email notification service via gRPC. It expects a port string as an input
+// and initializes the Emailclient and grpcConnection fields of the ClientAdapter. In case the connection fails, the application
+// is terminated with a log error indicating "notifications connection failed".
 func (a *ClientAdapter) InitializeClient(port string) {
 	connection, e := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials())) // FIXME
 	if e != nil {
