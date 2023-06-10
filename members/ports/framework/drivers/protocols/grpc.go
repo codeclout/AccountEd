@@ -1,5 +1,5 @@
 package protocols
 
-type httpProtocol interface {
+type GrpcProtocolPort interface {
 	InitializeClient(port string)
 }

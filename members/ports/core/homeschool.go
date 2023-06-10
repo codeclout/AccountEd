@@ -1,11 +1,11 @@
 package core
 
 import (
-  "context"
+	"context"
 
-  mt "github.com/codeclout/AccountEd/members/member-types"
+	mt "github.com/codeclout/AccountEd/members/member-types"
 )
 
 type HomeschoolCore interface {
-  PreRegister(ctx context.Context, in mt.PrimaryMemberStartRegisterIn) (*mt.PrimaryMemberStartRegisterOut, error)
+	PreRegister(ctx context.Context, in mt.EmailValidationIn) (*mt.PrimaryMemberStartRegisterOut, error)
 }
