@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"sync"
+
 	apiAdapter "github.com/codeclout/AccountEd/members/adapters/api"
 	coreAdapter "github.com/codeclout/AccountEd/members/adapters/core"
 	driverAdapter "github.com/codeclout/AccountEd/members/adapters/framework/drivers"
@@ -17,6 +20,7 @@ import (
 	serverProtocols "github.com/codeclout/AccountEd/pkg/server/ports/framework/drivers/protocols"
 )
 
+// main initializes the application and connects all dependencies, setting up the server and starting required components.
 func main() {
 	var (
 		homeschoolAPI       api.HomeschoolAPI
@@ -24,21 +28,43 @@ func main() {
 		homeschoolDriver    drivers.HomeschoolDriverPort
 		memberConfiguration server.MembersConfigurationPort
 		protocolDriver      serverProtocols.ProtocolPort
+
+		wg sync.WaitGroup
 		// sessionDriver       driver.SessionPort
 	)
 
 	monitor := monitoring.NewAdapter()
-	go monitor.Initialize()
+	wg.Add(1)
+	go monitor.Initialize(&wg)
 
-	memberConfiguration = driverAdapterServerConfiguration.NewAdapter(monitor.Logger)
+	memberConfiguration = driverAdapterServerConfiguration.NewAdapter(monitor.Logger, "./config.hcl")
 	config := *memberConfiguration.LoadMemberConfig()
 
+	applicationName, ok := config["application_name"]
+	if !ok {
+		monitor.Logger.Error("application_name not configured")
+		os.Exit(1)
+	}
+
+	routePrefix, ok := config["route_prefix"]
+	if !ok {
+		monitor.Logger.Error("route_prefix not configured")
+		os.Exit(1)
+	}
+
+	isAppGetOnly, ok := config["is_app_get_only"]
+	if !ok {
+		monitor.Logger.Error("is_app_get_only not configured")
+		os.Exit(1)
+	}
+
 	protocolAdapter := protocol.NewAdapter(
-		config["application_name"].(string),
-		config["route_prefix"].(string),
-		config["is_app_get_only"].(bool),
+		applicationName.(string),
+		routePrefix.(string),
+		isAppGetOnly.(bool),
 		monitor.Logger,
-		monitor.HttpMiddlewareLogger)
+		monitor.HttpMiddlewareLogger,
+		&wg)
 
 	protocolDriver = protocolAdapter
 
@@ -53,7 +79,8 @@ func main() {
 	// sessionDriver, _ = driverAdapterSession.NewAdapter(monitor)
 	http, port := protocolDriver.Initialize(homeschoolRoutes)
 
-	go protocolAdapter.PostInit(http)
+	wg.Add(1)
+	go protocolAdapter.PostInit(http, &wg)
 	defer protocolAdapter.StopProtocolListener(http)
 
 	app := driverAdapterProtocol.NewAdapter(monitor.Logger, http, httpmiddleware.NewLoggerMiddleware)

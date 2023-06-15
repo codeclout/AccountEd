@@ -1,25 +1,27 @@
 package server
 
 import (
-  "regexp"
-  "strconv"
+	"regexp"
+	"strconv"
 )
 
+// ValidateRequestLimit checks if the given limit string is a valid request limit by verifying that it contains one or two digits. It returns
+// true if the limit string matches the corresponding regular expression and there's no error, otherwise returns false.
 func ValidateRequestLimit(limit *string) bool {
-  if ok, e := regexp.MatchString(`(?m)^[1-9]{1,3}$`, *limit); ok && e == nil {
-    return true
-  }
+	if ok, e := regexp.MatchString(`(?m)^[\d]{1,2}$`, *limit); ok && e == nil {
+		return true
+	}
 
-  return false
+	return false
 }
 
 func getRequestLimit(q *string) *int16 {
-  var limit int16 = -1
+	var limit int16 = -1
 
-  if ok := ValidateRequestLimit(q); ok {
-    n, _ := strconv.ParseInt(*q, 10, 16)
-    limit = int16(n)
-  }
+	if ok := ValidateRequestLimit(q); ok {
+		n, _ := strconv.ParseInt(*q, 10, 16)
+		limit = int16(n)
+	}
 
-  return &limit
+	return &limit
 }

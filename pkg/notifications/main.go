@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/pkg/notifications/adapters/api"
 	coreAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/core"
@@ -16,6 +18,8 @@ import (
 	"github.com/codeclout/AccountEd/pkg/notifications/ports/framework/drivers/server"
 )
 
+// main initializes and runs the components of the email notification service, including monitoring, configuration, core logic, API, driving,
+// and gRPC protocol. It creates instances of the necessary system components and its dependencies, and starts the gRPC server to expose the service.
 func main() {
 	var (
 		notificationConfiguration server.NotificationsConfigurationPort
@@ -24,16 +28,19 @@ func main() {
 		emailNotificationCore     core.EmailCorePort
 		emailNotificationDriven   driven.EmailDrivenPort
 		grpcProtocol              protocols.GRPCProtocolPort
+
+		wg sync.WaitGroup
 	)
 
 	monitor := monitoring.NewAdapter()
-	go monitor.Initialize()
+	wg.Add(1)
+	go monitor.Initialize(&wg)
 
 	notificationConfiguration = configuration.NewAdapter(monitor.Logger)
 	internalConfig := notificationConfiguration.LoadNotificationsConfig()
 
-	emailNotificationDriven = drivenAdapter.NewAdapter(*internalConfig)
-	emailNotificationCore = coreAdapter.NewAdapter(*internalConfig)
+	emailNotificationDriven = drivenAdapter.NewAdapter(*internalConfig, monitor.Logger)
+	emailNotificationCore = coreAdapter.NewAdapter(*internalConfig, monitor.Logger)
 	emailNotificationApi = api.NewAdapter(monitor.Logger, emailNotificationCore, emailNotificationDriven)
 	emailNotificationDriver = driverAdapter.NewAdapter(emailNotificationApi, *internalConfig, monitor.Logger)
 

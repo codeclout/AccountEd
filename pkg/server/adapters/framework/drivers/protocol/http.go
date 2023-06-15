@@ -16,25 +16,6 @@ import (
 	httpMiddleware "github.com/codeclout/AccountEd/members/ports/framework/drivers/protocols/http-middleware"
 )
 
-func getPort() string {
-	p, ok := os.LookupEnv("PORT")
-	n, _ := strconv.Atoi(p)
-
-	if ok && len(strings.TrimSpace(p)) >= 4 && n >= 1024 && n <= 65535 {
-		return fmt.Sprintf(":%d", n)
-	}
-
-	return ":8088"
-}
-
-func isProd() bool {
-	if env, ok := os.LookupEnv("ENVIRONMENT"); ok && strings.TrimSpace(env) == "prod" {
-		return true
-	}
-
-	return false
-}
-
 type middlewareLogger func(msg string, attr slog.Attr)
 
 type Adapter struct {
@@ -47,11 +28,36 @@ type Adapter struct {
 	routePrefix          string
 }
 
-func NewAdapter(applicationName, routePrefix string, isAppGetOnly bool, log *slog.Logger, mwl middlewareLogger) *Adapter {
+// getPort retrieves the port number from the "PORT" environment variable and validates the value. If the value exists, fulfills a
+// minimum length of 4, and falls within the valid port range (1024 - 65535), getPort returns a string formatted with the port number.
+// If the value is not present or invalid, it returns the default port string ":8088".
+func getPort() string {
+	p, ok := os.LookupEnv("PORT")
+	n, _ := strconv.Atoi(p)
+
+	if ok && len(strings.TrimSpace(p)) >= 4 && n >= 1024 && n <= 65535 {
+		return fmt.Sprintf(":%d", n)
+	}
+
+	return ":8088"
+}
+
+// isProd checks if the current environment is a production environment. It does so by looking up the "ENVIRONMENT" environment
+// variable and comparing its trimmed value to "prod". If it matches, the function returns true, otherwise it returns false.
+func isProd() bool {
+	if env, ok := os.LookupEnv("ENVIRONMENT"); ok && strings.TrimSpace(env) == "prod" {
+		return true
+	}
+
+	return false
+}
+
+func NewAdapter(applicationName, routePrefix string, isAppGetOnly bool, log *slog.Logger, mwl middlewareLogger, wg *sync.WaitGroup) *Adapter {
 	api := fiber.New()
 
 	return &Adapter{
 		HTTP:                 api,
+		WaitGroup:            wg,
 		applicationName:      applicationName,
 		isApplicationGetOnly: isAppGetOnly,
 		log:                  log,
@@ -60,6 +66,8 @@ func NewAdapter(applicationName, routePrefix string, isAppGetOnly bool, log *slo
 	}
 }
 
+// Initialize sets up a new fiber.App instance with the provided configurations and mounts the passed API endpoints to it.
+// It returns the configured app and a string representation of the listening port number.
 func (a *Adapter) Initialize(api []*fiber.App) (*fiber.App, string) {
 	isAppGetOnly := func() int { // FixMe - write buffer size
 		if a.isApplicationGetOnly {
@@ -93,16 +101,20 @@ func (a *Adapter) Initialize(api []*fiber.App) (*fiber.App, string) {
 	return app, getPort()
 }
 
-func (a *Adapter) PostInit(app *fiber.App) {
+// PostInit listens for SIGINT and SIGTERM signals, initiates shutdown, and stops the protocol listener for the given Fiber App.
+func (a *Adapter) PostInit(app *fiber.App, wg *sync.WaitGroup) {
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 
 	<-s
 	a.log.Warn("initializing shutdown")
+
+	wg.Done()
 	a.StopProtocolListener(app)
 	os.Exit(0)
 }
 
 func (a *Adapter) StopProtocolListener(app *fiber.App) {
 	a.WaitGroup.Wait()
+	_ = app.Shutdown()
 }

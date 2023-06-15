@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	membertypes "github.com/codeclout/AccountEd/members/member-types"
 	"os"
 	"path/filepath"
 
@@ -11,8 +12,6 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"golang.org/x/exp/slog"
 )
-
-const path = "./config.hcl"
 
 type Server struct {
 	GetOnlyConstraint bool    `hcl:"is_app_get_only" json:"is_app_get_only"`
@@ -22,12 +21,14 @@ type Server struct {
 }
 
 type Adapter struct {
-	log *slog.Logger
+	log                     *slog.Logger
+	staticConfigurationPath membertypes.ConfigurationPath
 }
 
-func NewAdapter(log *slog.Logger) *Adapter {
+func NewAdapter(log *slog.Logger, configPath membertypes.ConfigurationPath) *Adapter {
 	return &Adapter{
-		log: log,
+		log:                     log,
+		staticConfigurationPath: configPath,
 	}
 }
 
@@ -41,7 +42,7 @@ func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
 	var s string
 
 	workingDirectory, _ := os.Getwd()
-	fileLocation := filepath.Join(workingDirectory, path)
+	fileLocation := filepath.Join(workingDirectory, string(a.staticConfigurationPath))
 
 	e := hclsimple.DecodeFile(fileLocation, nil, &configuration)
 	if e != nil {
@@ -68,6 +69,9 @@ func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
 				os.Exit(1)
 			}
 		case bool:
+			continue
+		case float64:
+			continue
 		default:
 			panic("invalid Members configuration type")
 		}

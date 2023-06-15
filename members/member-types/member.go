@@ -7,7 +7,12 @@ const (
 	Male
 )
 
+type ErrorCoreDataInvalid error
+
 type Gender int8
+type ConfigurationPath string
+type LogLabel string
+type TransactionID string
 
 type Member struct {
 	AccountType         string   `json:"account_type"`

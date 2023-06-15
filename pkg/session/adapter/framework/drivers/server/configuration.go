@@ -7,13 +7,6 @@ import (
 	"os"
 )
 
-type AmazonCloud struct{}
-
-type Adapter struct {
-	AmazonCloud
-	log *slog.Logger
-}
-
 type aws struct {
 	AccessKey       string
 	DynamoEndpoint  string
@@ -21,6 +14,10 @@ type aws struct {
 	Region          string
 	RoleToAssume    string
 	SecretAccessKey string
+}
+
+type Adapter struct {
+	log *slog.Logger
 }
 
 func NewAdapter(log *slog.Logger) *Adapter {

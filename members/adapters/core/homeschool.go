@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	mt "github.com/codeclout/AccountEd/members/member-types"
+	memberTypes "github.com/codeclout/AccountEd/members/member-types"
 )
 
 type Adapter struct {
@@ -47,19 +47,19 @@ func (i *isRegisterable) setRegistrationPending(delivery, qscore string, hasMX, 
 // is not disposable, or a role-based email. It sets the registration state as pending based on these criteria and generates a session ID.
 // Returns a PrimaryMemberStartRegisterOut object with registration pending status, session ID, username, and a bool indicating if username is
 // pending autocorrection. An error is returned if any issue occurs during this process.
-func (a *Adapter) PreRegister(ctx context.Context, in mt.EmailValidationIn) (*mt.PrimaryMemberStartRegisterOut, error) {
+func (a *Adapter) PreRegister(ctx context.Context, in memberTypes.EmailValidationIn) (*memberTypes.PrimaryMemberStartRegisterOut, error) {
 	var username *string
 	sessionID, _ := uuid.NewRandom()
 
 	if a.useAutoCorrect(in.Autocorrect) {
-		x, _ := mt.ValidateEmail(&in.Autocorrect)
+		x, _ := memberTypes.ValidateEmail(&in.Autocorrect)
 		v := x.Load().(string)
 		username = &v
 	} else {
 		username = &in.Email
 	}
 
-	return &mt.PrimaryMemberStartRegisterOut{
+	return &memberTypes.PrimaryMemberStartRegisterOut{
 		RegistrationPending: a.setRegistrationPending(in.Deliverability, in.QualityScore, in.IsMxFound.GetValue(), in.IsDisposableEmail.GetValue(), in.IsRoleEmail.GetValue()),
 		SessionID:           sessionID,
 		Username:            username,

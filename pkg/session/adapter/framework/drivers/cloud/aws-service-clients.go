@@ -3,11 +3,11 @@ package cloud
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
@@ -20,6 +20,7 @@ import (
 
 type ErrorDefaultConfiguration error
 type ErrorCredentialsRetrieval error
+type ErrorInvalidConfiguration error
 
 type Adapter struct {
 	config map[string]interface{}
@@ -77,11 +78,11 @@ func (a *Adapter) GetSecretsManagerClient(ctx context.Context, config *aws.Confi
 	return client
 }
 
-// GetDynamoClient creates and returns a new AWS DynamoDB client instance using the provided AWS configuration and region.
-// It takes a context.Context, a pointer to an aws.Config, and a pointer to a string representing the region as arguments, and returns
-// a pointer to a DynamoDB client (*dynamodb.Client) and an error if any. The context.Context is used for request cancellation and
-// timeouts, while the aws.Config should contain the necessary settings and credentials for connecting to the AWS API. If there is an
-// error retrieving the credentials or loading the configuration, appropriate error messages will be logged and returned.
+// GetDynamoClient creates and returns a new DynamoDB client instance using the provided AWS configuration and region. The function
+// takes a context.Context, a pointer to an aws.Config, and a pointer to a string representing the AWS region as arguments and returns a
+// pointer to a dynamodb.Client and an error if any. The context.Context is used for request cancellation and timeouts, while the aws.Config
+// should contain the necessary settings and credentials for connecting to the AWS API. If there is an error retrieving the credentials or
+// loading the configuration, appropriate error messages will be logged and returned.
 func (a *Adapter) GetDynamoClient(ctx context.Context, config *aws.Config, region *string) (*dynamodb.Client, error) {
 	creds, e := config.Credentials.Retrieve(ctx)
 	if e != nil {
@@ -89,11 +90,17 @@ func (a *Adapter) GetDynamoClient(ctx context.Context, config *aws.Config, regio
 		return nil, ErrorCredentialsRetrieval(errors.New("unable to retrieve DynamoDB credentials"))
 	}
 
+	endpoint, ok := a.config["DynamoEndpoint"]
+	if !ok {
+		a.log.Error("dynamodb endpoint not configured")
+		return nil, ErrorInvalidConfiguration(errors.New("configuration error: DynamoEndpoint"))
+	}
+
 	dynamoConfig, e := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(*region),
 		awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
 			func(service, awsregion string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: a.config["DynamoEndpoint"].(string)}, nil
+				return aws.Endpoint{URL: endpoint.(string)}, nil
 			})),
 		awsconfig.WithCredentialsProvider(credentials.StaticCredentialsProvider{
 			Value: aws.Credentials{

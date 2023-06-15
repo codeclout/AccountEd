@@ -2,7 +2,9 @@ package drivers
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -14,8 +16,6 @@ import (
 	mt "github.com/codeclout/AccountEd/members/member-types"
 	"github.com/codeclout/AccountEd/members/ports/api"
 )
-
-type label string
 
 type Adapter struct {
 	config     map[string]interface{}
@@ -31,8 +31,18 @@ func NewAdapter(homeschoolAPI api.HomeschoolAPI, log *slog.Logger, runtimeConfig
 	}
 }
 
+// initHomeSchoolRoutes initializes the routes for the Homeschool registration process and sets specific timeouts for each route.
+// It takes a *fiber.App pointer as input and returns a pointer to the updated *fiber.App.
+// It checks if the SLA (Service Level Agreement) routes are defined in the config and defaults to 2000 milliseconds if not.
+// The "/registration-start" route is registered with a POST method and the processRegistration function is wrapped with a timeout for handling requests.
 func (a *Adapter) initHomeSchoolRoutes(app *fiber.App) *fiber.App {
-	b := int(a.config["sla_routes"].(float64))
+	sla, ok := a.config["sla_routes"]
+	if !ok {
+		a.log.Error("sla_routes not configured")
+		sla = float64(2000)
+	}
+
+	b := int(sla.(float64))
 	app.Post("/registration-start", timeout.NewWithContext(a.processRegistration, time.Duration(b)*time.Millisecond))
 
 	return app
@@ -73,10 +83,10 @@ func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 	}
 
 	c := ctx.UserContext()
-	cstr := label("requestid")
-	cx := context.WithValue(c, cstr, ctx.Locals("requestid"))
+	cx := context.WithValue(c, mt.LogLabel("request_id"), ctx.Locals("requestid"))
+	cx1 := context.WithValue(cx, mt.TransactionID("transaction_id"), sha256.Sum256([]byte(*in.Username)))
 
-	out, x := a.HandlePreRegistration(cx, in)
+	out, x := a.HandlePreRegistration(cx1, in)
 	if x != nil {
 		a.log.Error(x.Error())
 		ctx.Status(500)
@@ -101,15 +111,21 @@ func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMembe
 
 	select {
 	case <-ctx.Done():
-		a.log.ErrorCtx(ctx, "timeout exceeded", "request_id", ctx.Value(label("requestid")))
+		a.log.ErrorCtx(ctx, "timeout exceeded",
+			"request_id", ctx.Value(mt.LogLabel("request_id")),
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.TransactionID("transaction_id"))))
 		return nil, ctx.Err()
 
 	case out := <-ch:
-		a.log.Info("completed", "request_id", ctx.Value(label("requestid")))
+		a.log.Info("completed",
+			"request_id", ctx.Value(mt.LogLabel("request_id")),
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.TransactionID("transaction_id"))))
 		return out, nil
 
 	case e := <-errorch:
-		a.log.Error(errors.Cause(e).Error(), "request_id", ctx.Value(label("requestid")))
+		a.log.Error(errors.Cause(e).Error(),
+			"request_id", ctx.Value(mt.LogLabel("request_id")),
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.TransactionID("transaction_id"))))
 		return nil, errors.New(fiber.ErrInternalServerError.Error())
 	}
 }
