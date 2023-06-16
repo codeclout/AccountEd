@@ -2,17 +2,16 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 
 	"github.com/codeclout/AccountEd/members/adapters/framework/drivers/protocols"
-	mt "github.com/codeclout/AccountEd/members/member-types"
+	memberTypes "github.com/codeclout/AccountEd/members/member-types"
 	"github.com/codeclout/AccountEd/members/ports/core"
 	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
 )
-
-var ErrorCoreDataInvalid error
 
 type Adapter struct {
 	core         core.HomeschoolCore
@@ -31,15 +30,18 @@ func NewAdapter(core core.HomeschoolCore, grpc *protocols.ClientAdapter, log *sl
 // PreRegisterPrimaryMember is a method of Adapter struct that pre-registers a primary member using provided data.
 // It validates the email address, and then passes the validation results and other data to the Core PreRegister
 // method. The output is sent to a channel and any errors are sent to an error channel.
-func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *mt.PrimaryMemberStartRegisterIn, ch chan *mt.PrimaryMemberStartRegisterOut, ech chan error) {
+func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberTypes.PrimaryMemberStartRegisterIn, ch chan *memberTypes.PrimaryMemberStartRegisterOut, ech chan error) {
 	emailclient := *a.grpcProtocol.Emailclient
 	response, e := emailclient.ValidateEmailAddress(ctx, &pb.ValidateEmailAddressRequest{Address: *data.Username})
 	if e != nil {
+		a.log.Error(*data.Username,
+			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.TransactionID("transaction_id"))))
 		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
 		return
 	}
 
-	coreData := mt.EmailValidationIn{
+	coreData := memberTypes.EmailValidationIn{
 		Email:             response.GetEmail(),
 		Autocorrect:       response.GetAutocorrect(),
 		Deliverability:    response.GetDeliverability(),
@@ -53,16 +55,25 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *mt.Primary
 		IsSmtpValid:       response.GetIsSmtpValid(),
 	}
 
-	if coreData == (mt.EmailValidationIn{}) {
-		ErrorCoreDataInvalid = errors.New("0 data")
-		ech <- ErrorCoreDataInvalid
+	if coreData == (memberTypes.EmailValidationIn{}) {
+		a.log.Error("core -> 0 data returned: "+*data.Username,
+			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.TransactionID("transaction_id"))))
+		ech <- memberTypes.ErrorCoreDataInvalid(errors.New("0 data for transaction_id:" + *data.Username))
 		return
 	}
 
 	out, e := a.core.PreRegister(ctx, coreData)
 	if e != nil {
+		a.log.Error("core -> pre registration: "+*data.Username,
+			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.TransactionID("transaction_id"))))
 		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
 		return
+	}
+
+	if out.RegistrationPending {
+
 	}
 
 	ch <- out

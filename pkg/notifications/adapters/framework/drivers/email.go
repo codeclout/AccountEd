@@ -3,6 +3,7 @@ package drivers
 import (
 	"context"
 	"errors"
+	notifications "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
 	"strconv"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
 	"github.com/codeclout/AccountEd/pkg/notifications/ports/api"
 )
+
+type TransactionID string
 
 type Adapter struct {
 	apiEmail api.EmailApiPort
@@ -32,10 +35,17 @@ func NewAdapter(api api.EmailApiPort, config map[string]interface{}, log *slog.L
 // logged and returned as is. Otherwise, the received response is returned with a success log message.
 func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error) {
 	address := email.GetAddress()
-	b, _ := strconv.Atoi(a.config["sla_route_performance"].(string))
+	sla, ok := a.config["sla_route_performance"].(string)
+	if !ok {
+		a.log.Error("drivers -> static config sla_route_performance is not a string")
+		return nil, notifications.ErrorStaticConfig(errors.New("wrong type: sla"))
+	}
+
+	b, _ := strconv.Atoi(sla)
+	transactionID := TransactionID("transactionID")
 
 	ch := make(chan *pb.ValidateEmailAddressResponse, 1)
-	ctx = context.WithValue(ctx, "transactionID", address)
+	ctx = context.WithValue(ctx, transactionID, address)
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(b)*time.Millisecond)
 
 	defer cancel()
@@ -45,15 +55,18 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEm
 
 	select {
 	case <-ctx.Done():
-		a.log.ErrorCtx(ctx, "request timeout")
+		t := ctx.Value(transactionID)
+		a.log.Error("request timeout", "transaction_id", t.(string))
 		return nil, errors.New("request timeout")
 
 	case out := <-ch:
-		a.log.InfoCtx(ctx, "success")
+		t := ctx.Value(transactionID)
+		a.log.Info("success", "transaction_id", t.(string))
 		return out, nil
 
 	case e := <-errorch:
-		a.log.ErrorCtx(ctx, e.Error())
+		t := ctx.Value(transactionID)
+		a.log.Error(e.Error(), "transaction_id", t.(string))
 		return nil, e
 	}
 
