@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package proto.v1;
+
+option go_package = "github.com/codeclout/AccountEd/pkg/session";
+
+import "v1/messages.proto";
+
+service AWSConfigurationService {
+  rpc GetAWSRoleConfiguration(AWSConfigRequest) returns (AWSConfigResponse);
+}

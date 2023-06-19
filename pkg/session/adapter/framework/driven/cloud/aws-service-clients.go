@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -11,9 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 )
@@ -51,6 +50,7 @@ func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string
 	creds := stscreds.NewAssumeRoleProvider(client, *arn)
 
 	configloader.Credentials = aws.NewCredentialsCache(creds)
+
 	return &configloader, nil
 }
 

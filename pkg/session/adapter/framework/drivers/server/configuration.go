@@ -1,10 +1,11 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
-	"golang.org/x/exp/slog"
 	"os"
+	"reflect"
+
+	"golang.org/x/exp/slog"
 )
 
 type aws struct {
@@ -41,8 +42,11 @@ func (a *Adapter) LoadSessionConfig() *map[string]interface{} {
 		SecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
 	}
 
-	awsenv, _ := json.Marshal(awsconfig)
-	_ = json.Unmarshal(awsenv, &out)
+	val := reflect.ValueOf(&awsconfig).Elem()
+
+	for i := 0; i < val.NumField(); i++ {
+		out[val.Type().Field(i).Name] = val.Field(i).Interface()
+	}
 
 	for k, v := range out {
 		switch x := v.(type) {
