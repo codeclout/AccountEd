@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -48,15 +49,13 @@ func (a *Adapter) initHomeSchoolRoutes(app *fiber.App) *fiber.App {
 	return app
 }
 
-// InitializeAPI method accepts a *fiber.App pointer as input and returns a slice of *fiber.App pointers. This method sets up the API routes for Homeschool
-// applications by calling the initHomeSchoolRoutes method. The returned *fiber.App pointer from the initHomeSchoolRoutes method is appended to the out slice and returned.
+// InitializeAPI is a function associated with the Adapter struct.
+// It takes a pointer to fiber.App as an argument and calls 'initHomeSchoolRoutes' function on 'fiber.App' pointer and returns a slice of pointers to 'fiber.App'.
+// The returned slice length will depend on how many times it calls the 'initHomeSchoolRoutes' function, in this case, it's only called once.
 func (a *Adapter) InitializeAPI(http *fiber.App) []*fiber.App {
-	var out []*fiber.App
-
-	x := a.initHomeSchoolRoutes(http)
-	out = append(out, x)
-
-	return out
+	return []*fiber.App{
+		a.initHomeSchoolRoutes(http),
+	}
 }
 
 // processRegistration handles user registration by validating the payload and processing the pre-registration of primary members.
@@ -69,17 +68,17 @@ func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 
 	if e := mt.ValidateUsernamePayloadSize(ctx.Body()); e != nil {
 		a.log.Error(e.Error(), "request_id", ctx.Locals("requestid"))
-		return ctx.JSON(ctx.Status(400))
+		return ctx.JSON(ctx.Status(http.StatusBadRequest))
 	}
 
 	if e := json.Unmarshal(ctx.Body(), &in); e != nil {
 		a.log.Error(e.Error(), "request_id", ctx.Locals("requestid"))
-		return ctx.JSON(ctx.SendStatus(400))
+		return ctx.JSON(ctx.SendStatus(http.StatusBadRequest))
 	}
 
 	if e := mt.ValidatePrimaryMember(in, &wg); e != nil {
 		a.log.Error(e.Error(), "request_id", ctx.Locals("requestid"))
-		return ctx.JSON(ctx.SendStatus(400))
+		return ctx.JSON(ctx.SendStatus(http.StatusBadRequest))
 	}
 
 	c := ctx.UserContext()
@@ -89,9 +88,8 @@ func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 	out, x := a.HandlePreRegistration(cx1, in)
 	if x != nil {
 		a.log.Error(x.Error())
-		ctx.Status(500)
 
-		return ctx.JSON(errors.New("internal server error"))
+		return ctx.Status(http.StatusInternalServerError).JSON(errors.New("internal server error"))
 	}
 
 	return ctx.JSON(out)

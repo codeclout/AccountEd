@@ -40,19 +40,19 @@ func main() {
 	memberConfiguration = driverAdapterServerConfiguration.NewAdapter(monitor.Logger, "./config.hcl")
 	config := *memberConfiguration.LoadMemberConfig()
 
-	applicationName, ok := config["Name"]
+	applicationName, ok := config["Name"].(string)
 	if !ok {
 		monitor.Logger.Error("application name not configured")
 		os.Exit(1)
 	}
 
-	routePrefix, ok := config["RoutePrefix"]
+	routePrefix, ok := config["RoutePrefix"].(string)
 	if !ok {
 		monitor.Logger.Error("route prefix not configured")
 		os.Exit(1)
 	}
 
-	isAppGetOnly, ok := config["GetOnlyConstraint"]
+	isAppGetOnly, ok := config["GetOnlyConstraint"].(bool)
 	if !ok {
 		monitor.Logger.Error("is_app_get_only not configured")
 		os.Exit(1)
@@ -60,20 +60,33 @@ func main() {
 
 	protocolAdapter := protocol.NewAdapter(
 		config,
-		routePrefix.(string),
-		applicationName.(string),
+		routePrefix,
+		applicationName,
 		monitor.Logger,
 		monitor.HttpMiddlewareLogger,
 		&wg,
-		isAppGetOnly.(bool))
+		isAppGetOnly)
 
 	protocolDriver = protocolAdapter
 
 	grpcClientAdapter := driverGrpcAdapter.NewAdapterClientProtocolGRPC(monitor.Logger, &wg)
-	grpcClientAdapter.InitializeNotificationsClient("9000") // @TODO - get port from config
-	grpcClientAdapter.InitializeSessionClient("9001")
 
-	go grpcClientAdapter.PostInit()
+	notificationServicePort, ok := config["NotificationsServicePort"].(string)
+	if !ok {
+		monitor.Logger.Error("notifications service port not configured")
+		os.Exit(1)
+	}
+	grpcClientAdapter.InitializeNotificationsClient(notificationServicePort)
+
+	sessionServicePort, ok := config["SessionServicePort"].(string)
+	if !ok {
+		monitor.Logger.Error("session service port not configured")
+		os.Exit(1)
+	}
+	grpcClientAdapter.InitializeSessionClient(sessionServicePort)
+
+	wg.Add(1)
+	go grpcClientAdapter.PostInit(&wg)
 	defer grpcClientAdapter.StopProtocolListener()
 
 	homeschoolCore = coreAdapter.NewAdapter(config, monitor.Logger)

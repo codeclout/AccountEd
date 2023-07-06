@@ -69,13 +69,14 @@ func (a *ClientAdapter) InitializeSessionClient(port string) {
 	a.MemberClient = &memberSessionClient
 }
 
-func (a *ClientAdapter) PostInit() {
+func (a *ClientAdapter) PostInit(wg *sync.WaitGroup) {
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 
 	<-s
 	a.log.Warn("grpc client shutting down")
 
+	wg.Done()
 	os.Exit(0)
 }
 

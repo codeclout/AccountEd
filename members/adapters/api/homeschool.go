@@ -21,6 +21,12 @@ type Adapter struct {
 	log          *slog.Logger
 }
 
+// NewAdapter is a constructor function for the Adapter struct. It initializes a new Adapter object and returns its pointer.
+// It accepts four parameters:
+// config is a map of string keys to interface{} values that stores the configuration parameters for the Adapter.
+// core is the core Homeschool interface, which is an implementation of the core domain behavior in the adapter.
+// grpc is the ClientAdapter of the gRPC protocol, which enables communication with other services.
+// log is a Logger object used to log activity, errors and other useful information during the program's runtime.
 func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *protocols.ClientAdapter, log *slog.Logger) *Adapter {
 	return &Adapter{
 		config:       config,
@@ -34,19 +40,18 @@ func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *p
 // It first fetches a parameter from SSM, then retrieves a secret value from Secrets Manager, and then creates the hashed session ID
 // using the SHA-256 hashing algorithm. Returns the hashed ID as a string and an error in case of any failure.
 func (a *Adapter) encryptSessionID(ctx context.Context, id string) (string, error) {
-
 	client := *a.grpcProtocol.MemberClient
 	payload := mpb.EncryptedStringRequest{
 		SessionId: id,
 	}
 
-	en, e := client.GetEncryptedSessionId(ctx, &payload)
+	encryptedSessionID, e := client.GetEncryptedSessionId(ctx, &payload)
 	if e != nil {
 		a.log.Error(e.Error())
 		return "", errors.Wrap(e, "failed to encrypt session ID")
 	}
 
-	return en.GetEncryptedSessionId(), nil
+	return encryptedSessionID.GetEncryptedSessionId(), nil
 }
 
 func (a *Adapter) logError(ctx context.Context, msg string) {
@@ -101,27 +106,17 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberType
 	hashedSessionID, e := a.encryptSessionID(ctx, out.SessionID)
 	out.SessionID = hashedSessionID
 
-	if out.RegistrationPending {
-
+	if out.UsernamePending {
 		// send auto correct & confirm email address on front end
 	}
 
-	// if out.RegistrationPending {
-	// 	// hash session with pre-registration secret
-	// 	// send a verification email containing the session id in the url
-	// 	// capture ip for session
-	// }
+	if out.RegistrationPending {
+		// send a verification email containing the session id in the url
+		// capture ip for session
+	}
 
 	// otherwise -> asynchronously
 	// create and register account
-
-	go func() {
-		select {
-		case <-ctx.Done():
-		// cleanup and exit
-		case ch <- out:
-		}
-	}()
 
 	ch <- out
 }
