@@ -1,11 +1,14 @@
 package membertypes
 
-import "github.com/aws/aws-sdk-go-v2/aws"
-
 type CredentialsAWS struct {
-	Value
+	Value `json:"Value"`
 }
 
 type Value struct {
-	aws.Credentials
+	AccessKeyID     string `json:"AccessKeyID"`
+	SecretAccessKey string `json:"SecretAccessKey"`
+	SessionToken    string `json:"SessionToken"`
+	Source          string `json:"Source"`
+	CanExpire       bool   `json:"CanExpire"`
+	Expires         string `json:"Expires"`
 }

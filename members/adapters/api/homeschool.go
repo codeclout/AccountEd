@@ -34,6 +34,7 @@ func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *p
 // It first fetches a parameter from SSM, then retrieves a secret value from Secrets Manager, and then creates the hashed session ID
 // using the SHA-256 hashing algorithm. Returns the hashed ID as a string and an error in case of any failure.
 func (a *Adapter) encryptSessionID(ctx context.Context, id string) (string, error) {
+
 	client := *a.grpcProtocol.MemberClient
 	payload := mpb.EncryptedStringRequest{
 		SessionId: id,
@@ -41,7 +42,8 @@ func (a *Adapter) encryptSessionID(ctx context.Context, id string) (string, erro
 
 	en, e := client.GetEncryptedSessionId(ctx, &payload)
 	if e != nil {
-		return "", e
+		a.log.Error(e.Error())
+		return "", errors.Wrap(e, "failed to encrypt session ID")
 	}
 
 	return en.GetEncryptedSessionId(), nil
@@ -116,9 +118,9 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberType
 	go func() {
 		select {
 		case <-ctx.Done():
-			// cleanup and exit
-			case ch<- out:
-				}
+		// cleanup and exit
+		case ch <- out:
+		}
 	}()
 
 	ch <- out

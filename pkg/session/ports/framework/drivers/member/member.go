@@ -1,4 +1,4 @@
-package cloud
+package member
 
 import (
 	"context"
@@ -6,6 +6,6 @@ import (
 	"github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
 )
 
-type MemberSessionDriverPort interface {
+type SessionDriverMemberPort interface {
 	GetEncryptedSessionId(ctx context.Context, request *sessions.EncryptedStringRequest) (*sessions.EncryptedStringResponse, error)
 }

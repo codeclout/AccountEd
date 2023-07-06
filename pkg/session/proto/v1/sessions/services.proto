@@ -1,11 +1,15 @@
 syntax = "proto3";
 
-package proto.v1;
+package proto.v1.sessions;
 
 option go_package = "github.com/codeclout/AccountEd/pkg/session";
 
-import "v1/messages.proto";
+import "v1/sessions/messages.proto";
 
 service AWSResourceClientService {
-  rpc GetSystemsManagerClient(AWSConfigRequest) returns (AWSConfigResponse);
+  rpc GetAWSSessionCredentials(AWSConfigRequest) returns (AWSConfigResponse);
+}
+
+service MemberSession {
+  rpc GetEncryptedSessionId(EncryptedStringRequest) returns (EncryptedStringResponse);
 }

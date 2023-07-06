@@ -1,7 +1,12 @@
-package cloud
+package member
 
 import (
 	"context"
+
+	"golang.org/x/exp/slog"
+
+	cloudAWS "github.com/codeclout/AccountEd/pkg/session/ports/api/cloud"
+	"github.com/codeclout/AccountEd/pkg/session/ports/api/member"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/pkg/errors"
@@ -10,10 +15,27 @@ import (
 	sessiontypes "github.com/codeclout/AccountEd/pkg/session/session-types"
 )
 
-func (a *Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.EncryptedStringRequest) (*pb.EncryptedStringResponse, error) {
+var transactionLable = sessiontypes.LogLabel("transaction_id")
+
+type Adapter struct {
+	api    member.SessionAPIMemberPort
+	awsapi cloudAWS.AWSApiPort
+	config map[string]interface{}
+	log    *slog.Logger
+}
+
+func NewAdapter(config map[string]interface{}, api member.SessionAPIMemberPort, awsapi cloudAWS.AWSApiPort, log *slog.Logger) *Adapter {
+	return &Adapter{
+		api:    api,
+		awsapi: awsapi,
+		config: config,
+		log:    log,
+	}
+}
+
+func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.EncryptedStringRequest) (*pb.EncryptedStringResponse, error) {
 	arn := a.config["RoleToAssume"].(string)
 	id := request.GetSessionId()
-	key := request.GetKey()
 	region := a.config["Region"].(string)
 
 	data := sessiontypes.AmazonConfigurationInput{
@@ -25,26 +47,29 @@ func (a *Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.Encrypt
 	echan := make(chan error, 1)
 	uch := make(chan *pb.EncryptedStringResponse, 1)
 
-	ctx = context.WithValue(ctx, transactionIdLogLabel, arn+"|"+region)
-	a.api.GetAWSSessionCredentials(ctx, data, ch, echan)
+	ctx = context.WithValue(ctx, transactionLable, arn+"|"+region)
+	a.awsapi.GetAWSSessionCredentials(ctx, data, ch, echan)
+
+	select {
+	case session := <-ch:
+		a.log.Log(ctx, 4, string(session.GetAwsSession()))
+		a.api.EncryptSessionId(ctx, session.AwsSession, id, uch, echan)
+	}
 
 	select {
 	case <-ctx.Done():
-		t := ctx.Value(transactionIdLogLabel)
-		a.log.Error("request timeout", transactionIdLogLabel, t.(string))
+		t := ctx.Value(transactionLable)
+		a.log.Error("request timeout", transactionLable, t.(string))
 		return nil, errors.New("request timeout")
 
-	case awsSession := <-ch:
-		a.api.EncryptSessionId(ctx, awsSession, id, key, uch, echan)
-
 	case out := <-uch:
-		t := ctx.Value(transactionIdLogLabel)
-		a.log.Info("success", transactionIdLogLabel, t.(string))
+		t := ctx.Value(transactionLable)
+		a.log.Info("success", transactionLable, t.(string))
 		return out, nil
 
 	case e := <-echan:
-		t := ctx.Value(transactionIdLogLabel)
-		a.log.Error(e.Error(), transactionIdLogLabel, t.(string))
+		t := ctx.Value(transactionLable)
+		a.log.Error(e.Error(), transactionLable, t.(string))
 		return nil, e
 	}
 }

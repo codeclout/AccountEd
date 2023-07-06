@@ -1,11 +1,11 @@
-package cloud
+package member
 
 import (
-  "context"
+	"context"
 
-  pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
+	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
 )
 
-type MemberSessionApiPort interface {
-  EncryptSessionId(ctx context.Context, creds []byte, id, key string, uch chan *pb.EncryptedStringResponse, echan chan error)
+type SessionAPIMemberPort interface {
+	EncryptSessionId(ctx context.Context, awscredentials []byte, id string, uch chan *pb.EncryptedStringResponse, echan chan error)
 }

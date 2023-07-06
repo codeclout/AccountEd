@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	AWSResourceClientService_GetSystemsManagerClient_FullMethodName = "/proto.v1.sessions.AWSResourceClientService/GetSystemsManagerClient"
+	AWSResourceClientService_GetAWSSessionCredentials_FullMethodName = "/proto.v1.sessions.AWSResourceClientService/GetAWSSessionCredentials"
 )
 
 // AWSResourceClientServiceClient is the client API for AWSResourceClientService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AWSResourceClientServiceClient interface {
-	GetSystemsManagerClient(ctx context.Context, in *AWSConfigRequest, opts ...grpc.CallOption) (*AWSConfigResponse, error)
+	GetAWSSessionCredentials(ctx context.Context, in *AWSConfigRequest, opts ...grpc.CallOption) (*AWSConfigResponse, error)
 }
 
 type aWSResourceClientServiceClient struct {
@@ -37,9 +37,9 @@ func NewAWSResourceClientServiceClient(cc grpc.ClientConnInterface) AWSResourceC
 	return &aWSResourceClientServiceClient{cc}
 }
 
-func (c *aWSResourceClientServiceClient) GetSystemsManagerClient(ctx context.Context, in *AWSConfigRequest, opts ...grpc.CallOption) (*AWSConfigResponse, error) {
+func (c *aWSResourceClientServiceClient) GetAWSSessionCredentials(ctx context.Context, in *AWSConfigRequest, opts ...grpc.CallOption) (*AWSConfigResponse, error) {
 	out := new(AWSConfigResponse)
-	err := c.cc.Invoke(ctx, AWSResourceClientService_GetSystemsManagerClient_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, AWSResourceClientService_GetAWSSessionCredentials_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,15 +50,15 @@ func (c *aWSResourceClientServiceClient) GetSystemsManagerClient(ctx context.Con
 // All implementations should embed UnimplementedAWSResourceClientServiceServer
 // for forward compatibility
 type AWSResourceClientServiceServer interface {
-	GetSystemsManagerClient(context.Context, *AWSConfigRequest) (*AWSConfigResponse, error)
+	GetAWSSessionCredentials(context.Context, *AWSConfigRequest) (*AWSConfigResponse, error)
 }
 
 // UnimplementedAWSResourceClientServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedAWSResourceClientServiceServer struct {
 }
 
-func (UnimplementedAWSResourceClientServiceServer) GetSystemsManagerClient(context.Context, *AWSConfigRequest) (*AWSConfigResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSystemsManagerClient not implemented")
+func (UnimplementedAWSResourceClientServiceServer) GetAWSSessionCredentials(context.Context, *AWSConfigRequest) (*AWSConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAWSSessionCredentials not implemented")
 }
 
 // UnsafeAWSResourceClientServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -72,20 +72,20 @@ func RegisterAWSResourceClientServiceServer(s grpc.ServiceRegistrar, srv AWSReso
 	s.RegisterService(&AWSResourceClientService_ServiceDesc, srv)
 }
 
-func _AWSResourceClientService_GetSystemsManagerClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AWSResourceClientService_GetAWSSessionCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AWSConfigRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AWSResourceClientServiceServer).GetSystemsManagerClient(ctx, in)
+		return srv.(AWSResourceClientServiceServer).GetAWSSessionCredentials(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AWSResourceClientService_GetSystemsManagerClient_FullMethodName,
+		FullMethod: AWSResourceClientService_GetAWSSessionCredentials_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AWSResourceClientServiceServer).GetSystemsManagerClient(ctx, req.(*AWSConfigRequest))
+		return srv.(AWSResourceClientServiceServer).GetAWSSessionCredentials(ctx, req.(*AWSConfigRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -98,8 +98,96 @@ var AWSResourceClientService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AWSResourceClientServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetSystemsManagerClient",
-			Handler:    _AWSResourceClientService_GetSystemsManagerClient_Handler,
+			MethodName: "GetAWSSessionCredentials",
+			Handler:    _AWSResourceClientService_GetAWSSessionCredentials_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "v1/sessions/services.proto",
+}
+
+const (
+	MemberSession_GetEncryptedSessionId_FullMethodName = "/proto.v1.sessions.MemberSession/GetEncryptedSessionId"
+)
+
+// MemberSessionClient is the client API for MemberSession service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type MemberSessionClient interface {
+	GetEncryptedSessionId(ctx context.Context, in *EncryptedStringRequest, opts ...grpc.CallOption) (*EncryptedStringResponse, error)
+}
+
+type memberSessionClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMemberSessionClient(cc grpc.ClientConnInterface) MemberSessionClient {
+	return &memberSessionClient{cc}
+}
+
+func (c *memberSessionClient) GetEncryptedSessionId(ctx context.Context, in *EncryptedStringRequest, opts ...grpc.CallOption) (*EncryptedStringResponse, error) {
+	out := new(EncryptedStringResponse)
+	err := c.cc.Invoke(ctx, MemberSession_GetEncryptedSessionId_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MemberSessionServer is the server API for MemberSession service.
+// All implementations should embed UnimplementedMemberSessionServer
+// for forward compatibility
+type MemberSessionServer interface {
+	GetEncryptedSessionId(context.Context, *EncryptedStringRequest) (*EncryptedStringResponse, error)
+}
+
+// UnimplementedMemberSessionServer should be embedded to have forward compatible implementations.
+type UnimplementedMemberSessionServer struct {
+}
+
+func (UnimplementedMemberSessionServer) GetEncryptedSessionId(context.Context, *EncryptedStringRequest) (*EncryptedStringResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEncryptedSessionId not implemented")
+}
+
+// UnsafeMemberSessionServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MemberSessionServer will
+// result in compilation errors.
+type UnsafeMemberSessionServer interface {
+	mustEmbedUnimplementedMemberSessionServer()
+}
+
+func RegisterMemberSessionServer(s grpc.ServiceRegistrar, srv MemberSessionServer) {
+	s.RegisterService(&MemberSession_ServiceDesc, srv)
+}
+
+func _MemberSession_GetEncryptedSessionId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EncryptedStringRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MemberSessionServer).GetEncryptedSessionId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MemberSession_GetEncryptedSessionId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MemberSessionServer).GetEncryptedSessionId(ctx, req.(*EncryptedStringRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// MemberSession_ServiceDesc is the grpc.ServiceDesc for MemberSession service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var MemberSession_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.v1.sessions.MemberSession",
+	HandlerType: (*MemberSessionServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetEncryptedSessionId",
+			Handler:    _MemberSession_GetEncryptedSessionId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
