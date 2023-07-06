@@ -6,6 +6,8 @@ import (
 	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
 )
 
+type DefaultRouteDuration int
+
 type EmailAddress string
 type ErrorEmailVerificationProcessor error
 type ErrorStaticConfig error
@@ -29,3 +31,6 @@ type ValidateEmailOut struct {
 	IsValidFormat     *pb.EmailVerificationPayload `json:"is_valid_format"`
 	QualityScore      string                       `json:"quality_score"`
 }
+
+type TransactionID string
+

@@ -2,7 +2,8 @@ package api
 
 import (
 	"context"
-	notification_types "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
+
+	notifications "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
@@ -13,13 +14,15 @@ import (
 )
 
 type Adapter struct {
+	config      map[string]interface{}
 	core        core.EmailCorePort
 	drivenEmail driven.EmailDrivenPort
 	log         *slog.Logger
 }
 
-func NewAdapter(log *slog.Logger, core core.EmailCorePort, email driven.EmailDrivenPort) *Adapter {
+func NewAdapter(config map[string]interface{}, core core.EmailCorePort, email driven.EmailDrivenPort, log *slog.Logger) *Adapter {
 	return &Adapter{
+		config:      config,
 		core:        core,
 		drivenEmail: email,
 		log:         log,
@@ -29,7 +32,7 @@ func NewAdapter(log *slog.Logger, core core.EmailCorePort, email driven.EmailDri
 // ValidateEmailAddress takes a context, an email address, a channel for ValidateEmailAddressResponse, and an error channel and validates the email address.
 // The results are sent back through the respective channels. If an error occurs during the process, it is sent through the error channel.
 func (a *Adapter) ValidateEmailAddress(ctx context.Context, address string, ch chan *pb.ValidateEmailAddressResponse, errorch chan error) {
-	emailAddress := notification_types.EmailAddress("address")
+	emailAddress := notifications.EmailAddress("address")
 	ctx = context.WithValue(ctx, emailAddress, address)
 
 	coreEmailProcessor, e := a.core.ProcessEmailValidation(ctx)

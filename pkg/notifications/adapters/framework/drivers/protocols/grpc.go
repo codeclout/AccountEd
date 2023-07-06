@@ -49,7 +49,7 @@ func (a *Adapter) Run() {
 }
 
 func (a *Adapter) getPort() string {
-	p, ok := a.config["port"].(string)
+	p, ok := a.config["Port"].(string)
 	n, _ := strconv.Atoi(p)
 
 	if ok && len(strings.TrimSpace(p)) >= 4 && n >= 1024 && n <= 65535 {

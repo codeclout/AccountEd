@@ -1,5 +1,6 @@
 package protocols
 
 type GrpcProtocolPort interface {
-	InitializeClient(port string)
+	InitializeNotificationsClient(port string)
+	InitializeSessionClient(port string)
 }

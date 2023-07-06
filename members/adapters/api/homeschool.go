@@ -11,20 +11,44 @@ import (
 	memberTypes "github.com/codeclout/AccountEd/members/member-types"
 	"github.com/codeclout/AccountEd/members/ports/core"
 	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
+	mpb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
 )
 
 type Adapter struct {
+	config       map[string]interface{}
 	core         core.HomeschoolCore
 	grpcProtocol *protocols.ClientAdapter
 	log          *slog.Logger
 }
 
-func NewAdapter(core core.HomeschoolCore, grpc *protocols.ClientAdapter, log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *protocols.ClientAdapter, log *slog.Logger) *Adapter {
 	return &Adapter{
+		config:       config,
 		core:         core,
 		grpcProtocol: grpc,
 		log:          log,
 	}
+}
+
+// encryptSessionId generates a hashed session ID using the provided session ID and a secret string fetched from AWS resources.
+// It first fetches a parameter from SSM, then retrieves a secret value from Secrets Manager, and then creates the hashed session ID
+// using the SHA-256 hashing algorithm. Returns the hashed ID as a string and an error in case of any failure.
+func (a *Adapter) encryptSessionID(ctx context.Context, id string) (string, error) {
+	client := *a.grpcProtocol.MemberClient
+	payload := mpb.EncryptedStringRequest{
+		SessionId: id,
+	}
+
+	en, e := client.GetEncryptedSessionId(ctx, &payload)
+	if e != nil {
+		return "", e
+	}
+
+	return en.GetEncryptedSessionId(), nil
+}
+
+func (a *Adapter) logError(ctx context.Context, msg string) {
+
 }
 
 // PreRegisterPrimaryMember is a method of Adapter struct that pre-registers a primary member using provided data.
@@ -36,7 +60,7 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberType
 	if e != nil {
 		a.log.Error(*data.Username,
 			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.TransactionID("transaction_id"))))
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.LogLabel("transaction_id"))))
 		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
 		return
 	}
@@ -58,7 +82,7 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberType
 	if coreData == (memberTypes.EmailValidationIn{}) {
 		a.log.Error("core -> 0 data returned: "+*data.Username,
 			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.TransactionID("transaction_id"))))
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.LogLabel("transaction_id"))))
 		ech <- memberTypes.ErrorCoreDataInvalid(errors.New("0 data for transaction_id:" + *data.Username))
 		return
 	}
@@ -67,14 +91,35 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberType
 	if e != nil {
 		a.log.Error("core -> pre registration: "+*data.Username,
 			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.TransactionID("transaction_id"))))
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.LogLabel("transaction_id"))))
 		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
 		return
 	}
 
+	hashedSessionID, e := a.encryptSessionID(ctx, out.SessionID)
+	out.SessionID = hashedSessionID
+
 	if out.RegistrationPending {
 
+		// send auto correct & confirm email address on front end
 	}
+
+	// if out.RegistrationPending {
+	// 	// hash session with pre-registration secret
+	// 	// send a verification email containing the session id in the url
+	// 	// capture ip for session
+	// }
+
+	// otherwise -> asynchronously
+	// create and register account
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			// cleanup and exit
+			case ch<- out:
+				}
+	}()
 
 	ch <- out
 }

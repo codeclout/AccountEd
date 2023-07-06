@@ -36,13 +36,13 @@ func (a *Adapter) ProcessEmailValidation(ctx context.Context) (*notification.Ema
 		return nil, notification.ErrorEmailVerificationProcessor(errors.New("core -> wrong type: emailAddress"))
 	}
 
-	emailProcessorDomain, ok := a.config["email_processor_domain"].(string)
+	emailProcessorDomain, ok := a.config["EmailProcessorDomain"].(string)
 	if !ok {
 		a.log.Error("core -> email processor domain is not a string")
 		return nil, notification.ErrorEmailVerificationProcessor(errors.New("core -> wrong type: emailProcessorDomain"))
 	}
 
-	emailProcessorPath, ok := a.config["email_verifier_api_path"].(string)
+	emailProcessorPath, ok := a.config["EmailVerifierApiPath"].(string)
 	if !ok {
 		a.log.Error("core -> email processor path is not a string")
 		return nil, notification.ErrorEmailVerificationProcessor(errors.New("core -> wrong type: emailProcessorPath"))

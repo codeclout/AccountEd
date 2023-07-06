@@ -1,10 +1,11 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
-	"golang.org/x/exp/slog"
 	"os"
+	"reflect"
+
+	"golang.org/x/exp/slog"
 )
 
 type environment struct {
@@ -30,7 +31,7 @@ func NewAdapter(log *slog.Logger) *Adapter {
 // If any string environment variable is not set, the method will log an error and forcefully exit the program. If the configuration value is of an unexpected type,
 // the method will panic with a "invalid AWS configuration type" message.
 func (a *Adapter) LoadNotificationsConfig() *map[string]interface{} {
-	var out map[string]interface{}
+	var out = make(map[string]interface{})
 	var s string
 
 	envConfig := environment{
@@ -41,8 +42,11 @@ func (a *Adapter) LoadNotificationsConfig() *map[string]interface{} {
 		SLARoutePerformance:  os.Getenv("PERFORMANCE_SLA"),
 	}
 
-	env, _ := json.Marshal(envConfig)
-	_ = json.Unmarshal(env, &out)
+	val := reflect.ValueOf(&envConfig).Elem()
+
+	for i := 0; i < val.NumField(); i++ {
+		out[val.Type().Field(i).Name] = val.Field(i).Interface()
+	}
 
 	for k, v := range out {
 		switch x := v.(type) {

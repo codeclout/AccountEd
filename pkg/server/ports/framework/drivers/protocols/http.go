@@ -8,6 +8,6 @@ import (
 
 type ProtocolPort interface {
 	Initialize(api []*fiber.App) (*fiber.App, string)
-	PostInit(app *fiber.App, wg *sync.WaitGroup)
+	PostInit(wg *sync.WaitGroup)
 	StopProtocolListener(app *fiber.App)
 }

@@ -40,49 +40,54 @@ func main() {
 	memberConfiguration = driverAdapterServerConfiguration.NewAdapter(monitor.Logger, "./config.hcl")
 	config := *memberConfiguration.LoadMemberConfig()
 
-	applicationName, ok := config["application_name"]
+	applicationName, ok := config["Name"]
 	if !ok {
-		monitor.Logger.Error("application_name not configured")
+		monitor.Logger.Error("application name not configured")
 		os.Exit(1)
 	}
 
-	routePrefix, ok := config["route_prefix"]
+	routePrefix, ok := config["RoutePrefix"]
 	if !ok {
-		monitor.Logger.Error("route_prefix not configured")
+		monitor.Logger.Error("route prefix not configured")
 		os.Exit(1)
 	}
 
-	isAppGetOnly, ok := config["is_app_get_only"]
+	isAppGetOnly, ok := config["GetOnlyConstraint"]
 	if !ok {
 		monitor.Logger.Error("is_app_get_only not configured")
 		os.Exit(1)
 	}
 
 	protocolAdapter := protocol.NewAdapter(
-		applicationName.(string),
+		config,
 		routePrefix.(string),
-		isAppGetOnly.(bool),
+		applicationName.(string),
 		monitor.Logger,
 		monitor.HttpMiddlewareLogger,
-		&wg)
+		&wg,
+		isAppGetOnly.(bool))
 
 	protocolDriver = protocolAdapter
 
-	grpcClientAdapter := driverGrpcAdapter.NewAdapterClientProtocolGRPC(monitor.Logger)
-	grpcClientAdapter.InitializeClient("9000")
+	grpcClientAdapter := driverGrpcAdapter.NewAdapterClientProtocolGRPC(monitor.Logger, &wg)
+	grpcClientAdapter.InitializeNotificationsClient("9000") // @TODO - get port from config
+	grpcClientAdapter.InitializeSessionClient("9001")
 
-	homeschoolCore = coreAdapter.NewAdapter(monitor.Logger)
-	homeschoolAPI = apiAdapter.NewAdapter(homeschoolCore, grpcClientAdapter, monitor.Logger)
-	homeschoolDriver = driverAdapter.NewAdapter(homeschoolAPI, monitor.Logger, config)
+	go grpcClientAdapter.PostInit()
+	defer grpcClientAdapter.StopProtocolListener()
+
+	homeschoolCore = coreAdapter.NewAdapter(config, monitor.Logger)
+	homeschoolAPI = apiAdapter.NewAdapter(config, homeschoolCore, grpcClientAdapter, monitor.Logger)
+	homeschoolDriver = driverAdapter.NewAdapter(config, homeschoolAPI, monitor.Logger)
 	homeschoolRoutes := homeschoolDriver.InitializeAPI(protocolAdapter.HTTP)
 
 	// sessionDriver, _ = driverAdapterSession.NewAdapter(monitor)
 	http, port := protocolDriver.Initialize(homeschoolRoutes)
 
 	wg.Add(1)
-	go protocolAdapter.PostInit(http, &wg)
+	go protocolAdapter.PostInit(&wg)
 	defer protocolAdapter.StopProtocolListener(http)
 
-	app := driverAdapterProtocol.NewAdapter(monitor.Logger, http, httpmiddleware.NewLoggerMiddleware)
-	app.InitializeClient(port)
+	app := driverAdapterProtocol.NewAdapter(config, http, httpmiddleware.NewLoggerMiddleware, monitor.Logger)
+	app.InitializeNotificationsClient(port)
 }

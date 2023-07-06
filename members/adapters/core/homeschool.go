@@ -13,14 +13,16 @@ import (
 
 type Adapter struct {
 	isRegisterable
-	log *slog.Logger
+	config map[string]interface{}
+	log    *slog.Logger
 }
 
 type isRegisterable bool
 
-func NewAdapter(log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, log *slog.Logger) *Adapter {
 	return &Adapter{
-		log: log,
+		config: config,
+		log:    log,
 	}
 }
 
@@ -61,7 +63,7 @@ func (a *Adapter) PreRegister(ctx context.Context, in memberTypes.EmailValidatio
 
 	return &memberTypes.PrimaryMemberStartRegisterOut{
 		RegistrationPending: a.setRegistrationPending(in.Deliverability, in.QualityScore, in.IsMxFound.GetValue(), in.IsDisposableEmail.GetValue(), in.IsRoleEmail.GetValue()),
-		SessionID:           sessionID,
+		SessionID:           sessionID.String(),
 		Username:            username,
 		UsernamePending:     a.useAutoCorrect(in.Autocorrect),
 	}, nil

@@ -1,19 +1,26 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	membertypes "github.com/codeclout/AccountEd/members/member-types"
 	"os"
 	"path/filepath"
+	"reflect"
+
+	membertypes "github.com/codeclout/AccountEd/members/member-types"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"golang.org/x/exp/slog"
 )
 
-type Server struct {
+type environment struct {
+	AWSRegion                string
+	AWSRolePreRegistration   string
+	PreRegistrationParameter string
+}
+
+type server struct {
 	GetOnlyConstraint bool    `hcl:"is_app_get_only" json:"is_app_get_only"`
 	Name              string  `hcl:"application_name" json:"application_name"`
 	RoutePrefix       string  `hcl:"route_prefix" json:"route_prefix"`
@@ -33,12 +40,12 @@ func NewAdapter(log *slog.Logger, configPath membertypes.ConfigurationPath) *Ada
 }
 
 // LoadMemberConfig reads and decodes the configuration file located by the "path" constant, and
-// populates a Server instance. The Server instance is then converted to a JSON object which is
+// populates a server instance. The server instance is then converted to a JSON object which is
 // unmarshalled into a map[string]interface{}. This method returns a pointer to the map.
 // In case of any errors, it logs the error message and panics with the corresponding error.
 func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
-	var configuration Server
-	var out map[string]interface{}
+	var configuration server
+	var out = make(map[string]interface{})
 	var s string
 
 	workingDirectory, _ := os.Getwd()
@@ -58,8 +65,21 @@ func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
 		}
 	}
 
-	b, _ := json.Marshal(&configuration)
-	_ = json.Unmarshal(b, &out)
+	env := environment{
+		AWSRegion:                os.Getenv("AWS_REGION"),
+		AWSRolePreRegistration:   os.Getenv("AWS_PRE_REGISTRATION_ROLE"),
+		PreRegistrationParameter: os.Getenv("AWS_PRE_REGISTRATION_HASH_PARAM"),
+	}
+
+	sval := reflect.ValueOf(&env).Elem()
+	for i := 0; i < sval.NumField(); i++ {
+		out[sval.Type().Field(i).Name] = sval.Field(i).Interface()
+	}
+
+	val := reflect.ValueOf(&configuration).Elem()
+	for i := 0; i < val.NumField(); i++ {
+		out[val.Type().Field(i).Name] = val.Field(i).Interface()
+	}
 
 	for k, v := range out {
 		switch x := v.(type) {

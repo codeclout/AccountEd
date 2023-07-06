@@ -23,9 +23,9 @@ type Adapter struct {
 	log        *slog.Logger
 }
 
-func NewAdapter(homeschoolAPI api.HomeschoolAPI, log *slog.Logger, runtimeConfig map[string]interface{}) *Adapter {
+func NewAdapter(conifg map[string]interface{}, homeschoolAPI api.HomeschoolAPI, log *slog.Logger) *Adapter {
 	return &Adapter{
-		config:     runtimeConfig,
+		config:     conifg,
 		homeschool: homeschoolAPI,
 		log:        log,
 	}
@@ -36,7 +36,7 @@ func NewAdapter(homeschoolAPI api.HomeschoolAPI, log *slog.Logger, runtimeConfig
 // It checks if the SLA (Service Level Agreement) routes are defined in the config and defaults to 2000 milliseconds if not.
 // The "/registration-start" route is registered with a POST method and the processRegistration function is wrapped with a timeout for handling requests.
 func (a *Adapter) initHomeSchoolRoutes(app *fiber.App) *fiber.App {
-	sla, ok := a.config["sla_routes"]
+	sla, ok := a.config["SLARoutes"]
 	if !ok {
 		a.log.Error("sla_routes not configured")
 		sla = float64(2000)
@@ -84,7 +84,7 @@ func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 
 	c := ctx.UserContext()
 	cx := context.WithValue(c, mt.LogLabel("request_id"), ctx.Locals("requestid"))
-	cx1 := context.WithValue(cx, mt.TransactionID("transaction_id"), sha256.Sum256([]byte(*in.Username)))
+	cx1 := context.WithValue(cx, mt.LogLabel("transaction_id"), sha256.Sum256([]byte(*in.Username)))
 
 	out, x := a.HandlePreRegistration(cx1, in)
 	if x != nil {
@@ -113,19 +113,19 @@ func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMembe
 	case <-ctx.Done():
 		a.log.ErrorCtx(ctx, "timeout exceeded",
 			"request_id", ctx.Value(mt.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.TransactionID("transaction_id"))))
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.LogLabel("transaction_id"))))
 		return nil, ctx.Err()
 
 	case out := <-ch:
 		a.log.Info("completed",
 			"request_id", ctx.Value(mt.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.TransactionID("transaction_id"))))
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.LogLabel("transaction_id"))))
 		return out, nil
 
 	case e := <-errorch:
 		a.log.Error(errors.Cause(e).Error(),
 			"request_id", ctx.Value(mt.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.TransactionID("transaction_id"))))
+			"transaction_id", fmt.Sprintf("%x", ctx.Value(mt.LogLabel("transaction_id"))))
 		return nil, errors.New(fiber.ErrInternalServerError.Error())
 	}
 }

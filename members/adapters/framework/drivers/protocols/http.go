@@ -11,19 +11,21 @@ import (
 
 type Adapter struct {
 	app              *fiber.App
+	config           map[string]interface{}
 	log              *slog.Logger
 	middlewareLogger func(settings ...httpMiddleware.Config) fiber.Handler
 }
 
-func NewAdapter(log *slog.Logger, app *fiber.App, middlewareLogger func(settings ...httpMiddleware.Config) fiber.Handler) *Adapter {
+func NewAdapter(config map[string]interface{}, app *fiber.App, middlewareLogger func(settings ...httpMiddleware.Config) fiber.Handler, log *slog.Logger) *Adapter {
 	return &Adapter{
 		app:              app,
+		config:           config,
 		log:              log,
 		middlewareLogger: middlewareLogger,
 	}
 }
 
-func (a *Adapter) InitializeClient(port string) {
+func (a *Adapter) InitializeNotificationsClient(port string) {
 	a.log.Info("starting server")
 	log.Fatal(a.app.Listen(port))
 }

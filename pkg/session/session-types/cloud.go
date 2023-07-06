@@ -1,0 +1,3 @@
+package sessiontypes
+
+type AmazonResourceName string

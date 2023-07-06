@@ -3,11 +3,12 @@ package cloud
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
@@ -22,23 +23,24 @@ type ErrorCredentialsRetrieval error
 type ErrorInvalidConfiguration error
 
 type Adapter struct {
-	config map[string]interface{}
-	log    *slog.Logger
+	config    map[string]interface{}
+	log       *slog.Logger
+	timeStamp func() time.Time
 }
 
-func NewAdapter(config map[string]interface{}, log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, ts func() time.Time, log *slog.Logger) *Adapter {
 	return &Adapter{
-		config: config,
-		log:    log,
+		config:    config,
+		log:       log,
+		timeStamp: ts,
 	}
 }
 
-// AssumeRoleCredentials attempts to assume the specified AWS role and returns an AWS Config object with the
-// assumed role's credentials, or an error if the operation failed. The function takes a context.Context and an IAM Role
-// Amazon Resource Name (ARN) string as arguments, and returns a pointer to an aws.Config object and an error if any.
-//
-// The ARN parameter is the Amazon Resource Name for the role you want to assume. The context.Context is used for request
-// cancellation and timeouts.
+// AssumeRoleCredentials takes a context.Context, a role ARN, and a region, and returns a pointer to an aws.Config with the assumed
+// role's credentials or an error if the operation fails. This method is used to obtain temporary AWS credentials for an AWS role.
+// It assumes the role specified by the given ARN and then generates a temporary AWS configuration with the assumed role's credentials.
+// It also sets the context and the specified region for the configuration. Note that the method will not handle credential caching or
+// refreshing.
 func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string) (*aws.Config, error) {
 	configloader, e := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(*region))
 	if e != nil {
@@ -47,9 +49,20 @@ func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string
 	}
 
 	client := sts.NewFromConfig(configloader)
-	creds := stscreds.NewAssumeRoleProvider(client, *arn)
 
-	configloader.Credentials = aws.NewCredentialsCache(creds)
+	stsRoleOutput, e := client.AssumeRole(ctx, &sts.AssumeRoleInput{
+		RoleArn:         arn,
+		RoleSessionName: aws.String("MySession" + strconv.Itoa(a.timeStamp().Nanosecond())),
+	})
+	if e != nil {
+		return nil, fmt.Errorf("failed to assume role: %w", e)
+	}
+
+	configloader.Credentials = credentials.StaticCredentialsProvider{Value: aws.Credentials{
+		AccessKeyID:     *stsRoleOutput.Credentials.AccessKeyId,
+		SecretAccessKey: *stsRoleOutput.Credentials.SecretAccessKey,
+		SessionToken:    *stsRoleOutput.Credentials.SessionToken,
+	}}
 
 	return &configloader, nil
 }

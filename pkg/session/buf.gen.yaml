@@ -2,7 +2,7 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/codeclout/AccountEd/pkg/session/gen
+    default: github.com/codeclout/AccountEd/pkg/session/gen/sessions
 plugins:
   - plugin: buf.build/protocolbuffers/go
     out: gen

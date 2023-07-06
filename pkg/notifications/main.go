@@ -37,13 +37,13 @@ func main() {
 	go monitor.Initialize(&wg)
 
 	notificationConfiguration = configuration.NewAdapter(monitor.Logger)
-	internalConfig := notificationConfiguration.LoadNotificationsConfig()
+	config := notificationConfiguration.LoadNotificationsConfig()
 
-	emailNotificationDriven = drivenAdapter.NewAdapter(*internalConfig, monitor.Logger)
-	emailNotificationCore = coreAdapter.NewAdapter(*internalConfig, monitor.Logger)
-	emailNotificationApi = api.NewAdapter(monitor.Logger, emailNotificationCore, emailNotificationDriven)
-	emailNotificationDriver = driverAdapter.NewAdapter(emailNotificationApi, *internalConfig, monitor.Logger)
+	emailNotificationDriven = drivenAdapter.NewAdapter(*config, monitor.Logger)
+	emailNotificationCore = coreAdapter.NewAdapter(*config, monitor.Logger)
+	emailNotificationApi = api.NewAdapter(*config, emailNotificationCore, emailNotificationDriven, monitor.Logger)
+	emailNotificationDriver = driverAdapter.NewAdapter(emailNotificationApi, *config, monitor.Logger)
 
-	grpcProtocol = protocolGrpcAdapter.NewAdapter(*internalConfig, monitor.Logger, emailNotificationDriver)
+	grpcProtocol = protocolGrpcAdapter.NewAdapter(*config, monitor.Logger, emailNotificationDriver)
 	grpcProtocol.Run()
 }

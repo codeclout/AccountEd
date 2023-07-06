@@ -3,8 +3,9 @@ package driven
 import (
 	"context"
 	"encoding/json"
-	"golang.org/x/exp/slog"
 	"net/http"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/pkg/errors"
 
@@ -35,7 +36,7 @@ func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *notificati
 	req, _ := http.NewRequest("GET", in.Endpoint, nil)
 	params := req.URL.Query()
 
-	emailProcessorApiKey, ok := a.config["email_processor_api_key"].(string)
+	emailProcessorApiKey, ok := a.config["EmailProcessorAPIKey"].(string)
 	if !ok {
 		a.log.Error("driven -> email processor api emailProcessorApiKey is not a string")
 		return nil, notifications.ErrorStaticConfig(errors.New("core -> wrong type: emailProcessorApiKeyx"))

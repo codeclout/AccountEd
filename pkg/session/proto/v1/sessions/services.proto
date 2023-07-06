@@ -6,6 +6,6 @@ option go_package = "github.com/codeclout/AccountEd/pkg/session";
 
 import "v1/messages.proto";
 
-service AWSConfigurationService {
-  rpc GetAWSRoleConfiguration(AWSConfigRequest) returns (AWSConfigResponse);
+service AWSResourceClientService {
+  rpc GetSystemsManagerClient(AWSConfigRequest) returns (AWSConfigResponse);
 }

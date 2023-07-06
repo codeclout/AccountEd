@@ -30,6 +30,11 @@ type AuthenticationOptions struct {
   WebAuthentication bool `json:"web_authentication"`
 }
 
+type DefaultRouteDuration int
+type ErrorStaticConfig error
+
+type LogLabel string
+
 type RegistrationOptions struct {
   AttestationType           string                     `json:"attestation_type"`
   AuthenticationCredentials []AuthenticationCredential `json:"authentication_credentials"`

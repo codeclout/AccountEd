@@ -22,6 +22,7 @@ type Adapter struct {
 	HTTP                 *fiber.App
 	WaitGroup            *sync.WaitGroup
 	applicationName      string
+	config               map[string]interface{}
 	isApplicationGetOnly bool
 	log                  *slog.Logger
 	middlewareLogger     middlewareLogger
@@ -52,13 +53,14 @@ func isProd() bool {
 	return false
 }
 
-func NewAdapter(applicationName, routePrefix string, isAppGetOnly bool, log *slog.Logger, mwl middlewareLogger, wg *sync.WaitGroup) *Adapter {
+func NewAdapter(config map[string]interface{}, routePrefix, applicationName string, log *slog.Logger, mwl middlewareLogger, wg *sync.WaitGroup, isAppGetOnly bool) *Adapter {
 	api := fiber.New()
 
 	return &Adapter{
 		HTTP:                 api,
 		WaitGroup:            wg,
 		applicationName:      applicationName,
+		config:               config,
 		isApplicationGetOnly: isAppGetOnly,
 		log:                  log,
 		middlewareLogger:     mwl,
@@ -102,15 +104,14 @@ func (a *Adapter) Initialize(api []*fiber.App) (*fiber.App, string) {
 }
 
 // PostInit listens for SIGINT and SIGTERM signals, initiates shutdown, and stops the protocol listener for the given Fiber App.
-func (a *Adapter) PostInit(app *fiber.App, wg *sync.WaitGroup) {
+func (a *Adapter) PostInit(wg *sync.WaitGroup) {
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 
 	<-s
-	a.log.Warn("initializing shutdown")
+	a.log.Warn("http client shutting down")
 
 	wg.Done()
-	a.StopProtocolListener(app)
 	os.Exit(0)
 }
 

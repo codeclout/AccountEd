@@ -1,7 +1,5 @@
 package membertypes
 
-import "github.com/google/uuid"
-
 const (
 	Female Gender = iota + 1
 	Male
@@ -12,7 +10,6 @@ type ErrorCoreDataInvalid error
 type Gender int8
 type ConfigurationPath string
 type LogLabel string
-type TransactionID string
 
 type Member struct {
 	AccountType         string   `json:"account_type"`
@@ -54,9 +51,9 @@ type PrimaryMemberStartRegisterIn struct {
 	Username *string `json:"username" bson:"username" validate:"required,email"`
 }
 
-type PrimaryMemberStartRegisterOut struct {
-	RegistrationPending bool      `json:"registration_pending"`
-	SessionID           uuid.UUID `json:"session_id" bson:"session_id" validate:"required"`
-	Username            *string   `json:"username" bson:"username" validate:"required,email"`
-	UsernamePending     bool      `json:"username_pending" bson:"username_pending" validate:"required"`
+type PrimaryMemberStartRegisterOut struct { //nolint:maligned
+	RegistrationPending bool    `json:"registration_pending"`
+	SessionID           string  `json:"session_id" bson:"session_id" validate:"required"`
+	Username            *string `json:"username" bson:"username" validate:"required,email"`
+	UsernamePending     bool    `json:"username_pending" bson:"username_pending" validate:"required"`
 }
