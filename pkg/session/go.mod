@@ -18,6 +18,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	golang.org/x/crypto v0.9.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
+	golang.org/x/net v0.10.0
+	google.golang.org/grpc v1.27.0
+	google.golang.org/protobuf v1.25.0
 )
 
 require (
@@ -41,9 +44,12 @@ require (
 	github.com/fxamacker/cbor/v2 v2.4.0 // indirect
 	github.com/go-webauthn/revoke v0.1.9 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
+	github.com/golang/protobuf v1.4.1 // indirect
 	github.com/google/go-tpm v0.3.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
+	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 )
