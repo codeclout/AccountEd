@@ -19,16 +19,16 @@ func NewMyStack(scope constructs.Construct, id string) cdktf.TerraformStack {
 	stack := cdktf.NewTerraformStack(scope, &id)
 
 	config := awsprovider.AwsProviderConfig{
-		AccessKey: jsii.String("AKIASWBCNCZGYYY2OWQI"),
+		AccessKey: jsii.String(""),
 		AssumeRole: []*awsprovider.AwsProviderAssumeRole{
 			&awsprovider.AwsProviderAssumeRole{
 				Duration:    jsii.String("45m"),
-				RoleArn:     jsii.String("arn:aws:iam::184755754573:role/notifications-sch00l.io-service"),
+				RoleArn:     jsii.String(""),
 				SessionName: jsii.String("MySession" + strconv.Itoa(t.Nanosecond())),
 			},
 		},
 		Region:    jsii.String("us-east-2"),
-		SecretKey: jsii.String("YYeqRoav111pSkvWP4HpdzxwycSLhp1gdMrlerO8"),
+		SecretKey: jsii.String(""),
 	}
 
 	aws := awsprovider.NewAwsProvider(stack, jsii.String("AWS"), &config)
