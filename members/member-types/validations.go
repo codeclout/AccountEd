@@ -22,7 +22,7 @@ var (
 // ValidateUsernamePayloadSize checks if the size of the input byte slice is within the acceptable limit.
 // It returns an error if the input byte slice is larger than 360 bytes.
 func ValidateUsernamePayloadSize(in []byte) error {
-	if len(in) > 360 {
+	if len(in) > 320 {
 		return ErrorPayloadSize
 	}
 

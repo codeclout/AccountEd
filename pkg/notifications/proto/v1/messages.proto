@@ -31,3 +31,15 @@ message ValidFormat {
   string text = 1;
   bool value = 2;
 }
+
+message NoReplyEmailNotificationRequest {
+  bytes awsCredentials = 1;
+  string fromAddress = 2;
+  string sessionId = 3;
+  repeated string toAddress = 4;
+  string domain = 5;
+}
+
+message NoReplyEmailNotificationResponse {
+  string messageId = 1;
+}

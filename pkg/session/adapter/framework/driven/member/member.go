@@ -24,6 +24,8 @@ func NewAdapter(config map[string]interface{}, memberDrivenLog *slog.Logger) *Ad
 	}
 }
 
+// GetSessionIdKey retrieves a session ID key from AWS Secret Manager via the System Manager's Parameter Store.
+// AWS region and 'PreRegistrationParameter' are extracted from the application configuration.
 func (a *Adapter) GetSessionIdKey(ctx context.Context, awsconfig []byte) (*string, error) {
 	var creds credentials.StaticCredentialsProvider
 

@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EmailNotificationService_ValidateEmailAddress_FullMethodName = "/proto.v1.EmailNotificationService/ValidateEmailAddress"
+	EmailNotificationService_ValidateEmailAddress_FullMethodName     = "/proto.v1.EmailNotificationService/ValidateEmailAddress"
+	EmailNotificationService_SendPreRegistrationEmail_FullMethodName = "/proto.v1.EmailNotificationService/SendPreRegistrationEmail"
 )
 
 // EmailNotificationServiceClient is the client API for EmailNotificationService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EmailNotificationServiceClient interface {
 	ValidateEmailAddress(ctx context.Context, in *ValidateEmailAddressRequest, opts ...grpc.CallOption) (*ValidateEmailAddressResponse, error)
+	SendPreRegistrationEmail(ctx context.Context, in *NoReplyEmailNotificationRequest, opts ...grpc.CallOption) (*NoReplyEmailNotificationResponse, error)
 }
 
 type emailNotificationServiceClient struct {
@@ -46,11 +48,21 @@ func (c *emailNotificationServiceClient) ValidateEmailAddress(ctx context.Contex
 	return out, nil
 }
 
+func (c *emailNotificationServiceClient) SendPreRegistrationEmail(ctx context.Context, in *NoReplyEmailNotificationRequest, opts ...grpc.CallOption) (*NoReplyEmailNotificationResponse, error) {
+	out := new(NoReplyEmailNotificationResponse)
+	err := c.cc.Invoke(ctx, EmailNotificationService_SendPreRegistrationEmail_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EmailNotificationServiceServer is the server API for EmailNotificationService service.
 // All implementations should embed UnimplementedEmailNotificationServiceServer
 // for forward compatibility
 type EmailNotificationServiceServer interface {
 	ValidateEmailAddress(context.Context, *ValidateEmailAddressRequest) (*ValidateEmailAddressResponse, error)
+	SendPreRegistrationEmail(context.Context, *NoReplyEmailNotificationRequest) (*NoReplyEmailNotificationResponse, error)
 }
 
 // UnimplementedEmailNotificationServiceServer should be embedded to have forward compatible implementations.
@@ -59,6 +71,9 @@ type UnimplementedEmailNotificationServiceServer struct {
 
 func (UnimplementedEmailNotificationServiceServer) ValidateEmailAddress(context.Context, *ValidateEmailAddressRequest) (*ValidateEmailAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateEmailAddress not implemented")
+}
+func (UnimplementedEmailNotificationServiceServer) SendPreRegistrationEmail(context.Context, *NoReplyEmailNotificationRequest) (*NoReplyEmailNotificationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendPreRegistrationEmail not implemented")
 }
 
 // UnsafeEmailNotificationServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -90,6 +105,24 @@ func _EmailNotificationService_ValidateEmailAddress_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EmailNotificationService_SendPreRegistrationEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoReplyEmailNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailNotificationServiceServer).SendPreRegistrationEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailNotificationService_SendPreRegistrationEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailNotificationServiceServer).SendPreRegistrationEmail(ctx, req.(*NoReplyEmailNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EmailNotificationService_ServiceDesc is the grpc.ServiceDesc for EmailNotificationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +133,10 @@ var EmailNotificationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValidateEmailAddress",
 			Handler:    _EmailNotificationService_ValidateEmailAddress_Handler,
+		},
+		{
+			MethodName: "SendPreRegistrationEmail",
+			Handler:    _EmailNotificationService_SendPreRegistrationEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

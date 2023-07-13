@@ -12,7 +12,6 @@ import (
 )
 
 func (a *Adapter) processAWSCredentials(ctx context.Context) *aws.Config {
-
 	var creds = &memberTypes.CredentialsAWS{}
 
 	grpcProtocol := *a.grpcProtocol.AWSClient
@@ -59,4 +58,17 @@ func (a *Adapter) processAWSCredentials(ctx context.Context) *aws.Config {
 	}
 
 	return &c
+}
+
+func (a *Adapter) getAWSCredentialBytes(ctx context.Context) []byte {
+	config := a.processAWSCredentials(ctx)
+	creds := config.Credentials
+
+	b, e := json.Marshal(creds)
+	if e != nil {
+		a.log.Error(e.Error())
+		return nil
+	}
+
+	return b
 }

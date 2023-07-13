@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/pkg/errors"
@@ -44,7 +45,7 @@ func NewAdapter(config map[string]interface{}, ts func() time.Time, log *slog.Lo
 func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string) (*aws.Config, error) {
 	configloader, e := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(*region))
 	if e != nil {
-		a.log.Error(e.Error())
+		a.log.Error(ErrorDefaultConfiguration(errors.New(e.Error())).Error())
 		return nil, ErrorDefaultConfiguration(errors.New("unable to load AWS configuration"))
 	}
 
@@ -55,7 +56,8 @@ func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string
 		RoleSessionName: aws.String("MySession" + strconv.Itoa(a.timeStamp().Nanosecond())),
 	})
 	if e != nil {
-		return nil, fmt.Errorf("failed to assume role: %w", e)
+		a.log.Error(ErrorDefaultConfiguration(errors.New(e.Error())).Error())
+		return nil, ErrorDefaultConfiguration(fmt.Errorf("failed to assume role: %w", e))
 	}
 
 	configloader.Credentials = credentials.StaticCredentialsProvider{Value: aws.Credentials{
@@ -166,4 +168,12 @@ func (a *Adapter) GetR2StorageClient(ctx context.Context, config *aws.Config, cl
 
 	client := s3.NewFromConfig(s3Config)
 	return client, nil
+}
+
+func (a *Adapter) GetSESClient(ctx context.Context, config *aws.Config) *sesv2.Client {
+	client := sesv2.NewFromConfig(*config)
+
+	// @TODO - cache client
+	// @TODO - store and check client expiration
+	return client
 }

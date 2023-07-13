@@ -6,16 +6,34 @@ import (
 	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
 )
 
-type DefaultRouteDuration int
-
+type URL string
 type EmailAddress string
+type EmailList []string
 type ErrorEmailVerificationProcessor error
 type ErrorStaticConfig error
+type SessionID string
 
 type EmailDrivenIn struct {
 	EmailAddress string     `json:"email_address"`
 	Endpoint     string     `json:"endpoint"`
 	SessionID    *uuid.UUID `json:"session_id"`
+}
+
+type NoReplyEmailIn struct {
+	AWSCredentials []byte
+	Domain         string
+	FromAddress    string
+	SessionID      string
+	ToAddress      []string
+}
+
+type NoReplyEmailInput struct {
+	Body    string
+	Subject string
+}
+
+type NoReplyEmailOut struct {
+	MessageID string
 }
 
 type ValidateEmailOut struct {
@@ -31,6 +49,3 @@ type ValidateEmailOut struct {
 	IsValidFormat     *pb.EmailVerificationPayload `json:"is_valid_format"`
 	QualityScore      string                       `json:"quality_score"`
 }
-
-type TransactionID string
-

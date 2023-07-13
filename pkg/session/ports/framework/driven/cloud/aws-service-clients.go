@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
@@ -18,4 +19,5 @@ type CredentialsAWSPort interface {
 	GetSystemsManagerClient(ctx context.Context, config *aws.Config) *ssm.Client
 	GetDynamoClient(ctx context.Context, config *aws.Config, region *string) (*dynamodb.Client, error)
 	GetR2StorageClient(ctx context.Context, config *aws.Config, cloudflareAccountID *string) (*s3.Client, error)
+	GetSESClient(ctx context.Context, config *aws.Config) *sesv2.Client
 }

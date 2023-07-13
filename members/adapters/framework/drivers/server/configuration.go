@@ -17,7 +17,12 @@ import (
 type environment struct {
 	AWSRegion                string
 	AWSRolePreRegistration   string
+	Domain                   string
+	NotificationsServiceHost string
+	NotificationsServicePort string
 	PreRegistrationParameter string
+	SessionServiceHost       string
+	SessionServicePort       string
 }
 
 type server struct {
@@ -68,7 +73,12 @@ func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
 	env := environment{
 		AWSRegion:                os.Getenv("AWS_REGION"),
 		AWSRolePreRegistration:   os.Getenv("AWS_PRE_REGISTRATION_ROLE"),
+		Domain:                   os.Getenv("DOMAIN"),
 		PreRegistrationParameter: os.Getenv("AWS_PRE_REGISTRATION_HASH_PARAM"),
+		NotificationsServiceHost: os.Getenv("NOTIFICATION_SERVER_HOST"),
+		NotificationsServicePort: os.Getenv("NOTIFICATION_SERVER_PORT"),
+		SessionServiceHost:       os.Getenv("SESSION_SERVER_HOST"),
+		SessionServicePort:       os.Getenv("SESSION_SERVER_PORT"),
 	}
 
 	sval := reflect.ValueOf(&env).Elem()

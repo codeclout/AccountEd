@@ -105,7 +105,7 @@ func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMembe
 
 	defer cancel()
 
-	a.homeschool.PreRegisterPrimaryMember(ctx, in, ch, errorch)
+	a.homeschool.PreRegisterPrimaryMemberAPI(ctx, in, ch, errorch)
 
 	select {
 	case <-ctx.Done():

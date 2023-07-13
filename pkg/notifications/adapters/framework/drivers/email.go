@@ -46,10 +46,23 @@ func (a *Adapter) getRequestSLA() (int, error) {
 	return i, nil
 }
 
-// ValidateEmailAddress takes a context and a ValidateEmailAddressRequest, sends the request using the EmailApiPort, and returns a
-// ValidateEmailAddressResponse and an error if any. It sets a timeout for the request using the "sla_route_performance" config value, and listens for
-// a response using channels. If the context times out, it returns a "request timeout" error. If an error is received from the error channel, it is
-// logged and returned as is. Otherwise, the received response is returned with a success log message.
+func (a *Adapter) setContextTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	deadline, ok := ctx.Deadline()
+
+	if ok {
+		ctx, cancel := context.WithDeadline(ctx, deadline)
+		return ctx, cancel
+	}
+
+	sla, e := a.getRequestSLA()
+	if e != nil {
+		sla = int(defaultRouteDuration)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(sla)*time.Millisecond)
+	return ctx, cancel
+}
+
 func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEmailAddressRequest) (*pb.ValidateEmailAddressResponse, error) {
 	address := email.GetAddress()
 
@@ -57,11 +70,7 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEm
 	errorch := make(chan error, 1)
 
 	ctx = context.WithValue(ctx, transactionID, address)
-	sla, e := a.getRequestSLA()
-	if e != nil {
-		sla = int(defaultRouteDuration)
-	}
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(sla)*time.Millisecond)
+	ctx, cancel := a.setContextTimeout(ctx)
 
 	defer cancel()
 
@@ -84,4 +93,47 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEm
 		return nil, e
 	}
 
+}
+
+func (a *Adapter) SendPreRegistrationEmail(ctx context.Context, in *pb.NoReplyEmailNotificationRequest) (*pb.NoReplyEmailNotificationResponse, error) {
+	awscredentials := in.GetAwsCredentials()
+	domain := in.GetDomain()
+	fromAddress := in.GetFromAddress()
+	sessionID := in.GetSessionId()
+	toAddress := in.GetToAddress()
+
+	ch := make(chan *pb.NoReplyEmailNotificationResponse, 1)
+	errorch := make(chan error, 1)
+
+	ctx = context.WithValue(ctx, transactionID, sessionID)
+	ctx, cancel := a.setContextTimeout(ctx)
+
+	defer cancel()
+
+	apiData := notifications.NoReplyEmailIn{
+		AWSCredentials: awscredentials,
+		Domain:         domain,
+		FromAddress:    fromAddress,
+		SessionID:      sessionID,
+		ToAddress:      toAddress,
+	}
+
+	a.apiEmail.SendPreRegistrationEmailAPI(ctx, &apiData, ch, errorch)
+
+	select {
+	case <-ctx.Done():
+		t := ctx.Value(transactionID)
+		a.log.Error("request timeout", "transaction_id", t.(string))
+		return nil, errors.New("request timeout")
+
+	case out := <-ch:
+		t := ctx.Value(transactionID)
+		a.log.Info("success", "transaction_id", t.(string))
+		return out, nil
+
+	case e := <-errorch:
+		t := ctx.Value(transactionID)
+		a.log.Error(e.Error(), "transaction_id", t.(string))
+		return nil, e
+	}
 }

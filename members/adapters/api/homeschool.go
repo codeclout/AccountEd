@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
@@ -21,12 +22,6 @@ type Adapter struct {
 	log          *slog.Logger
 }
 
-// NewAdapter is a constructor function for the Adapter struct. It initializes a new Adapter object and returns its pointer.
-// It accepts four parameters:
-// config is a map of string keys to interface{} values that stores the configuration parameters for the Adapter.
-// core is the core Homeschool interface, which is an implementation of the core domain behavior in the adapter.
-// grpc is the ClientAdapter of the gRPC protocol, which enables communication with other services.
-// log is a Logger object used to log activity, errors and other useful information during the program's runtime.
 func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *protocols.ClientAdapter, log *slog.Logger) *Adapter {
 	return &Adapter{
 		config:       config,
@@ -36,9 +31,6 @@ func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *p
 	}
 }
 
-// encryptSessionId generates a hashed session ID using the provided session ID and a secret string fetched from AWS resources.
-// It first fetches a parameter from SSM, then retrieves a secret value from Secrets Manager, and then creates the hashed session ID
-// using the SHA-256 hashing algorithm. Returns the hashed ID as a string and an error in case of any failure.
 func (a *Adapter) encryptSessionID(ctx context.Context, id string) (string, error) {
 	client := *a.grpcProtocol.MemberClient
 	payload := mpb.EncryptedStringRequest{
@@ -54,14 +46,60 @@ func (a *Adapter) encryptSessionID(ctx context.Context, id string) (string, erro
 	return encryptedSessionID.GetEncryptedSessionId(), nil
 }
 
-func (a *Adapter) logError(ctx context.Context, msg string) {
+func (a *Adapter) getDomain() (string, error) {
+	domain, ok := a.config["Domain"].(string)
+	if !ok {
+		return domain, errors.New("missing environment variable -> Domain")
+	}
 
+	return domain, nil
 }
 
-// PreRegisterPrimaryMember is a method of Adapter struct that pre-registers a primary member using provided data.
-// It validates the email address, and then passes the validation results and other data to the Core PreRegister
-// method. The output is sent to a channel and any errors are sent to an error channel.
-func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberTypes.PrimaryMemberStartRegisterIn, ch chan *memberTypes.PrimaryMemberStartRegisterOut, ech chan error) {
+// getEmailDomain is a method of Adapter struct that extracts and returns the domain part of an URL.
+func (a *Adapter) getEmailDomain() (string, error) {
+	v, e := a.getDomain()
+	if e != nil {
+		return "", e
+	}
+
+	r, _ := url.Parse(v)
+	if r == nil || r.Hostname() == "" {
+		return "", errors.New("unable to parse hostname")
+	}
+
+	return r.Hostname(), nil
+}
+
+func (a *Adapter) sendPreRegistrationEmail(ctx context.Context, hashedSessionID string, toAddress []string) error {
+	emailclient := *a.grpcProtocol.Emailclient
+	fqdn, e := a.getEmailDomain()
+	if e != nil {
+		return errors.New(e.Error())
+	}
+
+	uri, e := a.getDomain()
+	if e != nil {
+		return errors.New(e.Error())
+	}
+
+	reqData := pb.NoReplyEmailNotificationRequest{
+		AwsCredentials: a.getAWSCredentialBytes(ctx),
+		Domain:         uri,
+		FromAddress:    fmt.Sprintf("no-reply@%s", fqdn),
+		SessionId:      hashedSessionID,
+		ToAddress:      toAddress,
+	}
+
+	_, e = emailclient.SendPreRegistrationEmail(ctx, &reqData)
+	if e != nil {
+		a.log.Error(fmt.Sprintf("pre-registration email failed to process -> %s", e.Error()))
+		return errors.Wrapf(e, "domain -> %s pre registration email failed", uri)
+	}
+
+	return nil
+}
+
+func (a *Adapter) PreRegisterPrimaryMemberAPI(ctx context.Context, data *memberTypes.PrimaryMemberStartRegisterIn, ch chan *memberTypes.PrimaryMemberStartRegisterOut, ech chan error) {
 	emailclient := *a.grpcProtocol.Emailclient
 	response, e := emailclient.ValidateEmailAddress(ctx, &pb.ValidateEmailAddressRequest{Address: *data.Username})
 	if e != nil {
@@ -85,7 +123,6 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberType
 		IsMxFound:         response.GetIsMxFound(),
 		IsSmtpValid:       response.GetIsSmtpValid(),
 	}
-
 	if coreData == (memberTypes.EmailValidationIn{}) {
 		a.log.Error("core -> 0 data returned: "+*data.Username,
 			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
@@ -103,17 +140,21 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberType
 		return
 	}
 
-	hashedSessionID, e := a.encryptSessionID(ctx, out.SessionID)
+	hashedSessionID, _ := a.encryptSessionID(ctx, out.SessionID)
 	out.SessionID = hashedSessionID
 
 	if out.UsernamePending {
 		// send auto correct & confirm email address on front end
 	}
 
-	if out.RegistrationPending {
-		// send a verification email containing the session id in the url
-		// capture ip for session
+	// if out.RegistrationPending {
+	e = a.sendPreRegistrationEmail(ctx, hashedSessionID, []string{response.GetEmail()})
+
+	if e != nil {
+		a.log.Error(e.Error())
+		ech <- errors.New("unable to process verification email")
 	}
+	// }
 
 	// otherwise -> asynchronously
 	// create and register account

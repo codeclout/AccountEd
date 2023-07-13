@@ -7,5 +7,5 @@ import (
 )
 
 type HomeschoolAPI interface {
-  PreRegisterPrimaryMember(ctx context.Context, data *mt.PrimaryMemberStartRegisterIn, ch chan *mt.PrimaryMemberStartRegisterOut, ech chan error)
+  PreRegisterPrimaryMemberAPI(ctx context.Context, data *mt.PrimaryMemberStartRegisterIn, ch chan *mt.PrimaryMemberStartRegisterOut, ech chan error)
 }
