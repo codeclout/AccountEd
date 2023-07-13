@@ -6,4 +6,5 @@ use (
 	./pkg/notifications
 	./pkg/server
 	./pkg/session
+	pkg/notifications/infrastructure
 )
