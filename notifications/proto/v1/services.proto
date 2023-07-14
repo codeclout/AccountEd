@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package proto.v1;
 
-option go_package = "github.com/codeclout/AccountEd/pkg/notifications";
+option go_package = "github.com/codeclout/AccountEd/notifications";
 
 import "v1/messages.proto";
 
