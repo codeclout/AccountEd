@@ -4,7 +4,7 @@ SHELL=/bin/bash
 
 BUILD_EPOCH := $(shell date +"%s")
 BUILD_TIME := $(shell date -u -r $(BUILD_EPOCH) +'%Y%m%d-%H%M%S')
-GO_VERSION := 1.19.4
+GO_VERSION := 1.20.5
 
 ifndef IMAGE_TAG
 	IMAGE_TAG := $(shell git rev-parse --short HEAD)

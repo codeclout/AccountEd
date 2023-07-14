@@ -1,0 +1,41 @@
+SHELL=/bin/bash
+.EXPORT_ALL_VARIABLES:
+.SHELLFLAGS = -uec
+
+ifndef AWS_ACCESS_KEY_ID
+$(error AWS_ACCESS_KEY_ID is not set)
+endif
+
+ifndef AWS_REGION
+$(error AWS_REGION is not set)
+endif
+
+ifndef AWS_ROLE_TO_ASSUME
+$(error AWS_ROLE_TO_ASSUME is not set)
+endif
+
+ifndef AWS_SECRET_ACCESS_KEY
+$(error AWS_SECRET_ACCESS_KEY is not set)
+endif
+
+ifndef AWS_SESSION_LABEL
+$(error AWS_SESSION_LABEL is not set)
+endif
+
+.PHONY: cdktf-synth
+cdktf-synth:
+	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
+	AWS_REGION=$(AWS_REGION) \
+	AWS_ROLE_TO_ASSUME=$(AWS_ROLE_TO_ASSUME) \
+	AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+	AWS_SESSION_LABEL=$(AWS_SESSION_LABEL) \
+	cdktf synth
+
+.PHONY: cdktf-deploy
+cdktf-deploy:
+	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
+	AWS_REGION=$(AWS_REGION) \
+	AWS_ROLE_TO_ASSUME=$(AWS_ROLE_TO_ASSUME) \
+	AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+	AWS_SESSION_LABEL=$(AWS_SESSION_LABEL) \
+	cdktf deploy --auto-approve

@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	npb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
+  npb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
 	spb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
 )
 
