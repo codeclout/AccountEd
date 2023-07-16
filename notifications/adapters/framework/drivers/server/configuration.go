@@ -27,10 +27,6 @@ func NewAdapter(log *slog.Logger) *Adapter {
 	}
 }
 
-// LoadNotificationsConfig checks and loads environment variables for the adapter configuration such as EMAIL_PROCESSOR_API_KEY, EMAIL_PROCESSOR_DOMAIN,
-// EMAIL_VERIFIER_API_PATH, PORT, and PERFORMANCE_SLA. It returns a pointer to a map containing these environment variables as key-value pairs.
-// If any string environment variable is not set, the method will log an error and forcefully exit the program. If the configuration value is of an unexpected type,
-// the method will panic with a "invalid AWS configuration type" message.
 func (a *Adapter) LoadNotificationsConfig() *map[string]interface{} {
 	var out = make(map[string]interface{})
 	var s string
