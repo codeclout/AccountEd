@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package proto.v1;
+package proto_n.v1;
 
 option go_package = "github.com/codeclout/AccountEd/notifications";
 

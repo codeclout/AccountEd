@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package proto.v1.sessions;
+package proto.aws.v1;
 
 option go_package = "github.com/codeclout/AccountEd/pkg/session";
 
@@ -11,12 +11,4 @@ message AWSConfigRequest {
 
 message AWSConfigResponse {
   bytes awsSession = 1;
-}
-
-message EncryptedStringRequest {
-  string sessionId = 1;
-}
-
-message EncryptedStringResponse {
-  string encryptedSessionId = 1;
 }

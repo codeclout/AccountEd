@@ -53,7 +53,7 @@ func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string
 
 	stsRoleOutput, e := client.AssumeRole(ctx, &sts.AssumeRoleInput{
 		RoleArn:         arn,
-		RoleSessionName: aws.String("MySession" + strconv.Itoa(a.timeStamp().Nanosecond())),
+		RoleSessionName: aws.String("session-service" + strconv.Itoa(a.timeStamp().Nanosecond())),
 	})
 	if e != nil {
 		a.log.Error(ErrorDefaultConfiguration(errors.New(e.Error())).Error())

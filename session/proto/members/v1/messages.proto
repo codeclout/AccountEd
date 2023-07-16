@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package proto.members.v1;
+
+option go_package = "github.com/codeclout/AccountEd/pkg/session";
+
+message EncryptedStringRequest {
+  string sessionId = 1;
+}
+
+message EncryptedStringResponse {
+  string encryptedSessionId = 1;
+}

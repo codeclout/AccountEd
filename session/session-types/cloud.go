@@ -1,9 +1,5 @@
 package sessiontypes
 
-type AmazonRegion string
-type AmazonResourceName string
-type AmazonConfigResponse []byte
-
 type AmazonConfigurationInput struct {
 	ARN    *string
 	Region *string
