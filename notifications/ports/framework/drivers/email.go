@@ -3,7 +3,7 @@ package drivers
 import (
 	"context"
 
-	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
+	pb "github.com/codeclout/AccountEd/notifications/gen/v1"
 )
 
 type EmailDriverPort interface {

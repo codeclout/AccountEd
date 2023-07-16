@@ -3,7 +3,7 @@ package core
 import (
 	"context"
 
-	notification "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
+	notification "github.com/codeclout/AccountEd/notifications/notification-types"
 )
 
 type EmailCorePort interface {

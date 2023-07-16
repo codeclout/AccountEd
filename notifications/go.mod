@@ -1,4 +1,4 @@
-module github.com/codeclout/AccountEd/pkg/notifications
+module github.com/codeclout/AccountEd/notifications
 
 go 1.20
 

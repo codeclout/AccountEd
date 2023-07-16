@@ -3,14 +3,14 @@ package api
 import (
 	"context"
 
-	notifications "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
+	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 
-	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
-	"github.com/codeclout/AccountEd/pkg/notifications/ports/core"
-	"github.com/codeclout/AccountEd/pkg/notifications/ports/framework/driven"
+	pb "github.com/codeclout/AccountEd/notifications/gen/v1"
+	"github.com/codeclout/AccountEd/notifications/ports/core"
+	"github.com/codeclout/AccountEd/notifications/ports/framework/driven"
 )
 
 type Adapter struct {

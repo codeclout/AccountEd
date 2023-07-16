@@ -3,9 +3,9 @@ package api
 import (
   "context"
 
-  notification "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
+  notification "github.com/codeclout/AccountEd/notifications/notification-types"
 
-  pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
+  pb "github.com/codeclout/AccountEd/notifications/gen/v1"
 )
 
 type EmailApiPort interface {

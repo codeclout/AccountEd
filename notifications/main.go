@@ -3,8 +3,6 @@ package main
 import (
 	"sync"
 
-	"github.com/codeclout/AccountEd/pkg/monitoring"
-	"github.com/codeclout/AccountEd/pkg/notifications/adapters/api"
 	coreAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/core"
 	drivenAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/driven"
 	driverAdapter "github.com/codeclout/AccountEd/pkg/notifications/adapters/framework/drivers"
@@ -16,6 +14,9 @@ import (
 	"github.com/codeclout/AccountEd/pkg/notifications/ports/framework/drivers"
 	"github.com/codeclout/AccountEd/pkg/notifications/ports/framework/drivers/protocols"
 	"github.com/codeclout/AccountEd/pkg/notifications/ports/framework/drivers/server"
+
+	"github.com/codeclout/AccountEd/notifications/adapters/api"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 // main initializes and runs the components of the email notification service, including monitoring, configuration, core logic, API, driving,

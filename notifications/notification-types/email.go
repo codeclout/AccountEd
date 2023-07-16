@@ -3,7 +3,7 @@ package notification_types
 import (
 	"github.com/google/uuid"
 
-	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
+	pb "github.com/codeclout/AccountEd/notifications/gen/v1"
 )
 
 type URL string

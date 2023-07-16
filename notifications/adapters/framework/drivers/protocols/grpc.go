@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
-	"github.com/codeclout/AccountEd/pkg/notifications/ports/framework/drivers"
+	pb "github.com/codeclout/AccountEd/notifications/gen/v1"
+	"github.com/codeclout/AccountEd/notifications/ports/framework/drivers"
 )
 
 type Adapter struct {

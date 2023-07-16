@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
-	notifications "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
+	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
 )
 
 type Adapter struct {

@@ -8,9 +8,9 @@ import (
 
 	"golang.org/x/exp/slog"
 
-	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
-	notifications "github.com/codeclout/AccountEd/pkg/notifications/notification-types"
-	"github.com/codeclout/AccountEd/pkg/notifications/ports/api"
+	pb "github.com/codeclout/AccountEd/notifications/gen/v1"
+	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
+	"github.com/codeclout/AccountEd/notifications/ports/api"
 )
 
 var defaultRouteDuration = notifications.DefaultRouteDuration(2000)
