@@ -3,9 +3,9 @@ package member
 import (
 	"context"
 
-	"github.com/codeclout/AccountEd/session/gen/v1/sessions"
+	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 )
 
 type SessionDriverMemberPort interface {
-	GetEncryptedSessionId(ctx context.Context, request *sessions.EncryptedStringRequest) (*sessions.EncryptedStringResponse, error)
+	GetEncryptedSessionId(ctx context.Context, request *pb.EncryptedStringRequest) (*pb.EncryptedStringResponse, error)
 }

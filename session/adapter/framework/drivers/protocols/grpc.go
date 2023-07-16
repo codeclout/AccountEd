@@ -11,7 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	pb "github.com/codeclout/AccountEd/session/gen/v1/sessions"
+	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
+	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 	"github.com/codeclout/AccountEd/session/ports/framework/drivers/cloud"
 	"github.com/codeclout/AccountEd/session/ports/framework/drivers/member"
 )
@@ -42,7 +43,7 @@ func (a *Adapter) Run() {
 	}
 
 	server := grpc.NewServer(options...)
-	pb.RegisterAWSResourceClientServiceServer(server, a.cloudDriver)
+	awspb.RegisterAWSResourceClientServiceServer(server, a.cloudDriver)
 	pb.RegisterMemberSessionServer(server, a.memberDriver)
 	reflection.Register(server)
 
