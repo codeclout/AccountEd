@@ -5,7 +5,7 @@ import (
 
   notification "github.com/codeclout/AccountEd/notifications/notification-types"
 
-  pb "github.com/codeclout/AccountEd/notifications/gen/v1"
+  pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 )
 
 type EmailApiPort interface {

@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 
-	pb "github.com/codeclout/AccountEd/notifications/gen/v1"
+	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	"github.com/codeclout/AccountEd/notifications/ports/core"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/driven"
 )

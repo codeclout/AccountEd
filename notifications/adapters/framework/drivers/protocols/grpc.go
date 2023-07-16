@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	pb "github.com/codeclout/AccountEd/notifications/gen/v1"
+	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/drivers"
 )
 

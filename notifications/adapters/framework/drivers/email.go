@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/exp/slog"
 
-	pb "github.com/codeclout/AccountEd/notifications/gen/v1"
+	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
 	"github.com/codeclout/AccountEd/notifications/ports/api"
 )
