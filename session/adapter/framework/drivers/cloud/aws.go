@@ -6,9 +6,10 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 
-	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
-	"github.com/codeclout/AccountEd/pkg/session/ports/api/cloud"
-	sessiontypes "github.com/codeclout/AccountEd/pkg/session/session-types"
+	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
+
+	"github.com/codeclout/AccountEd/session/ports/api/cloud"
+	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
 var defaultRouteDuration = sessiontypes.DefaultRouteDuration(2000)
@@ -28,19 +29,19 @@ func NewAdapter(config map[string]interface{}, api cloud.AWSApiPort, log *slog.L
 	}
 }
 
-func (a *Adapter) GetAWSSessionCredentials(ctx context.Context, request *pb.AWSConfigRequest) (*pb.AWSConfigResponse, error) {
-	arn := request.GetArn()
+func (a *Adapter) GetAWSSessionCredentials(ctx context.Context, request *awspb.AWSConfigRequest) (*awspb.AWSConfigResponse, error) {
 	region := request.GetRegion()
+	roleArn := request.GetRoleArn()
 
 	data := sessiontypes.AmazonConfigurationInput{
-		ARN:    &arn,
+		ARN:    &roleArn,
 		Region: &region,
 	}
 
-	ch := make(chan *pb.AWSConfigResponse, 1)
+	ch := make(chan *awspb.AWSConfigResponse, 1)
 	errorch := make(chan error, 1)
 
-	ctx = context.WithValue(ctx, transactionIdLogLabel, arn+"|"+region)
+	ctx = context.WithValue(ctx, transactionIdLogLabel, roleArn+"|"+region)
 	a.api.GetAWSSessionCredentials(ctx, data, ch, errorch)
 
 	select {

@@ -3,7 +3,7 @@ package member
 import (
 	"context"
 
-	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
+	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 )
 
 type SessionAPIMemberPort interface {

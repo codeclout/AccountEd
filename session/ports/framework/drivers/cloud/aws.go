@@ -3,7 +3,7 @@ package cloud
 import (
 	"context"
 
-	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
+	pb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 )
 
 type AWSDriverPort interface {

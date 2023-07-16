@@ -1,4 +1,4 @@
-module github.com/codeclout/AccountEd/pkg/session
+module github.com/codeclout/AccountEd/session
 
 go 1.20
 
@@ -14,7 +14,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.19.3
 	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230714165702-b8f210161836
 	github.com/go-webauthn/webauthn v0.8.4
-	github.com/google/uuid v1.3.0
 	github.com/o1egl/paseto v1.0.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/crypto v0.11.0
@@ -47,6 +46,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-tpm v0.9.0 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

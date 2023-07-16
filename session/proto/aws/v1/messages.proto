@@ -2,13 +2,13 @@ syntax = "proto3";
 
 package proto.aws.v1;
 
-option go_package = "github.com/codeclout/AccountEd/pkg/session";
+option go_package = "github.com/codeclout/AccountEd/session";
 
 message AWSConfigRequest {
-  string arn = 1;
+  string roleArn = 1;
   string region = 2;
 }
 
 message AWSConfigResponse {
-  bytes awsSession = 1;
+  bytes awsCredentials = 1;
 }

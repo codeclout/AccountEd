@@ -11,9 +11,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
-	"github.com/codeclout/AccountEd/pkg/session/ports/framework/drivers/cloud"
-	"github.com/codeclout/AccountEd/pkg/session/ports/framework/drivers/member"
+	pb "github.com/codeclout/AccountEd/session/gen/v1/sessions"
+	"github.com/codeclout/AccountEd/session/ports/framework/drivers/cloud"
+	"github.com/codeclout/AccountEd/session/ports/framework/drivers/member"
 )
 
 type Adapter struct {

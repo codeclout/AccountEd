@@ -7,10 +7,11 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 
-	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
-	core "github.com/codeclout/AccountEd/pkg/session/ports/core/cloud"
-	"github.com/codeclout/AccountEd/pkg/session/ports/framework/driven/cloud"
-	sessiontypes "github.com/codeclout/AccountEd/pkg/session/session-types"
+	core "github.com/codeclout/AccountEd/session/ports/core/cloud"
+	"github.com/codeclout/AccountEd/session/ports/framework/driven/cloud"
+	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+
+	pb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 )
 
 type Adapter struct {
@@ -43,7 +44,7 @@ func (a *Adapter) GetAWSSessionCredentials(ctx context.Context, in sessiontypes.
 		return
 	}
 
-	response := pb.AWSConfigResponse{AwsSession: b}
+	response := pb.AWSConfigResponse{AwsCredentials: b}
 	out <- &response
 
 	return

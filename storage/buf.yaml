@@ -1,0 +1,10 @@
+version: v1
+build:
+  roots:
+    - email
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT

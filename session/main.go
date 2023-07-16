@@ -3,28 +3,29 @@ package main
 import (
 	"sync"
 
-	memberAdapterDriven "github.com/codeclout/AccountEd/pkg/session/adapter/framework/driven/member"
-	memberPortDriven "github.com/codeclout/AccountEd/pkg/session/ports/framework/driven/member"
+	memberAdapterDriven "github.com/codeclout/AccountEd/session/adapter/framework/driven/member"
+	memberPortDriven "github.com/codeclout/AccountEd/session/ports/framework/driven/member"
 
-	memberAdapterApi "github.com/codeclout/AccountEd/pkg/session/adapter/api/member"
-	memberAdapterCore "github.com/codeclout/AccountEd/pkg/session/adapter/core/member"
-	memberAdapterDriver "github.com/codeclout/AccountEd/pkg/session/adapter/framework/drivers/member"
-	memberPortApi "github.com/codeclout/AccountEd/pkg/session/ports/api/member"
-	memberPortCore "github.com/codeclout/AccountEd/pkg/session/ports/core/member"
-	"github.com/codeclout/AccountEd/pkg/session/ports/framework/drivers/member"
+	memberAdapterApi "github.com/codeclout/AccountEd/session/adapter/api/member"
+	memberAdapterCore "github.com/codeclout/AccountEd/session/adapter/core/member"
+	memberAdapterDriver "github.com/codeclout/AccountEd/session/adapter/framework/drivers/member"
+	memberPortApi "github.com/codeclout/AccountEd/session/ports/api/member"
+	memberPortCore "github.com/codeclout/AccountEd/session/ports/core/member"
+	"github.com/codeclout/AccountEd/session/ports/framework/drivers/member"
+
+	"github.com/codeclout/AccountEd/session/adapter/api/cloud"
+	cloudAdapterCore "github.com/codeclout/AccountEd/session/adapter/core/cloud"
+	cloudAdapterDriven "github.com/codeclout/AccountEd/session/adapter/framework/driven/cloud"
+	cloudAdapterDriver "github.com/codeclout/AccountEd/session/adapter/framework/drivers/cloud"
+	grpcProtocol "github.com/codeclout/AccountEd/session/adapter/framework/drivers/protocols"
+	configuration "github.com/codeclout/AccountEd/session/adapter/framework/drivers/server"
+	cloudPortApi "github.com/codeclout/AccountEd/session/ports/api/cloud"
+	cloudPortCore "github.com/codeclout/AccountEd/session/ports/core/cloud"
+	cloudPortDriven "github.com/codeclout/AccountEd/session/ports/framework/driven/cloud"
+	cloudPortDriver "github.com/codeclout/AccountEd/session/ports/framework/drivers/cloud"
+	"github.com/codeclout/AccountEd/session/ports/framework/drivers/protocols"
 
 	"github.com/codeclout/AccountEd/pkg/monitoring"
-	"github.com/codeclout/AccountEd/pkg/session/adapter/api/cloud"
-	cloudAdapterCore "github.com/codeclout/AccountEd/pkg/session/adapter/core/cloud"
-	cloudAdapterDriven "github.com/codeclout/AccountEd/pkg/session/adapter/framework/driven/cloud"
-	cloudAdapterDriver "github.com/codeclout/AccountEd/pkg/session/adapter/framework/drivers/cloud"
-	grpcProtocol "github.com/codeclout/AccountEd/pkg/session/adapter/framework/drivers/protocols"
-	configuration "github.com/codeclout/AccountEd/pkg/session/adapter/framework/drivers/server"
-	cloudPortApi "github.com/codeclout/AccountEd/pkg/session/ports/api/cloud"
-	cloudPortCore "github.com/codeclout/AccountEd/pkg/session/ports/core/cloud"
-	cloudPortDriven "github.com/codeclout/AccountEd/pkg/session/ports/framework/driven/cloud"
-	cloudPortDriver "github.com/codeclout/AccountEd/pkg/session/ports/framework/drivers/cloud"
-	"github.com/codeclout/AccountEd/pkg/session/ports/framework/drivers/protocols"
 )
 
 func main() {

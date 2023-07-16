@@ -3,7 +3,7 @@ package member
 import (
 	"context"
 
-	"github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
+	"github.com/codeclout/AccountEd/session/gen/v1/sessions"
 )
 
 type SessionDriverMemberPort interface {

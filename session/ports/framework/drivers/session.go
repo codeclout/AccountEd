@@ -4,7 +4,7 @@ import (
   "context"
   "time"
 
-  sessiontypes "github.com/codeclout/AccountEd/pkg/session/session-types"
+  sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
 type SessionPort interface {

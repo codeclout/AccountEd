@@ -6,11 +6,11 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 
-	"github.com/codeclout/AccountEd/pkg/session/ports/core/member"
-	"github.com/codeclout/AccountEd/pkg/session/ports/framework/driven/cloud"
-	member2 "github.com/codeclout/AccountEd/pkg/session/ports/framework/driven/member"
+	"github.com/codeclout/AccountEd/session/ports/core/member"
+	"github.com/codeclout/AccountEd/session/ports/framework/driven/cloud"
+	member2 "github.com/codeclout/AccountEd/session/ports/framework/driven/member"
 
-	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
+	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 )
 
 type Adapter struct {

@@ -5,14 +5,16 @@ import (
 
 	"golang.org/x/exp/slog"
 
-	cloudAWS "github.com/codeclout/AccountEd/pkg/session/ports/api/cloud"
-	"github.com/codeclout/AccountEd/pkg/session/ports/api/member"
+	cloudAWS "github.com/codeclout/AccountEd/session/ports/api/cloud"
+	"github.com/codeclout/AccountEd/session/ports/api/member"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/pkg/errors"
 
-	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
-	sessiontypes "github.com/codeclout/AccountEd/pkg/session/session-types"
+	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+
+	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
+	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 )
 
 var transactionLable = sessiontypes.LogLabel("transaction_id")
@@ -43,7 +45,7 @@ func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.Encrypte
 		Region: aws.String(region),
 	}
 
-	ch := make(chan *pb.AWSConfigResponse, 1)
+	ch := make(chan *awspb.AWSConfigResponse, 1)
 	echan := make(chan error, 1)
 	uch := make(chan *pb.EncryptedStringResponse, 1)
 
@@ -52,8 +54,8 @@ func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.Encrypte
 
 	select {
 	case session := <-ch:
-		a.log.Log(ctx, 4, string(session.GetAwsSession()))
-		a.api.EncryptSessionId(ctx, session.AwsSession, id, uch, echan)
+		a.log.Log(ctx, 4, string(session.GetAwsCredentials()))
+		a.api.EncryptSessionId(ctx, session.AwsCredentials, id, uch, echan)
 	}
 
 	select {

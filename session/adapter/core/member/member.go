@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
 
-	sessiontypes "github.com/codeclout/AccountEd/pkg/session/session-types"
+	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
 type Adapter struct {

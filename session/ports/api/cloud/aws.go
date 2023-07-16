@@ -3,8 +3,9 @@ package cloud
 import (
 	"golang.org/x/net/context"
 
-	pb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
-	sessiontypes "github.com/codeclout/AccountEd/pkg/session/session-types"
+	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+
+	pb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 )
 
 type AWSApiPort interface {

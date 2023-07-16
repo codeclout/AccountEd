@@ -8,7 +8,7 @@ import (
   "github.com/go-webauthn/webauthn/protocol"
   "github.com/go-webauthn/webauthn/webauthn"
 
-  sessiontypes "github.com/codeclout/AccountEd/pkg/session/session-types"
+  sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
 func (a *Adapter) HandleAuthenticationOptions(ctx context.Context, id string) sessiontypes.AuthenticationOptions {

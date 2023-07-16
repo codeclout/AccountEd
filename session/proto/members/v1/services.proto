@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package proto.members.v1;
 
-option go_package = "github.com/codeclout/AccountEd/pkg/session";
+option go_package = "github.com/codeclout/AccountEd/session";
 
 import "members/v1/messages.proto";
 
