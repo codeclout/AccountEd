@@ -5,6 +5,7 @@ use (
 	./pkg/monitoring
 	./notifications
 	./pkg/server
-	./pkg/session
+	./session
 	./notifications/infrastructure
+	./storage
 )

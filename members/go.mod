@@ -5,10 +5,10 @@ go 1.20
 require (
 	github.com/aws/aws-sdk-go-v2 v1.19.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.27
-	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230713234107-fb1966ce31b2
-	github.com/codeclout/AccountEd/pkg/notifications v0.0.0-20230713234107-fb1966ce31b2
+	github.com/codeclout/AccountEd/notifications v0.0.0-20230716160110-1f5bfc80a7eb
+	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230714165702-b8f210161836
 	github.com/codeclout/AccountEd/pkg/server v0.0.0-20230713234107-fb1966ce31b2
-	github.com/codeclout/AccountEd/pkg/session v0.0.0-20230713234107-fb1966ce31b2
+	github.com/codeclout/AccountEd/session v0.0.0-20230716154253-26b3a1e94a56
 	github.com/gofiber/fiber/v2 v2.47.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl/v2 v2.17.0
