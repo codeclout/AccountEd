@@ -20,6 +20,7 @@ type environment struct {
 	Domain                   string
 	NotificationsServiceHost string
 	NotificationsServicePort string
+	Port                     string
 	PreRegistrationParameter string
 	SessionServiceHost       string
 	SessionServicePort       string
@@ -28,7 +29,6 @@ type environment struct {
 type server struct {
 	GetOnlyConstraint bool    `hcl:"is_app_get_only" json:"is_app_get_only"`
 	Name              string  `hcl:"application_name" json:"application_name"`
-	RoutePrefix       string  `hcl:"route_prefix" json:"route_prefix"`
 	SLARoutes         float64 `hcl:"sla_routes" json:"sla_routes"`
 }
 
@@ -62,10 +62,10 @@ func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
 		ok := errors.Is(e, x)
 
 		if ok {
-			a.log.Error("fatal", fmt.Sprintf("Failed to load runtime staticConfig: %s", e.(hcl.Diagnostics)[0].Summary))
+			a.log.Error(fmt.Sprintf("Failed to load runtime staticConfig: %s", e.(hcl.Diagnostics)[0].Summary))
 			panic(e)
 		} else {
-			a.log.Error("fatal", fmt.Sprintf("Failed to get runtime staticConfig: %v", x))
+			a.log.Error(fmt.Sprintf("Failed to get runtime staticConfig: %v", x))
 			panic(e)
 		}
 	}
@@ -74,6 +74,7 @@ func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
 		AWSRegion:                os.Getenv("AWS_REGION"),
 		AWSRolePreRegistration:   os.Getenv("AWS_PRE_REGISTRATION_ROLE"),
 		Domain:                   os.Getenv("DOMAIN"),
+		Port:                     os.Getenv("PORT"),
 		PreRegistrationParameter: os.Getenv("AWS_PRE_REGISTRATION_HASH_PARAM"),
 		NotificationsServiceHost: os.Getenv("NOTIFICATION_SERVER_HOST"),
 		NotificationsServicePort: os.Getenv("NOTIFICATION_SERVER_PORT"),

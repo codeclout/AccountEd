@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package proto.dynamo.v1;
+
+option go_package = "github.com/codeclout/AccountEd/storage";
+
+import "dynamo/v1/messages.proto";
+
+service DynamoDBStorageService {
+  rpc GetPreRegistrationBySessionId(PreRegistrationConfirmationRequest) returns (PreRegistrationConfirmationResponse);
+  rpc StorePreRegistrationSessionId(StorePreRegistrationSessionRequest) returns (StorePreRegistrationSessionResponse);
+}

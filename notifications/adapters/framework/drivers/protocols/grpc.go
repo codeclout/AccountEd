@@ -7,24 +7,24 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/exp/slog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/drivers"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type Adapter struct {
 	config   map[string]interface{}
-	log      *slog.Logger
+	monitor  monitoring.Adapter
 	protocol drivers.EmailDriverPort
 }
 
-func NewAdapter(config map[string]interface{}, log *slog.Logger, protocol drivers.EmailDriverPort) *Adapter {
+func NewAdapter(config map[string]interface{}, protocol drivers.EmailDriverPort, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		config:   config,
-		log:      log,
+		monitor:  monitor,
 		protocol: protocol,
 	}
 }
@@ -34,7 +34,7 @@ func (a *Adapter) Run() {
 
 	listener, e := net.Listen("tcp", a.getPort())
 	if e != nil {
-		a.log.Error(e.Error())
+		a.monitor.LogGenericError(e.Error())
 		os.Exit(1)
 	}
 
@@ -43,7 +43,7 @@ func (a *Adapter) Run() {
 	reflection.Register(server)
 
 	if e := server.Serve(listener); e != nil {
-		a.log.Error(e.Error())
+		a.monitor.LogGenericError(e.Error())
 		os.Exit(1)
 	}
 }

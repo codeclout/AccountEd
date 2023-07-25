@@ -31,16 +31,16 @@ func NewAdapter(core core.AWSCloudCorePort, driven cloud.CredentialsAWSPort, log
 func (a *Adapter) GetAWSSessionCredentials(ctx context.Context, in sessiontypes.AmazonConfigurationInput, out chan *pb.AWSConfigResponse, echan chan error) {
 	// a.core.GetServiceIdMetadata(ctx)
 
-	session, e := a.driven.AssumeRoleCredentials(ctx, in.ARN, in.Region)
+	sessionCredentials, e := a.driven.AssumeRoleCredentials(ctx, in.RoleArn, in.Region)
 	if e != nil {
-		x := errors.Wrapf(e, "api-GetAWSSessionCredentials -> driven.AssumeRoleCredentials(arn:%s,region%s)", *in.ARN, *in.Region)
+		x := errors.Wrapf(e, "api-GetAWSSessionCredentials -> driven.AssumeRoleCredentials(arn:%s,region%s)", *in.RoleArn, *in.Region)
 		echan <- x
 		return
 	}
 
-	b, e := json.Marshal(session.Credentials)
+	b, e := json.Marshal(sessionCredentials)
 	if e != nil {
-		echan <- errors.Wrap(e, "api-GetAWSSessionCredentials -> json.Marshal(session)")
+		echan <- errors.Wrap(e, "api-GetAWSSessionCredentials -> json.Marshal(sessionCredentials)")
 		return
 	}
 

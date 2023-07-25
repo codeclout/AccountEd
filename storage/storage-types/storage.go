@@ -1,0 +1,7 @@
+package storage_types
+
+type ErrorCredentialsRetrieval error
+type ErrorInvalidConfiguration error
+type ErrorDefaultConfiguration error
+
+type DefaultRouteDuration int

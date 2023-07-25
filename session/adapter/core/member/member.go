@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"io"
 
-	"github.com/codeclout/AccountEd/pkg/monitoring"
+	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slog"
@@ -19,10 +19,10 @@ import (
 type Adapter struct {
 	config  map[string]interface{}
 	log     *slog.Logger
-	monitor *monitoring.Adapter
+	monitor *drivers.Adapter
 }
 
-func NewAdapter(config map[string]interface{}, monitor *monitoring.Adapter) *Adapter {
+func NewAdapter(config map[string]interface{}, monitor *drivers.Adapter) *Adapter {
 	return &Adapter{
 		config:  config,
 		log:     monitor.Logger,

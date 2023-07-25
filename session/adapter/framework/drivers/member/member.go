@@ -41,8 +41,8 @@ func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.Encrypte
 	region := a.config["Region"].(string)
 
 	data := sessiontypes.AmazonConfigurationInput{
-		ARN:    aws.String(arn),
-		Region: aws.String(region),
+		RoleArn: aws.String(arn),
+		Region:  aws.String(region),
 	}
 
 	ch := make(chan *awspb.AWSConfigResponse, 1)

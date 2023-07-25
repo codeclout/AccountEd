@@ -3,7 +3,7 @@ package membertypes
 import (
 	"time"
 
-  pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
+	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 )
 
 type ParentGuardian struct {

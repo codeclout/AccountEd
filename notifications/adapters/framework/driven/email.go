@@ -3,28 +3,29 @@ package driven
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
-	"golang.org/x/exp/slog"
 
 	"github.com/pkg/errors"
 
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type Adapter struct {
-	config map[string]interface{}
-	log    *slog.Logger
+	config  map[string]interface{}
+	monitor monitoring.Adapter
 }
 
-func NewAdapter(c map[string]interface{}, log *slog.Logger) *Adapter {
+func NewAdapter(c map[string]interface{}, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		config: c,
-		log:    log,
+		config:  c,
+		monitor: monitor,
 	}
 }
 
@@ -54,7 +55,7 @@ func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *notificati
 
 	req, e := http.NewRequest("GET", in.Endpoint, nil)
 	if e != nil {
-		a.log.Error(e.Error())
+		a.monitor.LogGenericError(e.Error())
 		return nil, e
 	}
 
@@ -62,7 +63,7 @@ func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *notificati
 
 	emailProcessorApiKey, ok := a.config["EmailProcessorAPIKey"].(string)
 	if !ok {
-		a.log.Error("driven -> email processor api emailProcessorApiKey is not a string")
+		a.monitor.LogGenericError("driven -> email processor api emailProcessorApiKey is not a string")
 		return nil, notifications.ErrorStaticConfig(errors.New("core -> wrong type: emailProcessorApiKey"))
 	}
 
@@ -72,12 +73,13 @@ func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *notificati
 
 	response, e := client.Do(req)
 	if e != nil || response.StatusCode > 299 {
+		a.monitor.LogGenericError(fmt.Sprintf("email processor api returned -> %s", response.Status))
 		return nil, notifications.ErrorEmailVerificationProcessor(errors.New(response.Status))
 	}
 
 	e = json.NewDecoder(response.Body).Decode(&out)
 	if e != nil {
-		a.log.Error("driven -> unable to decode response body")
+		a.monitor.LogGenericError("driven EmailVerificationProcessor -> unable to decode response body")
 		return nil, notifications.ErrorEmailVerificationProcessor(errors.New("unable to decode response body"))
 	}
 
@@ -111,7 +113,7 @@ func (a *Adapter) SendPreRegistrationEmail(ctx context.Context, awsconfig []byte
 	})
 
 	if e != nil {
-		a.log.Error(e.Error())
+		a.monitor.LogGenericError(e.Error())
 		return nil, e
 	}
 

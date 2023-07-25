@@ -2,30 +2,35 @@ package protocols
 
 import (
 	"log"
+	"sync"
 
 	"github.com/gofiber/fiber/v2"
-	"golang.org/x/exp/slog"
 
-	httpMiddleware "github.com/codeclout/AccountEd/members/ports/framework/drivers/protocols/http-middleware"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type Adapter struct {
-	app              *fiber.App
-	config           map[string]interface{}
-	log              *slog.Logger
-	middlewareLogger func(settings ...httpMiddleware.Config) fiber.Handler
+	app     *fiber.App
+	config  map[string]interface{}
+	monitor monitoring.Adapter
+	wg      *sync.WaitGroup
 }
 
-func NewAdapter(config map[string]interface{}, app *fiber.App, middlewareLogger func(settings ...httpMiddleware.Config) fiber.Handler, log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, app *fiber.App, monitor monitoring.Adapter, wg *sync.WaitGroup) *Adapter {
 	return &Adapter{
-		app:              app,
-		config:           config,
-		log:              log,
-		middlewareLogger: middlewareLogger,
+		app:     app,
+		config:  config,
+		monitor: monitor,
+		wg:      wg,
 	}
 }
 
-func (a *Adapter) InitializeNotificationsClient(port string) {
-	a.log.Info("starting server")
+func (a *Adapter) Run(port string) {
+	a.monitor.LogGenericInfo("starting server")
 	log.Fatal(a.app.Listen(port))
+}
+
+func (a *Adapter) StopProtocolListener(app *fiber.App) {
+	a.wg.Wait()
+	_ = app.Shutdown()
 }

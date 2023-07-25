@@ -1,8 +1,8 @@
 package sessiontypes
 
 type AmazonConfigurationInput struct {
-	ARN    *string
-	Region *string
+	RoleArn *string
+	Region  *string
 }
 
 type CredentialsAWS struct {

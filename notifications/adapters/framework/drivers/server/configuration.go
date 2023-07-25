@@ -5,7 +5,7 @@ import (
 	"os"
 	"reflect"
 
-	"golang.org/x/exp/slog"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type environment struct {
@@ -18,12 +18,12 @@ type environment struct {
 }
 
 type Adapter struct {
-	log *slog.Logger
+	monitor monitoring.Adapter
 }
 
-func NewAdapter(log *slog.Logger) *Adapter {
+func NewAdapter(monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		log: log,
+		monitor: monitor,
 	}
 }
 
@@ -50,7 +50,7 @@ func (a *Adapter) LoadNotificationsConfig() *map[string]interface{} {
 		switch x := v.(type) {
 		case string:
 			if x == (s) {
-				a.log.Error(fmt.Sprintf("Notification:%s is not defined in the environment", k))
+				a.monitor.LogGenericError(fmt.Sprintf("Notification:%s is not defined in the environment", k))
 				os.Exit(1)
 			}
 		default:

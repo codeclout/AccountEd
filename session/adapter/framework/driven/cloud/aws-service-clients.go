@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
@@ -37,19 +36,14 @@ func NewAdapter(config map[string]interface{}, ts func() time.Time, log *slog.Lo
 	}
 }
 
-// AssumeRoleCredentials takes a context.Context, a role ARN, and a region, and returns a pointer to an aws.Config with the assumed
-// role's credentials or an error if the operation fails. This method is used to obtain temporary AWS credentials for an AWS role.
-// It assumes the role specified by the given ARN and then generates a temporary AWS configuration with the assumed role's credentials.
-// It also sets the context and the specified region for the configuration. Note that the method will not handle credential caching or
-// refreshing.
-func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string) (*aws.Config, error) {
-	configloader, e := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(*region))
+func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string) (*credentials.StaticCredentialsProvider, error) {
+	defaultConfiguration, e := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(*region))
 	if e != nil {
 		a.log.Error(ErrorDefaultConfiguration(errors.New(e.Error())).Error())
 		return nil, ErrorDefaultConfiguration(errors.New("unable to load AWS configuration"))
 	}
 
-	client := sts.NewFromConfig(configloader)
+	client := sts.NewFromConfig(defaultConfiguration)
 
 	stsRoleOutput, e := client.AssumeRole(ctx, &sts.AssumeRoleInput{
 		RoleArn:         arn,
@@ -60,13 +54,13 @@ func (a *Adapter) AssumeRoleCredentials(ctx context.Context, arn, region *string
 		return nil, ErrorDefaultConfiguration(fmt.Errorf("failed to assume role: %w", e))
 	}
 
-	configloader.Credentials = credentials.StaticCredentialsProvider{Value: aws.Credentials{
+	out := credentials.StaticCredentialsProvider{Value: aws.Credentials{
 		AccessKeyID:     *stsRoleOutput.Credentials.AccessKeyId,
 		SecretAccessKey: *stsRoleOutput.Credentials.SecretAccessKey,
 		SessionToken:    *stsRoleOutput.Credentials.SessionToken,
 	}}
 
-	return &configloader, nil
+	return &out, nil
 }
 
 // GetSystemsManagerClient creates and returns a new AWS Systems Manager (SSM) client instance using the provided AWS
@@ -91,49 +85,6 @@ func (a *Adapter) GetSecretsManagerClient(ctx context.Context, config *aws.Confi
 	// @TODO - cache client
 	// @TODO - store and check client expiration
 	return client
-}
-
-// GetDynamoClient creates and returns a new DynamoDB client instance using the provided AWS configuration and region. The function
-// takes a context.Context, a pointer to an aws.Config, and a pointer to a string representing the AWS region as arguments and returns a
-// pointer to a dynamodb.Client and an error if any. The context.Context is used for request cancellation and timeouts, while the aws.Config
-// should contain the necessary settings and credentials for connecting to the AWS API. If there is an error retrieving the credentials or
-// loading the configuration, appropriate error messages will be logged and returned.
-func (a *Adapter) GetDynamoClient(ctx context.Context, config *aws.Config, region *string) (*dynamodb.Client, error) {
-	creds, e := config.Credentials.Retrieve(ctx)
-	if e != nil {
-		a.log.Error(e.Error())
-		return nil, ErrorCredentialsRetrieval(errors.New("unable to retrieve DynamoDB credentials"))
-	}
-
-	endpoint, ok := a.config["DynamoEndpoint"]
-	if !ok {
-		a.log.Error("dynamodb endpoint not configured")
-		return nil, ErrorInvalidConfiguration(errors.New("configuration error: DynamoEndpoint"))
-	}
-
-	dynamoConfig, e := awsconfig.LoadDefaultConfig(ctx,
-		awsconfig.WithRegion(*region),
-		awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-			func(service, awsregion string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: endpoint.(string)}, nil
-			})),
-		awsconfig.WithCredentialsProvider(credentials.StaticCredentialsProvider{
-			Value: aws.Credentials{
-				AccessKeyID:     creds.AccessKeyID,
-				SecretAccessKey: creds.SecretAccessKey,
-				SessionToken:    creds.SessionToken,
-			},
-		}),
-	)
-	if e != nil {
-		a.log.Error(e.Error())
-		return nil, ErrorDefaultConfiguration(errors.New("unable to load DynamoDB configuration"))
-	}
-
-	// @TODO - cache client
-	// @TODO - store and check client expiration
-	client := dynamodb.NewFromConfig(dynamoConfig)
-	return client, nil
 }
 
 // GetR2StorageClient creates and returns a new Cloudflare R2 Storage client using the provided AWS configuration and Cloudflare Account ID.

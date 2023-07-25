@@ -51,7 +51,7 @@ services:
       - accountEd-local
   mongo-init-replicas:
     image: mongo:6.0.3
-    entrypoint: [ "/scripts/setup.sh" ]
+    entrypoint: [ "/migrations/scripts/setup.sh" ]
     restart: 'no'
     depends_on:
       db:

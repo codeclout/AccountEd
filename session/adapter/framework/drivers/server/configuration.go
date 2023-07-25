@@ -10,8 +10,6 @@ import (
 
 type environment struct {
 	AccessKey                string
-	DynamoEndpoint           string
-	DynamoTableName          string
 	Port                     string
 	PreRegistrationParameter string
 	Region                   string
@@ -37,8 +35,6 @@ func (a *Adapter) LoadSessionConfig() *map[string]interface{} {
 
 	env := environment{
 		AccessKey:                os.Getenv("AWS_ACCESS_KEY_ID"),
-		DynamoEndpoint:           os.Getenv("DYNAMODB_ENDPOINT"),
-		DynamoTableName:          os.Getenv("DYNAMODB_TABLE_NAME"),
 		Port:                     os.Getenv("PORT"),
 		PreRegistrationParameter: os.Getenv("AWS_PRE_REGISTRATION_PARAM"),
 		Region:                   os.Getenv("AWS_REGION"),

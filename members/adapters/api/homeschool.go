@@ -6,40 +6,39 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
-	"golang.org/x/exp/slog"
 
-	"github.com/codeclout/AccountEd/members/adapters/framework/drivers/protocols"
+	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
+	sessionpb "github.com/codeclout/AccountEd/session/gen/members/v1"
+
 	memberTypes "github.com/codeclout/AccountEd/members/member-types"
 	"github.com/codeclout/AccountEd/members/ports/core"
-	pb "github.com/codeclout/AccountEd/pkg/notifications/gen/v1"
-	mpb "github.com/codeclout/AccountEd/pkg/session/gen/v1/sessions"
 )
 
 type Adapter struct {
 	config       map[string]interface{}
 	core         core.HomeschoolCore
-	grpcProtocol *protocols.ClientAdapter
-	log          *slog.Logger
+	grpcProtocol *protocol.AdapterGrpc
+	monitor      monitoring.Adapter
 }
 
-func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *protocols.ClientAdapter, log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *protocol.AdapterGrpc, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		config:       config,
 		core:         core,
 		grpcProtocol: grpc,
-		log:          log,
+		monitor:      monitor,
 	}
 }
 
 func (a *Adapter) encryptSessionID(ctx context.Context, id string) (string, error) {
-	client := *a.grpcProtocol.MemberClient
-	payload := mpb.EncryptedStringRequest{
-		SessionId: id,
-	}
+	client := *a.grpcProtocol.Member_SessionClient
+	payload := sessionpb.EncryptedStringRequest{SessionId: id}
 
 	encryptedSessionID, e := client.GetEncryptedSessionId(ctx, &payload)
 	if e != nil {
-		a.log.Error(e.Error())
+		a.monitor.LogGenericError(e.Error())
 		return "", errors.Wrap(e, "failed to encrypt session ID")
 	}
 
@@ -71,7 +70,7 @@ func (a *Adapter) getEmailDomain() (string, error) {
 }
 
 func (a *Adapter) sendPreRegistrationEmail(ctx context.Context, hashedSessionID string, toAddress []string) error {
-	emailclient := *a.grpcProtocol.Emailclient
+	emailclient := *a.grpcProtocol.Email_NotificationClient
 	fqdn, e := a.getEmailDomain()
 	if e != nil {
 		return errors.New(e.Error())
@@ -92,7 +91,7 @@ func (a *Adapter) sendPreRegistrationEmail(ctx context.Context, hashedSessionID 
 
 	_, e = emailclient.SendPreRegistrationEmail(ctx, &reqData)
 	if e != nil {
-		a.log.Error(fmt.Sprintf("pre-registration email failed to process -> %s", e.Error()))
+		a.monitor.LogGenericError(fmt.Sprintf("pre-registration email failed to process -> %s", e.Error()))
 		return errors.Wrapf(e, "domain -> %s pre registration email failed", uri)
 	}
 
@@ -100,12 +99,10 @@ func (a *Adapter) sendPreRegistrationEmail(ctx context.Context, hashedSessionID 
 }
 
 func (a *Adapter) PreRegisterPrimaryMemberAPI(ctx context.Context, data *memberTypes.PrimaryMemberStartRegisterIn, ch chan *memberTypes.PrimaryMemberStartRegisterOut, ech chan error) {
-	emailclient := *a.grpcProtocol.Emailclient
+	emailclient := *a.grpcProtocol.Email_NotificationClient
 	response, e := emailclient.ValidateEmailAddress(ctx, &pb.ValidateEmailAddressRequest{Address: *data.Username})
 	if e != nil {
-		a.log.Error(*data.Username,
-			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.LogLabel("transaction_id"))))
+		a.monitor.LogHttpError(ctx, *data.Username)
 		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
 		return
 	}
@@ -124,18 +121,14 @@ func (a *Adapter) PreRegisterPrimaryMemberAPI(ctx context.Context, data *memberT
 		IsSmtpValid:       response.GetIsSmtpValid(),
 	}
 	if coreData == (memberTypes.EmailValidationIn{}) {
-		a.log.Error("core -> 0 data returned: "+*data.Username,
-			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.LogLabel("transaction_id"))))
+		a.monitor.LogHttpError(ctx, "core -> 0 data returned: "+*data.Username)
 		ech <- memberTypes.ErrorCoreDataInvalid(errors.New("0 data for transaction_id:" + *data.Username))
 		return
 	}
 
 	out, e := a.core.PreRegister(ctx, coreData)
 	if e != nil {
-		a.log.Error("core -> pre registration: "+*data.Username,
-			"request_id", ctx.Value(memberTypes.LogLabel("request_id")),
-			"transaction_id", fmt.Sprintf("%x", ctx.Value(memberTypes.LogLabel("transaction_id"))))
+		a.monitor.LogHttpError(ctx, "core -> pre registration: "+*data.Username)
 		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
 		return
 	}
@@ -151,7 +144,7 @@ func (a *Adapter) PreRegisterPrimaryMemberAPI(ctx context.Context, data *memberT
 	e = a.sendPreRegistrationEmail(ctx, hashedSessionID, []string{response.GetEmail()})
 
 	if e != nil {
-		a.log.Error(e.Error())
+		a.monitor.LogGenericError(e.Error())
 		ech <- errors.New("unable to process verification email")
 	}
 	// }

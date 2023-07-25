@@ -34,8 +34,8 @@ func (a *Adapter) GetAWSSessionCredentials(ctx context.Context, request *awspb.A
 	roleArn := request.GetRoleArn()
 
 	data := sessiontypes.AmazonConfigurationInput{
-		ARN:    &roleArn,
-		Region: &region,
+		RoleArn: &roleArn,
+		Region:  &region,
 	}
 
 	ch := make(chan *awspb.AWSConfigResponse, 1)

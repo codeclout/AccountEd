@@ -1,8 +1,7 @@
 package main
 
 import (
-	"sync"
-
+	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	memberAdapterDriven "github.com/codeclout/AccountEd/session/adapter/framework/driven/member"
 	memberPortDriven "github.com/codeclout/AccountEd/session/ports/framework/driven/member"
 
@@ -24,13 +23,11 @@ import (
 	cloudPortDriven "github.com/codeclout/AccountEd/session/ports/framework/driven/cloud"
 	cloudPortDriver "github.com/codeclout/AccountEd/session/ports/framework/drivers/cloud"
 	"github.com/codeclout/AccountEd/session/ports/framework/drivers/protocols"
-
-	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 func main() {
 	var (
-		wg sync.WaitGroup
+		// wg sync.WaitGroup
 
 		awsAPIAdapter    cloudPortApi.AWSApiPort
 		awsDriverAdapter cloudPortDriver.AWSDriverPort
@@ -45,9 +42,7 @@ func main() {
 		grpcProtocolAdapter protocols.GRPCProtocolPort
 	)
 
-	monitor := monitoring.NewAdapter()
-	wg.Add(1)
-	go monitor.Initialize(&wg)
+	monitor := drivers.NewAdapter()
 
 	sessionConfiguration := configuration.NewAdapter(monitor.Logger)
 	internalConfig := sessionConfiguration.LoadSessionConfig()

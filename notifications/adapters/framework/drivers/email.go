@@ -6,11 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/exp/slog"
-
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
 	"github.com/codeclout/AccountEd/notifications/ports/api"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 var defaultRouteDuration = notifications.DefaultRouteDuration(2000)
@@ -19,27 +18,27 @@ var transactionID = notifications.TransactionID("transactionID")
 type Adapter struct {
 	apiEmail api.EmailApiPort
 	config   map[string]interface{}
-	log      *slog.Logger
+	monitor  monitoring.Adapter
 }
 
-func NewAdapter(api api.EmailApiPort, config map[string]interface{}, log *slog.Logger) *Adapter {
+func NewAdapter(api api.EmailApiPort, config map[string]interface{}, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		apiEmail: api,
 		config:   config,
-		log:      log,
+		monitor:  monitor,
 	}
 }
 
 func (a *Adapter) getRequestSLA() (int, error) {
 	sla, ok := a.config["SLARoutePerformance"].(string)
 	if !ok {
-		a.log.Error("drivers -> static config sla_route_performance is not a string")
+		a.monitor.LogGenericError("drivers -> static config sla_route_performance is not a string")
 		return 0, notifications.ErrorStaticConfig(errors.New("wrong type: sla"))
 	}
 
 	i, e := strconv.Atoi(sla)
 	if e != nil {
-		a.log.Error("drivers -> error converting sla_route_performance to int")
+		a.monitor.LogGenericError("drivers -> error converting sla_route_performance to int")
 		return 0, notifications.ErrorStaticConfig(errors.New("error converting slaroutperformance to int: " + e.Error()))
 	}
 
@@ -69,7 +68,7 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEm
 	ch := make(chan *pb.ValidateEmailAddressResponse, 1)
 	errorch := make(chan error, 1)
 
-	ctx = context.WithValue(ctx, transactionID, address)
+	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, address)
 	ctx, cancel := a.setContextTimeout(ctx)
 
 	defer cancel()
@@ -78,18 +77,15 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEm
 
 	select {
 	case <-ctx.Done():
-		t := ctx.Value(transactionID)
-		a.log.Error("request timeout", "transaction_id", t.(string))
+		a.monitor.LogGrpcError(ctx, "request timeout")
 		return nil, errors.New("request timeout")
 
 	case out := <-ch:
-		t := ctx.Value(transactionID)
-		a.log.Info("success", "transaction_id", t.(string))
+		a.monitor.LogGrpcInfo(ctx, "success")
 		return out, nil
 
 	case e := <-errorch:
-		t := ctx.Value(transactionID)
-		a.log.Error(e.Error(), "transaction_id", t.(string))
+		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}
 
@@ -105,7 +101,7 @@ func (a *Adapter) SendPreRegistrationEmail(ctx context.Context, in *pb.NoReplyEm
 	ch := make(chan *pb.NoReplyEmailNotificationResponse, 1)
 	errorch := make(chan error, 1)
 
-	ctx = context.WithValue(ctx, transactionID, sessionID)
+	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, sessionID)
 	ctx, cancel := a.setContextTimeout(ctx)
 
 	defer cancel()
@@ -122,18 +118,15 @@ func (a *Adapter) SendPreRegistrationEmail(ctx context.Context, in *pb.NoReplyEm
 
 	select {
 	case <-ctx.Done():
-		t := ctx.Value(transactionID)
-		a.log.Error("request timeout", "transaction_id", t.(string))
+		a.monitor.LogGrpcError(ctx, "request timeout")
 		return nil, errors.New("request timeout")
 
 	case out := <-ch:
-		t := ctx.Value(transactionID)
-		a.log.Info("success", "transaction_id", t.(string))
+		a.monitor.LogGrpcInfo(ctx, "success")
 		return out, nil
 
 	case e := <-errorch:
-		t := ctx.Value(transactionID)
-		a.log.Error(e.Error(), "transaction_id", t.(string))
+		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}
 }
