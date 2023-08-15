@@ -1,60 +1,79 @@
 package drivers
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
-	"golang.org/x/exp/slog"
 
-	"github.com/codeclout/AccountEd/pkg/server/server-types/protocols"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
-const path = "./config.hcl"
+//go:embed config.hcl
+var PackageConfiguration []byte
 
-type Adapter struct {
-	log *slog.Logger
+type MetadataAndSettings struct {
+	Settings Settings `hcl:"Settings,block"`
 }
 
-func NewAdapter(log *slog.Logger) *Adapter {
+type Settings struct {
+	GRPCClientConnectionTimeout float64 `hcl:"grpc_service_client_connection_timeout"`
+}
+
+type Adapter struct {
+	monitor monitoring.Adapter
+}
+
+func NewAdapter(monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		log: log,
+		monitor: monitor,
 	}
 }
 
-// Load reads the configuration file, decodes it into a TransferBounds struct, and then converts it into a map[string]interface{} for
-// easier manipulation. It gets the working directory, constructs the file path, and decodes the file content using hclsimple.DecodeFile. If there are
-// any errors during decoding, it logs an error message and panics. After decoding, the TransferBounds struct is marshaled into a JSON and then
-// unmarshaled into a map[string]interface{}. The resulting map is returned.
-func (a *Adapter) Load() (*map[string]interface{}, error) {
-	var bounds protocols.TransferBounds
-	var out map[string]interface{}
+func (a *Adapter) LoadServerConfiguration() *map[string]interface{} {
+	var metadataAndSettings MetadataAndSettings
+	var out = make(map[string]interface{})
+	var s string
 
-	workingDirectory, _ := os.Getwd()
-	fileLocation := filepath.Join(workingDirectory, path)
-
-	e := hclsimple.DecodeFile(fileLocation, nil, &bounds)
+	e := hclsimple.Decode("config.hcl", PackageConfiguration, nil, &metadataAndSettings)
 	if e != nil {
-		x, ok := e.(hcl.Diagnostics)
+		var x *hcl.Diagnostics
 
-		if ok {
-			a.log.Error(fmt.Sprintf("Failed to load runtime staticConfig: %s", x[0].Summary))
-			return nil, errors.New(x[0].Error())
-		} else {
-			a.log.Error(fmt.Sprintf("Failed to get runtime staticConfig: %s", e.Error()))
-			return nil, errors.New(e.Error())
+		if errors.As(e, &x) {
+			for _, x := range *x {
+				if x.Severity == hcl.DiagError {
+					a.monitor.LogGenericError(fmt.Sprintf("Failed to load server runtime staticConfig: %s", x))
+				}
+			}
+			return nil
 		}
 	}
 
-	val := reflect.ValueOf(&bounds).Elem()
+	settings := reflect.ValueOf(&metadataAndSettings.Settings).Elem()
 
-	for i := 0; i < val.NumField(); i++ {
-		out[val.Type().Field(i).Name] = val.Field(i).Interface()
+	for i := 0; i < settings.NumField(); i++ {
+		out[settings.Type().Field(i).Name] = settings.Field(i).Interface()
 	}
 
-	return &out, nil
+	for k, v := range out {
+		switch x := v.(type) {
+		case string:
+			if x == (s) {
+				a.monitor.LogGenericError(fmt.Sprintf("Server Package:%s is not defined in the environment", k))
+				os.Exit(1)
+			}
+		case bool:
+			continue
+		case float64:
+			continue
+		default:
+			panic("invalid Server Package configuration type")
+		}
+	}
+
+	return &out
 }

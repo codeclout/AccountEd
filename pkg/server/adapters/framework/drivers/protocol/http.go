@@ -27,30 +27,6 @@ type Adapter struct {
 	monitor         monitoring.Adapter
 }
 
-func (a *Adapter) GetPort() (string, error) {
-	port, ok := a.config["Port"].(string)
-	if !ok {
-		a.monitor.LogGenericError("port not configured")
-		os.Exit(1)
-	}
-
-	n, _ := strconv.Atoi(port)
-
-	if ok && len(strings.TrimSpace(port)) >= 4 && n >= 1024 && n <= 65535 {
-		return fmt.Sprintf(":%d", n), nil
-	}
-
-	return "", errors.New("environment port out of bounds")
-}
-
-func isProd() bool {
-	if env, ok := os.LookupEnv("ENVIRONMENT"); ok && strings.TrimSpace(env) == "prod" {
-		return true
-	}
-
-	return false
-}
-
 func NewAdapter(config map[string]interface{}, metadata protocols.ServerProtocolHttpMetadata, monitor monitoring.Adapter, wg *sync.WaitGroup) *Adapter {
 	app := initialize(metadata)
 
@@ -64,6 +40,14 @@ func NewAdapter(config map[string]interface{}, metadata protocols.ServerProtocol
 		metadata:        metadata,
 		monitor:         monitor,
 	}
+}
+
+func isProd() bool {
+	if env, ok := os.LookupEnv("ENVIRONMENT"); ok && strings.TrimSpace(env) == "prod" {
+		return true
+	}
+
+	return false
 }
 
 func initialize(metadata protocols.ServerProtocolHttpMetadata) *fiber.App {
@@ -95,6 +79,22 @@ func postInit(monitor monitoring.Adapter, wg *sync.WaitGroup, warning string) {
 
 	wg.Done()
 	os.Exit(0)
+}
+
+func (a *Adapter) GetPort() (string, error) {
+	port, ok := a.config["Port"].(string)
+	if !ok {
+		a.monitor.LogGenericError("port not configured")
+		os.Exit(1)
+	}
+
+	n, _ := strconv.Atoi(port)
+
+	if ok && len(strings.TrimSpace(port)) >= 4 && n >= 1024 && n <= 65535 {
+		return fmt.Sprintf(":%d", n), nil
+	}
+
+	return "", errors.New("environment port out of bounds")
 }
 
 func (a *Adapter) InitializeRoutes(routes []*fiber.App) {
