@@ -1,11 +1,12 @@
-go 1.20
+go 1.21
 
 use (
-	./members
-	./pkg/monitoring
-	./notifications
-	./pkg/server
-	./session
+	members
+	pkg/monitoring
+	notifications
+	pkg/server
+	session
+	storage
 	./notifications/infrastructure
-	./storage
+	storage/infrastructure
 )
