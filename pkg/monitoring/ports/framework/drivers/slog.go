@@ -2,8 +2,7 @@ package drivers
 
 import (
 	"context"
-
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type SlogLoggerDriverPort interface {

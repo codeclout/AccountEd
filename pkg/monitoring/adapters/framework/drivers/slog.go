@@ -3,11 +3,10 @@ package drivers
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
-
-	"golang.org/x/exp/slog"
 
 	monitorTypes "github.com/codeclout/AccountEd/pkg/monitoring/monitoring-types"
 )
@@ -15,6 +14,7 @@ import (
 type Adapter struct {
 	LogLabelRequestID     monitorTypes.LogLabel
 	LogLabelTransactionID monitorTypes.LogLabel
+	XForwardedFor         monitorTypes.LogLabel
 	Logger                *slog.Logger
 }
 
@@ -46,9 +46,10 @@ func NewAdapter() *Adapter {
 	}
 
 	return &Adapter{
-		LogLabelRequestID:     monitorTypes.LogLabel("request_id"),
-		LogLabelTransactionID: monitorTypes.LogLabel("transaction_id"),
+		LogLabelRequestID:     "request_id",
+		LogLabelTransactionID: "transaction_id",
 		Logger:                logger,
+		XForwardedFor:         "forwarded_ip",
 	}
 }
 
