@@ -2,21 +2,33 @@ package drivers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
-	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 	pb "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 	"github.com/codeclout/AccountEd/storage/ports/api"
+	storageTypes "github.com/codeclout/AccountEd/storage/storage-types"
 )
 
-var defaultRouteDuration = sessiontypes.DefaultRouteDuration(2000)
+var defaultRouteDuration = sessionTypes.DefaultRouteDuration(2000)
+
+type cctx = context.Context
+
+type ConfirmedRegReq = pb.StoreConfirmedRegistrationRequest
+type ConfirmedRegResp = pb.StoreConfirmedRegistrationResponse
+type PreRegReq = pb.PreRegistrationConfirmationRequest
+type PreRegResp = pb.PreRegistrationConfirmationResponse
 
 type Adapter struct {
 	AwsGrpcClient awspb.AWSResourceClientServiceClient
@@ -68,31 +80,55 @@ func (a *Adapter) setContextTimeout(ctx context.Context) (context.Context, conte
 	return ctx, cancel
 }
 
-func (a *Adapter) GetPreRegistrationBySessionId(ctx context.Context, request *pb.PreRegistrationConfirmationRequest) (*pb.PreRegistrationConfirmationResponse, error) {
-	sessionID := request.GetSessionID()
+func (a *Adapter) StorePreConfirmationRegistrationSession(ctx cctx, request *PreRegReq) (*PreRegResp, error) {
+	var apidata storageTypes.PreRegistrationSessionAPIin
+	var credentialsOut credentials.StaticCredentialsProvider
+
+	e := json.Unmarshal(request.GetSessionServiceAWScredentials(), &credentialsOut)
+	if e != nil {
+		a.monitor.LogGrpcError(ctx, e.Error())
+		return nil, status.Error(codes.Internal, e.Error())
+	}
+
+	apidata = storageTypes.PreRegistrationSessionAPIin{
+		AssociatedData:            request.GetAssociatedData(),
+		EncryptedSessionID:        request.GetEncryptedSessionID(),
+		ForwardedIP:               request.GetForwardedIp(),
+		HasAutoCorrect:            request.GetHasAutoCorrect(),
+		MemberID:                  request.GetMemberId(),
+		Nonce:                     request.GetNonce(),
+		SessionID:                 request.GetSessionID(),
+		SessionServiceCredentials: &credentials.StaticCredentialsProvider{Value: credentialsOut.Value},
+		SessionStorageTableName:   request.GetSessionTableName(),
+		TTL:                       request.GetTtl(),
+	}
 
 	ch := make(chan *pb.PreRegistrationConfirmationResponse, 1)
-	errorch := make(chan error, 1)
+	ech := make(chan error, 1)
 
-	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, sessionID)
+	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, request.GetSessionID())
 	ctx, cancel := a.setContextTimeout(ctx)
 
 	defer cancel()
 
-	a.dynamoApi.PreRegistrationConfirmationApi(ctx, sessionID, ch, errorch)
+	a.dynamoApi.PreRegistrationConfirmationApi(ctx, apidata, ch, ech)
 
 	select {
 	case <-ctx.Done():
 		a.monitor.LogGrpcError(ctx, "request timeout")
-		return nil, errors.New("request timeout")
+		return nil, status.Error(codes.DeadlineExceeded, "request timeout")
 
 	case out := <-ch:
 		t := ctx.Value(a.monitor.LogLabelTransactionID)
 		a.monitor.LogGrpcInfo(ctx, fmt.Sprintf("pre registration confirmation success for %s", t))
 		return out, nil
 
-	case e := <-errorch:
+	case e := <-ech:
 		a.monitor.LogGrpcError(ctx, e.Error())
-		return nil, e
+		return nil, status.Error(codes.Internal, e.Error())
 	}
+}
+
+func (a *Adapter) StoreConfirmedRegistration(context.Context, *ConfirmedRegReq) (*ConfirmedRegResp, error) {
+	return nil, errors.New("not implemented")
 }

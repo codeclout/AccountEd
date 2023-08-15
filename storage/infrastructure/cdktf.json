@@ -2,7 +2,7 @@
   "language": "go",
   "app": "go run main.go",
   "codeMakerOutput": "generated",
-  "projectId": "80362459-f7a5-406f-a739-e44492974333",
+  "projectId": "a1b8861b-fb31-4210-af8a-8d7e5b8c14a2",
   "sendCrashReports": "true",
   "terraformProviders": [],
   "terraformModules": [],

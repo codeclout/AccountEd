@@ -1,35 +1,42 @@
 syntax = "proto3";
+import "google/protobuf/timestamp.proto";
 
 package proto.dynamo.v1;
 
 option go_package = "github.com/codeclout/AccountEd/storage";
 
-message StorePreRegistrationSessionRequest {
+message StoreConfirmedRegistrationRequest {
   string sessionID = 1;
   string browser_agent = 2;
   string forwarded_ip = 3;
   string member_id = 4;
   string member_firstname = 5;
   string member_lastname = 6;
+  string zip_code = 7;
 }
 
-message StorePreRegistrationSessionResponse {
+message StoreConfirmedRegistrationResponse {
   string sessionID = 1;
   string expires_at = 2;
+  string refresh_token = 3;
 }
 
 message PreRegistrationConfirmationRequest {
-  string sessionID = 1;
+  bytes associatedData = 1;
+  string encryptedSessionID = 2;
+  string forwarded_ip = 3;
+  bool hasAutoCorrect = 4;
+  string memberId = 5;
+  bytes nonce = 6;
+  bytes sessionServiceAWScredentials = 7;
+  string sessionID = 8;
+  string sessionTableName = 9;
+  int32 ttl = 10;
 }
 
 message PreRegistrationConfirmationResponse {
   bool active = 1;
-  string browser_agent = 2;
-  string created_at = 3;
-  string expires_at = 4;
-  string forwarded_ip = 5;
-  string member_id = 6;
-  string member_firstname = 7;
-  string member_lastname = 8;
-  string refresh_token = 9;
+  google.protobuf.Timestamp created_at = 3;
+  int64 expires_at = 4;
+  string member_id = 5;
 }

@@ -19,16 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	DynamoDBStorageService_GetPreRegistrationBySessionId_FullMethodName = "/proto.dynamo.v1.DynamoDBStorageService/GetPreRegistrationBySessionId"
-	DynamoDBStorageService_StorePreRegistrationSessionId_FullMethodName = "/proto.dynamo.v1.DynamoDBStorageService/StorePreRegistrationSessionId"
+	DynamoDBStorageService_StorePreConfirmationRegistrationSession_FullMethodName = "/proto.dynamo.v1.DynamoDBStorageService/StorePreConfirmationRegistrationSession"
+	DynamoDBStorageService_StoreConfirmedRegistration_FullMethodName              = "/proto.dynamo.v1.DynamoDBStorageService/StoreConfirmedRegistration"
 )
 
 // DynamoDBStorageServiceClient is the client API for DynamoDBStorageService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DynamoDBStorageServiceClient interface {
-	GetPreRegistrationBySessionId(ctx context.Context, in *PreRegistrationConfirmationRequest, opts ...grpc.CallOption) (*PreRegistrationConfirmationResponse, error)
-	StorePreRegistrationSessionId(ctx context.Context, in *StorePreRegistrationSessionRequest, opts ...grpc.CallOption) (*StorePreRegistrationSessionResponse, error)
+	StorePreConfirmationRegistrationSession(ctx context.Context, in *PreRegistrationConfirmationRequest, opts ...grpc.CallOption) (*PreRegistrationConfirmationResponse, error)
+	StoreConfirmedRegistration(ctx context.Context, in *StoreConfirmedRegistrationRequest, opts ...grpc.CallOption) (*StoreConfirmedRegistrationResponse, error)
 }
 
 type dynamoDBStorageServiceClient struct {
@@ -39,18 +39,18 @@ func NewDynamoDBStorageServiceClient(cc grpc.ClientConnInterface) DynamoDBStorag
 	return &dynamoDBStorageServiceClient{cc}
 }
 
-func (c *dynamoDBStorageServiceClient) GetPreRegistrationBySessionId(ctx context.Context, in *PreRegistrationConfirmationRequest, opts ...grpc.CallOption) (*PreRegistrationConfirmationResponse, error) {
+func (c *dynamoDBStorageServiceClient) StorePreConfirmationRegistrationSession(ctx context.Context, in *PreRegistrationConfirmationRequest, opts ...grpc.CallOption) (*PreRegistrationConfirmationResponse, error) {
 	out := new(PreRegistrationConfirmationResponse)
-	err := c.cc.Invoke(ctx, DynamoDBStorageService_GetPreRegistrationBySessionId_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, DynamoDBStorageService_StorePreConfirmationRegistrationSession_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dynamoDBStorageServiceClient) StorePreRegistrationSessionId(ctx context.Context, in *StorePreRegistrationSessionRequest, opts ...grpc.CallOption) (*StorePreRegistrationSessionResponse, error) {
-	out := new(StorePreRegistrationSessionResponse)
-	err := c.cc.Invoke(ctx, DynamoDBStorageService_StorePreRegistrationSessionId_FullMethodName, in, out, opts...)
+func (c *dynamoDBStorageServiceClient) StoreConfirmedRegistration(ctx context.Context, in *StoreConfirmedRegistrationRequest, opts ...grpc.CallOption) (*StoreConfirmedRegistrationResponse, error) {
+	out := new(StoreConfirmedRegistrationResponse)
+	err := c.cc.Invoke(ctx, DynamoDBStorageService_StoreConfirmedRegistration_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,19 +61,19 @@ func (c *dynamoDBStorageServiceClient) StorePreRegistrationSessionId(ctx context
 // All implementations should embed UnimplementedDynamoDBStorageServiceServer
 // for forward compatibility
 type DynamoDBStorageServiceServer interface {
-	GetPreRegistrationBySessionId(context.Context, *PreRegistrationConfirmationRequest) (*PreRegistrationConfirmationResponse, error)
-	StorePreRegistrationSessionId(context.Context, *StorePreRegistrationSessionRequest) (*StorePreRegistrationSessionResponse, error)
+	StorePreConfirmationRegistrationSession(context.Context, *PreRegistrationConfirmationRequest) (*PreRegistrationConfirmationResponse, error)
+	StoreConfirmedRegistration(context.Context, *StoreConfirmedRegistrationRequest) (*StoreConfirmedRegistrationResponse, error)
 }
 
 // UnimplementedDynamoDBStorageServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedDynamoDBStorageServiceServer struct {
 }
 
-func (UnimplementedDynamoDBStorageServiceServer) GetPreRegistrationBySessionId(context.Context, *PreRegistrationConfirmationRequest) (*PreRegistrationConfirmationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPreRegistrationBySessionId not implemented")
+func (UnimplementedDynamoDBStorageServiceServer) StorePreConfirmationRegistrationSession(context.Context, *PreRegistrationConfirmationRequest) (*PreRegistrationConfirmationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StorePreConfirmationRegistrationSession not implemented")
 }
-func (UnimplementedDynamoDBStorageServiceServer) StorePreRegistrationSessionId(context.Context, *StorePreRegistrationSessionRequest) (*StorePreRegistrationSessionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StorePreRegistrationSessionId not implemented")
+func (UnimplementedDynamoDBStorageServiceServer) StoreConfirmedRegistration(context.Context, *StoreConfirmedRegistrationRequest) (*StoreConfirmedRegistrationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StoreConfirmedRegistration not implemented")
 }
 
 // UnsafeDynamoDBStorageServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -87,38 +87,38 @@ func RegisterDynamoDBStorageServiceServer(s grpc.ServiceRegistrar, srv DynamoDBS
 	s.RegisterService(&DynamoDBStorageService_ServiceDesc, srv)
 }
 
-func _DynamoDBStorageService_GetPreRegistrationBySessionId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DynamoDBStorageService_StorePreConfirmationRegistrationSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PreRegistrationConfirmationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DynamoDBStorageServiceServer).GetPreRegistrationBySessionId(ctx, in)
+		return srv.(DynamoDBStorageServiceServer).StorePreConfirmationRegistrationSession(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DynamoDBStorageService_GetPreRegistrationBySessionId_FullMethodName,
+		FullMethod: DynamoDBStorageService_StorePreConfirmationRegistrationSession_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DynamoDBStorageServiceServer).GetPreRegistrationBySessionId(ctx, req.(*PreRegistrationConfirmationRequest))
+		return srv.(DynamoDBStorageServiceServer).StorePreConfirmationRegistrationSession(ctx, req.(*PreRegistrationConfirmationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DynamoDBStorageService_StorePreRegistrationSessionId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StorePreRegistrationSessionRequest)
+func _DynamoDBStorageService_StoreConfirmedRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StoreConfirmedRegistrationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DynamoDBStorageServiceServer).StorePreRegistrationSessionId(ctx, in)
+		return srv.(DynamoDBStorageServiceServer).StoreConfirmedRegistration(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DynamoDBStorageService_StorePreRegistrationSessionId_FullMethodName,
+		FullMethod: DynamoDBStorageService_StoreConfirmedRegistration_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DynamoDBStorageServiceServer).StorePreRegistrationSessionId(ctx, req.(*StorePreRegistrationSessionRequest))
+		return srv.(DynamoDBStorageServiceServer).StoreConfirmedRegistration(ctx, req.(*StoreConfirmedRegistrationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -131,12 +131,12 @@ var DynamoDBStorageService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*DynamoDBStorageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetPreRegistrationBySessionId",
-			Handler:    _DynamoDBStorageService_GetPreRegistrationBySessionId_Handler,
+			MethodName: "StorePreConfirmationRegistrationSession",
+			Handler:    _DynamoDBStorageService_StorePreConfirmationRegistrationSession_Handler,
 		},
 		{
-			MethodName: "StorePreRegistrationSessionId",
-			Handler:    _DynamoDBStorageService_StorePreRegistrationSessionId_Handler,
+			MethodName: "StoreConfirmedRegistration",
+			Handler:    _DynamoDBStorageService_StoreConfirmedRegistration_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
