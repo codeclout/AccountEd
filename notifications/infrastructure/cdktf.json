@@ -4,6 +4,13 @@
   "codeMakerOutput": "generated",
   "projectId": "80362459-f7a5-406f-a739-e44492974333",
   "sendCrashReports": "true",
+  "stacks": {
+    "service2-stack": {
+      "terraformProviders": [
+        "aws@~> 4.0"
+      ]
+    }
+  },
   "terraformProviders": [],
   "terraformModules": [],
   "context": {

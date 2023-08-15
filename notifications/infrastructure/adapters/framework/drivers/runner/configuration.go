@@ -13,7 +13,8 @@ import (
   "github.com/cdktf/cdktf-provider-aws-go/aws/v16/sesdomainidentity"
   "github.com/cdktf/cdktf-provider-aws-go/aws/v16/sesdomainmailfrom"
   "github.com/hashicorp/terraform-cdk-go/cdktf"
-  "golang.org/x/exp/slog"
+
+  monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type environment struct {
@@ -26,13 +27,13 @@ type environment struct {
 
 type Adapter struct {
   app cdktf.App
-  log *slog.Logger
+  monitor monitoring.Adapter
 }
 
-func NewAdapter(app cdktf.App, log *slog.Logger) *Adapter {
+func NewAdapter(app cdktf.App, monitor monitoring.Adapter) *Adapter {
   return &Adapter{
     app: app,
-    log: log,
+    monitor: monitor,
   }
 }
 
@@ -58,7 +59,7 @@ func (a *Adapter) LoadNotificationsInfrastructureConfig() *map[string]interface{
     switch x := v.(type) {
     case string:
       if x == (s) {
-        a.log.Error(fmt.Sprintf("Notification:%s is not defined in the environment", k))
+        a.monitor.LogGenericError(fmt.Sprintf("Notification:%s is not defined in the environment", k))
         os.Exit(1)
       }
     default:
