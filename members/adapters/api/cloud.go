@@ -12,7 +12,7 @@ import (
 func (a *Adapter) processAWSCredentials(ctx context.Context) *credentials.StaticCredentialsProvider {
 	var creds credentials.StaticCredentialsProvider
 
-	grpcProtocol := *a.grpcProtocol.AWS_SessionClient
+	grpcProtocol := *a.gRPC.AwsSessionclient
 
 	arn, ok := a.config["AWSRolePreRegistration"].(string)
 	if !ok {

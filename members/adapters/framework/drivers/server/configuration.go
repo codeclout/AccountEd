@@ -8,64 +8,66 @@ import (
 	"reflect"
 
 	membertypes "github.com/codeclout/AccountEd/members/member-types"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
-	"golang.org/x/exp/slog"
 )
 
 type environment struct {
 	AWSRegion                string
 	AWSRolePreRegistration   string
 	Domain                   string
-	NotificationsServiceHost string
-	NotificationsServicePort string
 	Port                     string
 	PreRegistrationParameter string
-	SessionServiceHost       string
-	SessionServicePort       string
+	RuntimeEnvironment       string
 }
 
-type server struct {
-	GetOnlyConstraint bool    `hcl:"is_app_get_only" json:"is_app_get_only"`
-	Name              string  `hcl:"application_name" json:"application_name"`
-	SLARoutes         float64 `hcl:"sla_routes" json:"sla_routes"`
+type metadataAndSettings struct {
+	Metadata Metadata `hcl:"Metadata,block"`
+	Settings Settings `hcl:"Settings,block"`
+}
+
+type Metadata struct {
+	GetOnlyConstraint bool   `hcl:"is_app_get_only"`
+	Name              string `hcl:"application_name"`
+	Version           string `hcl:"version"`
+}
+
+type Settings struct {
+	SLARoutes float64 `hcl:"sla_routes"`
 }
 
 type Adapter struct {
-	log                     *slog.Logger
+	monitor                 monitoring.Adapter
 	staticConfigurationPath membertypes.ConfigurationPath
 }
 
-func NewAdapter(log *slog.Logger, configPath membertypes.ConfigurationPath) *Adapter {
+func NewAdapter(monitor monitoring.Adapter, configPath membertypes.ConfigurationPath) *Adapter {
 	return &Adapter{
-		log:                     log,
+		monitor:                 monitor,
 		staticConfigurationPath: configPath,
 	}
 }
 
-// LoadMemberConfig reads and decodes the configuration file located by the "path" constant, and
-// populates a server instance. The server instance is then converted to a JSON object which is
-// unmarshalled into a map[string]interface{}. This method returns a pointer to the map.
-// In case of any errors, it logs the error message and panics with the corresponding error.
+//nolint:funlen
 func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
-	var configuration server
+	var metadataAndSettings metadataAndSettings
 	var out = make(map[string]interface{})
 	var s string
 
 	workingDirectory, _ := os.Getwd()
 	fileLocation := filepath.Join(workingDirectory, string(a.staticConfigurationPath))
 
-	e := hclsimple.DecodeFile(fileLocation, nil, &configuration)
+	e := hclsimple.DecodeFile(fileLocation, nil, &metadataAndSettings)
 	if e != nil {
 		var x hcl.Diagnostics
-		ok := errors.Is(e, x)
-
-		if ok {
-			a.log.Error(fmt.Sprintf("Failed to load runtime staticConfig: %s", e.(hcl.Diagnostics)[0].Summary))
-			panic(e)
-		} else {
-			a.log.Error(fmt.Sprintf("Failed to get runtime staticConfig: %v", x))
+		if errors.As(e, &x) {
+			for _, x := range x {
+				if x.Severity == hcl.DiagError {
+					a.monitor.LogGenericError(fmt.Sprintf("Failed to load member runtime staticConfig: %s", x))
+				}
+			}
 			panic(e)
 		}
 	}
@@ -76,27 +78,29 @@ func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
 		Domain:                   os.Getenv("DOMAIN"),
 		Port:                     os.Getenv("PORT"),
 		PreRegistrationParameter: os.Getenv("AWS_PRE_REGISTRATION_HASH_PARAM"),
-		NotificationsServiceHost: os.Getenv("NOTIFICATION_SERVER_HOST"),
-		NotificationsServicePort: os.Getenv("NOTIFICATION_SERVER_PORT"),
-		SessionServiceHost:       os.Getenv("SESSION_SERVER_HOST"),
-		SessionServicePort:       os.Getenv("SESSION_SERVER_PORT"),
+		RuntimeEnvironment:       os.Getenv("ENVIRONMENT"),
 	}
 
-	sval := reflect.ValueOf(&env).Elem()
-	for i := 0; i < sval.NumField(); i++ {
-		out[sval.Type().Field(i).Name] = sval.Field(i).Interface()
+	runtimeEnv := reflect.ValueOf(&env).Elem()
+	for i := 0; i < runtimeEnv.NumField(); i++ {
+		out[runtimeEnv.Type().Field(i).Name] = runtimeEnv.Field(i).Interface()
 	}
 
-	val := reflect.ValueOf(&configuration).Elem()
-	for i := 0; i < val.NumField(); i++ {
-		out[val.Type().Field(i).Name] = val.Field(i).Interface()
+	metadata := reflect.ValueOf(&metadataAndSettings.Metadata).Elem()
+	for i := 0; i < metadata.NumField(); i++ {
+		out[metadata.Type().Field(i).Name] = metadata.Field(i).Interface()
+	}
+
+	settings := reflect.ValueOf(&metadataAndSettings.Settings).Elem()
+	for i := 0; i < settings.NumField(); i++ {
+		out[settings.Type().Field(i).Name] = settings.Field(i).Interface()
 	}
 
 	for k, v := range out {
 		switch x := v.(type) {
 		case string:
 			if x == (s) {
-				a.log.Error(fmt.Sprintf("Members:%s is not defined in the environment", k))
+				a.monitor.LogGenericError(fmt.Sprintf("Members:%s is not defined in the environment", k))
 				os.Exit(1)
 			}
 		case bool:

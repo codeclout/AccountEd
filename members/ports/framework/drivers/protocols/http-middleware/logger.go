@@ -2,11 +2,11 @@ package httpmiddleware
 
 import (
 	"log"
+	"log/slog"
 	"os/exec"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"golang.org/x/exp/slog"
 )
 
 type Config struct {
@@ -39,7 +39,7 @@ func NewLoggerMiddleware(c ...Config) fiber.Handler {
 		r = string(req.Header.Peek(fiber.HeaderXRequestID))
 		if r == "" {
 			r = strings.Trim(string(uuid), "\n")
-			
+
 			ctx.Set(fiber.HeaderXRequestID, r)
 			ctx.Locals("requestid", r)
 		}
@@ -48,6 +48,7 @@ func NewLoggerMiddleware(c ...Config) fiber.Handler {
 		if x == "" {
 			x = ctx.IP()
 		}
+		ctx.Locals("xForwardedFor", x)
 
 		config.Log("incoming request", slog.Group("request",
 			slog.String("host", string(req.Host())),

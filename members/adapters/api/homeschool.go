@@ -13,28 +13,38 @@ import (
 	sessionpb "github.com/codeclout/AccountEd/session/gen/members/v1"
 
 	memberTypes "github.com/codeclout/AccountEd/members/member-types"
-	"github.com/codeclout/AccountEd/members/ports/core"
+	membersCore "github.com/codeclout/AccountEd/members/ports/core"
 )
 
 type Adapter struct {
-	config       map[string]interface{}
-	core         core.HomeschoolCore
-	grpcProtocol *protocol.AdapterGrpc
-	monitor      monitoring.Adapter
+	config             map[string]interface{}
+	contextAPILabel    memberTypes.ContextAPILabel
+	contextDrivenLabel memberTypes.ContextDrivenLabel
+	core               membersCore.HomeschoolCore
+	gRPC               *protocol.AdapterServiceClients
+	monitor            monitoring.Adapter
 }
 
-func NewAdapter(config map[string]interface{}, core core.HomeschoolCore, grpc *protocol.AdapterGrpc, monitor monitoring.Adapter) *Adapter {
+func NewAdapter(config map[string]interface{}, core membersCore.HomeschoolCore, grpc *protocol.AdapterServiceClients, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		config:       config,
-		core:         core,
-		grpcProtocol: grpc,
-		monitor:      monitor,
+		config:             config,
+		contextAPILabel:    "api_input",
+		contextDrivenLabel: "driven_input",
+		core:               core,
+		gRPC:               grpc,
+		monitor:            monitor,
 	}
 }
 
-func (a *Adapter) encryptSessionID(ctx context.Context, id string) (string, error) {
-	client := *a.grpcProtocol.Member_SessionClient
-	payload := sessionpb.EncryptedStringRequest{SessionId: id}
+func (a *Adapter) encryptSessionID(ctx context.Context, in *memberTypes.PrimaryMemberStartRegisterOut) (string, error) {
+	var s string
+
+	client := *a.gRPC.MemberSessionclient
+	payload := sessionpb.EncryptedStringRequest{
+		HasAutoCorrect: in.AutoCorrect == (s),
+		MemberId:       in.MemberID,
+		SessionId:      in.SessionID,
+	}
 
 	encryptedSessionID, e := client.GetEncryptedSessionId(ctx, &payload)
 	if e != nil {
@@ -54,7 +64,6 @@ func (a *Adapter) getDomain() (string, error) {
 	return domain, nil
 }
 
-// getEmailDomain is a method of Adapter struct that extracts and returns the domain part of an URL.
 func (a *Adapter) getEmailDomain() (string, error) {
 	v, e := a.getDomain()
 	if e != nil {
@@ -70,7 +79,7 @@ func (a *Adapter) getEmailDomain() (string, error) {
 }
 
 func (a *Adapter) sendPreRegistrationEmail(ctx context.Context, hashedSessionID string, toAddress []string) error {
-	emailclient := *a.grpcProtocol.Email_NotificationClient
+	emailclient := *a.gRPC.EmailNotificationclient
 	fqdn, e := a.getEmailDomain()
 	if e != nil {
 		return errors.New(e.Error())
@@ -98,8 +107,8 @@ func (a *Adapter) sendPreRegistrationEmail(ctx context.Context, hashedSessionID 
 	return nil
 }
 
-func (a *Adapter) PreRegisterPrimaryMemberAPI(ctx context.Context, data *memberTypes.PrimaryMemberStartRegisterIn, ch chan *memberTypes.PrimaryMemberStartRegisterOut, ech chan error) {
-	emailclient := *a.grpcProtocol.Email_NotificationClient
+func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberTypes.PrimaryMemberStartRegisterIn, ch chan *memberTypes.PrimaryMemberStartRegisterOut, ech chan error) {
+	emailclient := *a.gRPC.EmailNotificationclient
 	response, e := emailclient.ValidateEmailAddress(ctx, &pb.ValidateEmailAddressRequest{Address: *data.Username})
 	if e != nil {
 		a.monitor.LogHttpError(ctx, *data.Username)
@@ -126,31 +135,30 @@ func (a *Adapter) PreRegisterPrimaryMemberAPI(ctx context.Context, data *memberT
 		return
 	}
 
-	out, e := a.core.PreRegister(ctx, coreData)
+	ctx = context.WithValue(ctx, a.contextAPILabel, coreData)
+	core, e := a.core.PreRegister(ctx)
 	if e != nil {
 		a.monitor.LogHttpError(ctx, "core -> pre registration: "+*data.Username)
 		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
 		return
 	}
 
-	hashedSessionID, _ := a.encryptSessionID(ctx, out.SessionID)
-	out.SessionID = hashedSessionID
+	hashedSessionID, _ := a.encryptSessionID(ctx, core)
+	core.SessionID = hashedSessionID
 
-	if out.UsernamePending {
-		// send auto correct & confirm email address on front end
+	if core.RegistrationPending {
+		e = a.sendPreRegistrationEmail(ctx, hashedSessionID, []string{core.MemberID})
+		if e != nil {
+			a.monitor.LogGenericError(e.Error())
+			ech <- errors.New("unable to process verification email")
+			return
+		}
+
+		ch <- core
 	}
-
-	// if out.RegistrationPending {
-	e = a.sendPreRegistrationEmail(ctx, hashedSessionID, []string{response.GetEmail()})
-
-	if e != nil {
-		a.monitor.LogGenericError(e.Error())
-		ech <- errors.New("unable to process verification email")
-	}
-	// }
 
 	// otherwise -> asynchronously
 	// create and register account
 
-	ch <- out
+	ch <- core
 }

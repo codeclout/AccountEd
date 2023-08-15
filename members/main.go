@@ -35,7 +35,7 @@ func main() {
 
 	monitor := monitoring.NewAdapter()
 
-	memberConfiguration = driverAdapterServerConfiguration.NewAdapter(monitor.Logger, "./config.hcl")
+  memberConfiguration = driverAdapterServerConfiguration.NewAdapter(*monitor, "./config.hcl")
 	config := *memberConfiguration.LoadMemberConfig()
 
 	applicationName, ok := config["Name"].(string)
@@ -66,7 +66,7 @@ func main() {
 	go gRPCAdapter.InitializeClients()
 	defer gRPCAdapter.StopProtocolListener()
 
-	homeschoolCore = coreAdapter.NewAdapter(config, monitor.Logger)
+  homeschoolCore = coreAdapter.NewAdapter(config, *monitor)
 	homeschoolAPI = apiAdapter.NewAdapter(config, homeschoolCore, gRPCAdapter, *monitor)
 	homeschoolDriver = memberDriverAdapter.NewAdapter(config, homeschoolAPI, *monitor)
 

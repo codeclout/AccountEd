@@ -2,27 +2,28 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
-	"golang.org/x/exp/slog"
-
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	memberTypes "github.com/codeclout/AccountEd/members/member-types"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type Adapter struct {
 	isRegisterable
 	config map[string]interface{}
-	log    *slog.Logger
+	monitor monitoring.Adapter
 }
 
 type isRegisterable bool
 
-func NewAdapter(config map[string]interface{}, log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		config: config,
-		log:    log,
+		monitor: monitor,
 	}
 }
 
@@ -45,26 +46,35 @@ func (i *isRegisterable) setRegistrationPending(delivery, qscore string, hasMX, 
 	return true
 }
 
-// PreRegister performs the pre-registration process for an email address, determining if it is deliverable, has a valid MX record,
-// is not disposable, or a role-based email. It sets the registration state as pending based on these criteria and generates a session ID.
-// Returns a PrimaryMemberStartRegisterOut object with registration pending status, session ID, username, and a bool indicating if username is
-// pending autocorrection. An error is returned if any issue occurs during this process.
-func (a *Adapter) PreRegister(ctx context.Context, in memberTypes.EmailValidationIn) (*memberTypes.PrimaryMemberStartRegisterOut, error) {
-	var username *string
-	sessionID, _ := uuid.NewRandom()
+func (a *Adapter) PreRegister(ctx context.Context) (*memberTypes.PrimaryMemberStartRegisterOut, error) {
+	var memberID string
+	var username string
+
+	in, ok := ctx.Value(memberTypes.ContextAPILabel("api_input")).(memberTypes.EmailValidationIn)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("invalid core parameters -> %v", ctx))
+	}
+
+	sessionID, e := uuid.NewRandom()
+	if e != nil {
+		return nil, errors.New("unable to set sessionID")
+	}
 
 	if a.useAutoCorrect(in.Autocorrect) {
+		memberID = ""
+
 		x, _ := memberTypes.ValidateEmail(&in.Autocorrect)
-		v := x.Load().(string)
-		username = &v
+		suggestedMemberID := x.Load().(string)
+		username = suggestedMemberID
 	} else {
-		username = &in.Email
+		memberID = in.Email
 	}
 
 	return &memberTypes.PrimaryMemberStartRegisterOut{
+		AutoCorrect: username,
+		MemberID:    memberID,
 		RegistrationPending: a.setRegistrationPending(in.Deliverability, in.QualityScore, in.IsMxFound.GetValue(), in.IsDisposableEmail.GetValue(), in.IsRoleEmail.GetValue()),
 		SessionID:           sessionID.String(),
-		Username:            username,
 		UsernamePending:     a.useAutoCorrect(in.Autocorrect),
 	}, nil
 }

@@ -7,5 +7,5 @@ import (
 )
 
 type HomeschoolCore interface {
-	PreRegister(ctx context.Context, in mt.EmailValidationIn) (*mt.PrimaryMemberStartRegisterOut, error)
+	PreRegister(ctx context.Context) (*mt.PrimaryMemberStartRegisterOut, error)
 }

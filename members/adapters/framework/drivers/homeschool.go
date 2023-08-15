@@ -23,6 +23,9 @@ type Adapter struct {
 	monitor    monitoring.Adapter
 }
 
+type PrimaryMemberStart = mt.PrimaryMemberStartRegisterIn
+type PrimaryMemberStartOut = mt.PrimaryMemberStartRegisterOut
+
 func NewAdapter(conifg map[string]interface{}, homeschoolAPI api.HomeschoolAPI, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		config:     conifg,
@@ -32,13 +35,13 @@ func NewAdapter(conifg map[string]interface{}, homeschoolAPI api.HomeschoolAPI, 
 }
 
 func (a *Adapter) initHomeSchoolRoutes(app *fiber.App) *fiber.App {
-	sla, ok := a.config["SLARoutes"]
+	sla, ok := a.config["SLARoutes"].(float64)
 	if !ok {
 		a.monitor.LogGenericError("sla_routes not configured")
 		sla = float64(2000)
 	}
 
-	b := int(sla.(float64))
+	b := int(sla)
 	app.Post("/homeschool/registration-start", timeout.NewWithContext(a.processRegistration, time.Duration(b)*time.Millisecond))
 
 	return app
@@ -72,26 +75,27 @@ func (a *Adapter) processRegistration(ctx *fiber.Ctx) error {
 	}
 
 	c := ctx.UserContext()
-	cx := context.WithValue(c, a.monitor.LogLabelRequestID, ctx.Locals("requestid"))
-	cx1 := context.WithValue(cx, a.monitor.LogLabelTransactionID, sha256.Sum256([]byte(*in.Username)))
+	c = context.WithValue(c, a.monitor.LogLabelRequestID, ctx.Locals("requestid"))
+	c = context.WithValue(c, a.monitor.LogLabelTransactionID, sha256.Sum256([]byte(*in.Username)))
+	c = context.WithValue(c, a.monitor.XForwardedFor, ctx.Locals("xForwardedFor"))
 
-	out, x := a.HandlePreRegistration(cx1, in)
+	out, x := a.HandlePreRegistration(c, in)
 	if x != nil {
 		a.monitor.LogGenericError(x.Error())
-		return ctx.Status(http.StatusInternalServerError).JSON(errors.New("internal server error"))
+		return ctx.JSON(ctx.Status(http.StatusInternalServerError))
 	}
 
 	return ctx.JSON(out)
 }
 
-func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMemberStartRegisterIn) (*mt.PrimaryMemberStartRegisterOut, error) {
-	ch := make(chan *mt.PrimaryMemberStartRegisterOut, 1)
+func (a *Adapter) HandlePreRegistration(ctx context.Context, in *PrimaryMemberStart) (*PrimaryMemberStartOut, error) {
+	ch := make(chan *PrimaryMemberStartOut, 1)
 	ctx, cancel := context.WithCancel(ctx)
-	errorch := make(chan error, 1)
+	ech := make(chan error, 1)
 
 	defer cancel()
 
-	a.homeschool.PreRegisterPrimaryMemberAPI(ctx, in, ch, errorch)
+	a.homeschool.PreRegisterPrimaryMember(ctx, in, ch, ech)
 
 	select {
 	case <-ctx.Done():
@@ -102,7 +106,7 @@ func (a *Adapter) HandlePreRegistration(ctx context.Context, in *mt.PrimaryMembe
 		a.monitor.LogHttpInfo(ctx, "completed")
 		return out, nil
 
-	case e := <-errorch:
+	case e := <-ech:
 		a.monitor.LogHttpError(ctx, errors.Cause(e).Error())
 		return nil, errors.New(fiber.ErrInternalServerError.Error())
 	}

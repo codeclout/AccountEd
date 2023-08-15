@@ -6,27 +6,34 @@ const (
 )
 
 type ErrorCoreDataInvalid error
+type PreRegistrationAutoCorrect error
 
 type Gender int8
 type ConfigurationPath string
+type ContextAPILabel string
+type ContextDrivenLabel string
 type LogLabel string
 
+type AutoCorrectErrorOutput struct {
+	SuggestedEmailAddress string `json:"suggestedEmailAddress"`
+}
+
 type Member struct {
-	AccountType         string   `json:"account_type"`
-	AuthorizedRoles     []string `json:"authorized_roles"`
+	AccountType         string   `json:"accountType"`
+	AuthorizedRoles     []string `json:"authorizedRoles"`
 	County              string   `json:"county" validate:"required"`
 	CreatedAt           int64    `json:"created"`
-	DisplayName         string   `json:"display_name"`
-	GroupID             string   `json:"group_id"`
+	DisplayName         string   `json:"displayName"`
+	GroupID             string   `json:"groupID"`
 	ID                  MemberID `json:"id"`
 	Image               any      `json:"image"` // FixMe
-	IsActive            bool     `json:"is_active"`
-	IsMarkedForDeletion bool     `json:"is_marked_for_deletion"`
-	IsPending           bool     `json:"is_pending"`
-	IsVerified          bool     `json:"is_verified"`
-	LegalFirstName      *string  `json:"legal_first_namefirst_name" validate:"required"`
-	LegalLastName       *string  `json:"legal_last_namelast_name" validate:"required"`
-	MemberType          string   `json:"member_type"`
+	IsActive            bool     `json:"isActive"`
+	IsMarkedForDeletion bool     `json:"IsMarkedForDeletion"`
+	IsPending           bool     `json:"isPending"`
+	IsVerified          bool     `json:"isVerified"`
+	LegalFirstName      *string  `json:"legalFirstName" validate:"required"`
+	LegalLastName       *string  `json:"legalLastName" validate:"required"`
+	MemberType          string   `json:"memberType"`
 	Pin                 *string  `json:"pin" validate:"required"`
 	UpdatedAt           int64    `json:"updated"`
 }
@@ -51,9 +58,10 @@ type PrimaryMemberStartRegisterIn struct {
 	Username *string `json:"username" bson:"username" validate:"required,email"`
 }
 
-type PrimaryMemberStartRegisterOut struct { //nolint:maligned
-	RegistrationPending bool    `json:"registration_pending"`
-	SessionID           string  `json:"session_id" bson:"session_id" validate:"required"`
-	Username            *string `json:"username" bson:"username" validate:"required,email"`
-	UsernamePending     bool    `json:"username_pending" bson:"username_pending" validate:"required"`
+type PrimaryMemberStartRegisterOut struct {
+	AutoCorrect         string `json:"autoCorrect" bson:"auto_correct"`
+	MemberID            string `json:"memberID" bson:"member_id"`
+	RegistrationPending bool   `json:"registration_pending" bson:"registration_pending"`
+	SessionID           string `json:"sessionID" bson:"session_id"`
+	UsernamePending     bool   `json:"usernamePending" bson:"username_pending"`
 }
