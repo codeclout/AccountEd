@@ -5,7 +5,9 @@ package proto.members.v1;
 option go_package = "github.com/codeclout/AccountEd/session";
 
 message EncryptedStringRequest {
-  string sessionId = 1;
+  bool hasAutoCorrect = 1;
+  string memberId = 2;
+  string sessionId = 3;
 }
 
 message EncryptedStringResponse {

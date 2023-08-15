@@ -22,4 +22,5 @@ type SessionIdEncryptionOut struct {
 	AssociatedData []byte
 	CipherText     *string
 	IV             []byte
+	SessionID      *string
 }

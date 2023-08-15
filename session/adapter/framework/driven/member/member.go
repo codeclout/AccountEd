@@ -9,18 +9,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/pkg/errors"
-	"golang.org/x/exp/slog"
+
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type Adapter struct {
 	config map[string]interface{}
-	log    *slog.Logger
+	monitor monitoring.Adapter
 }
 
-func NewAdapter(config map[string]interface{}, memberDrivenLog *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		config: config,
-		log:    memberDrivenLog,
+		monitor: monitor,
 	}
 }
 

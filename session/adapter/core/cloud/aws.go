@@ -3,16 +3,18 @@ package cloud
 import (
 	"context"
 
-	"golang.org/x/exp/slog"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type Adapter struct {
-	log *slog.Logger
+	config  map[string]interface{}
+	monitor monitoring.Adapter
 }
 
-func NewAdapter(log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		log: log,
+		config:  config,
+		monitor: monitor,
 	}
 }
 

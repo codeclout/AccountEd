@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"golang.org/x/exp/slog"
 
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 
 	"github.com/codeclout/AccountEd/session/ports/api/cloud"
@@ -13,19 +13,18 @@ import (
 )
 
 var defaultRouteDuration = sessiontypes.DefaultRouteDuration(2000)
-var transactionIdLogLabel = sessiontypes.LogLabel("transactionID")
 
 type Adapter struct {
-	api    cloud.AWSApiPort
-	config map[string]interface{}
-	log    *slog.Logger
+	api     cloud.AWSApiPort
+	config  map[string]interface{}
+	monitor monitoring.Adapter
 }
 
-func NewAdapter(config map[string]interface{}, api cloud.AWSApiPort, log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, api cloud.AWSApiPort, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		api:    api,
-		config: config,
-		log:    log,
+		api:     api,
+		config:  config,
+		monitor: monitor,
 	}
 }
 
@@ -41,23 +40,20 @@ func (a *Adapter) GetAWSSessionCredentials(ctx context.Context, request *awspb.A
 	ch := make(chan *awspb.AWSConfigResponse, 1)
 	errorch := make(chan error, 1)
 
-	ctx = context.WithValue(ctx, transactionIdLogLabel, roleArn+"|"+region)
+	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, roleArn+"|"+region)
 	a.api.GetAWSSessionCredentials(ctx, data, ch, errorch)
 
 	select {
 	case <-ctx.Done():
-		t := ctx.Value(transactionIdLogLabel)
-		a.log.Error("request timeout", transactionIdLogLabel, t.(string))
+		a.monitor.LogGrpcError(ctx, "request timeout")
 		return nil, errors.New("request timeout")
 
 	case out := <-ch:
-		t := ctx.Value(transactionIdLogLabel)
-		a.log.Info("success", transactionIdLogLabel, t.(string))
+		a.monitor.LogGrpcInfo(ctx, "success")
 		return out, nil
 
 	case e := <-errorch:
-		t := ctx.Value(transactionIdLogLabel)
-		a.log.Error(e.Error(), transactionIdLogLabel, t.(string))
+		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}
 }

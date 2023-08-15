@@ -7,6 +7,6 @@ import (
 )
 
 type SessionCoreMemberPort interface {
-	ProcessSessionIdEncryption(ctx context.Context, id, key string) (*sessiontypes.SessionIdEncryptionOut, error)
+	ProcessSessionIdEncryption(ctx context.Context) (*sessiontypes.SessionIdEncryptionOut, error)
 	ProcessSessionIdDecryption(associatedData, key []byte, cipherIn *string) ([]byte, error)
 }

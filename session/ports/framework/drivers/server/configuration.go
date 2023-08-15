@@ -1,5 +1,5 @@
 package server
 
 type SessionConfigurationPort interface {
-	LoadSessionConfig() *map[string]interface{}
+	LoadStorageConfig() *map[string]interface{}
 }

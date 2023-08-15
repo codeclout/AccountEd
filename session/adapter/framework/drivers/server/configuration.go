@@ -5,7 +5,7 @@ import (
 	"os"
 	"reflect"
 
-	"golang.org/x/exp/slog"
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
 type environment struct {
@@ -15,21 +15,20 @@ type environment struct {
 	Region                   string
 	RoleToAssume             string
 	SecretAccessKey          string
+	SessionTableName         string
 }
 
 type Adapter struct {
-	log *slog.Logger
+	monitor monitoring.Adapter
 }
 
-func NewAdapter(log *slog.Logger) *Adapter {
+func NewAdapter(monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		log: log,
+		monitor: monitor,
 	}
 }
 
-// LoadSessionConfig retrieves the AWS configuration from environment variables, validates the required values, and returns the configuration in
-// a map. If a mandatory configuration value is missing, it logs an error message and triggers the program to exit with an error code.
-func (a *Adapter) LoadSessionConfig() *map[string]interface{} {
+func (a *Adapter) LoadStorageConfig() *map[string]interface{} {
 	var out = make(map[string]interface{})
 	var s string
 
@@ -40,6 +39,7 @@ func (a *Adapter) LoadSessionConfig() *map[string]interface{} {
 		Region:                   os.Getenv("AWS_REGION"),
 		RoleToAssume:             os.Getenv("AWS_ROLE_TO_ASSUME"),
 		SecretAccessKey:          os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		SessionTableName:         os.Getenv("SESSION_STORAGE_TABLE_NAME"),
 	}
 
 	val := reflect.ValueOf(&env).Elem()
@@ -56,7 +56,7 @@ func (a *Adapter) LoadSessionConfig() *map[string]interface{} {
 			}
 
 			if x == (s) {
-				a.log.Error(fmt.Sprintf("AWS:%s is not defined in the environment", k))
+				a.monitor.LogGenericError(fmt.Sprintf("AWS:%s is not defined in the environment", k))
 				os.Exit(1)
 			}
 		default:

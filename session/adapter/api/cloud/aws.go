@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
-	"golang.org/x/exp/slog"
 
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	core "github.com/codeclout/AccountEd/session/ports/core/cloud"
 	"github.com/codeclout/AccountEd/session/ports/framework/driven/cloud"
 	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
@@ -15,16 +15,16 @@ import (
 )
 
 type Adapter struct {
-	core   core.AWSCloudCorePort
-	driven cloud.CredentialsAWSPort
-	log    *slog.Logger
+	core    core.AWSCloudCorePort
+	driven  cloud.CredentialsAWSPort
+	monitor monitoring.Adapter
 }
 
-func NewAdapter(core core.AWSCloudCorePort, driven cloud.CredentialsAWSPort, log *slog.Logger) *Adapter {
+func NewAdapter(core core.AWSCloudCorePort, driven cloud.CredentialsAWSPort, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		core:   core,
-		driven: driven,
-		log:    log,
+		core:    core,
+		driven:  driven,
+		monitor: monitor,
 	}
 }
 

@@ -11,26 +11,33 @@ import (
 	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 
 	"github.com/pkg/errors"
-	"golang.org/x/exp/slog"
 
 	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
 type Adapter struct {
 	config  map[string]interface{}
-	log     *slog.Logger
 	monitor *drivers.Adapter
 }
 
 func NewAdapter(config map[string]interface{}, monitor *drivers.Adapter) *Adapter {
 	return &Adapter{
 		config:  config,
-		log:     monitor.Logger,
 		monitor: monitor,
 	}
 }
 
-func (a *Adapter) ProcessSessionIdEncryption(ctx context.Context, id, key string) (*sessiontypes.SessionIdEncryptionOut, error) {
+func (a *Adapter) ProcessSessionIdEncryption(ctx context.Context) (*sessiontypes.SessionIdEncryptionOut, error) {
+	key, ok := ctx.Value(sessiontypes.ContextDrivenLabel("driven_input")).(string)
+	if !ok {
+		return nil, errors.New("invalid session id key")
+	}
+
+	id, ok := ctx.Value(sessiontypes.ContextAPILabel("api_input")).(string)
+	if !ok {
+		return nil, errors.New("invalid session id")
+	}
+
 	keyBytes := []byte(key)
 	if len(keyBytes) != 32 {
 		return nil, errors.New("key length must equal 32 bytes")
@@ -60,6 +67,7 @@ func (a *Adapter) ProcessSessionIdEncryption(ctx context.Context, id, key string
 		AssociatedData: associatedData,
 		CipherText:     &cipherOut,
 		IV:             nonce,
+		SessionID:      &id,
 	}
 
 	return &out, nil

@@ -1,7 +1,10 @@
 package main
 
 import (
-	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"sync"
+
+	monitoringDriver "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	serverProtocolAdapter "github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
 	memberAdapterDriven "github.com/codeclout/AccountEd/session/adapter/framework/driven/member"
 	memberPortDriven "github.com/codeclout/AccountEd/session/ports/framework/driven/member"
 
@@ -27,7 +30,7 @@ import (
 
 func main() {
 	var (
-		// wg sync.WaitGroup
+		wg sync.WaitGroup
 
 		awsAPIAdapter    cloudPortApi.AWSApiPort
 		awsDriverAdapter cloudPortDriver.AWSDriverPort
@@ -42,21 +45,25 @@ func main() {
 		grpcProtocolAdapter protocols.GRPCProtocolPort
 	)
 
-	monitor := drivers.NewAdapter()
+	monitor := monitoringDriver.NewAdapter()
 
-	sessionConfiguration := configuration.NewAdapter(monitor.Logger)
-	internalConfig := sessionConfiguration.LoadSessionConfig()
+	sessionConfiguration := configuration.NewAdapter(*monitor)
+	internalConfig := sessionConfiguration.LoadStorageConfig()
 
-	awsCoreAdapter = cloudAdapterCore.NewAdapter(monitor.Logger)
+	awsCoreAdapter = cloudAdapterCore.NewAdapter(*internalConfig, *monitor)
 	memberCoreAdapter = memberAdapterCore.NewAdapter(*internalConfig, monitor)
-	awsDrivenAdapter = cloudAdapterDriven.NewAdapter(*internalConfig, monitor.GetTimeStamp, monitor.Logger)
-	awsAPIAdapter = cloud.NewAdapter(awsCoreAdapter, awsDrivenAdapter, monitor.Logger)
-	awsDriverAdapter = cloudAdapterDriver.NewAdapter(*internalConfig, awsAPIAdapter, monitor.Logger)
+	awsDrivenAdapter = cloudAdapterDriven.NewAdapter(*internalConfig, *monitor)
+	awsAPIAdapter = cloud.NewAdapter(awsCoreAdapter, awsDrivenAdapter, *monitor)
+	awsDriverAdapter = cloudAdapterDriver.NewAdapter(*internalConfig, awsAPIAdapter, *monitor)
 
-	memberDrivenAdapter = memberAdapterDriven.NewAdapter(*internalConfig, monitor.Logger)
-	memberApiAdapter = memberAdapterApi.NewAdapter(*internalConfig, memberCoreAdapter, awsDrivenAdapter, memberDrivenAdapter, monitor.Logger)
-	memberDriverAdapter = memberAdapterDriver.NewAdapter(*internalConfig, memberApiAdapter, awsAPIAdapter, monitor.Logger)
+	gRPCAdapterClient := serverProtocolAdapter.NewGrpcAdapter(*internalConfig, *monitor, &wg)
+	go gRPCAdapterClient.InitializeClients()
+	defer gRPCAdapterClient.StopProtocolListener()
 
-	grpcProtocolAdapter = grpcProtocol.NewAdapter(*internalConfig, awsDriverAdapter, memberDriverAdapter, monitor.Logger)
+	memberDrivenAdapter = memberAdapterDriven.NewAdapter(*internalConfig, *monitor)
+	memberApiAdapter = memberAdapterApi.NewAdapter(*internalConfig, memberCoreAdapter, awsDrivenAdapter, memberDrivenAdapter, gRPCAdapterClient, *monitor, &wg)
+	memberDriverAdapter = memberAdapterDriver.NewAdapter(*internalConfig, memberApiAdapter, awsAPIAdapter, *monitor)
+
+	grpcProtocolAdapter = grpcProtocol.NewAdapter(*internalConfig, awsDriverAdapter, memberDriverAdapter, *monitor)
 	grpcProtocolAdapter.Run()
 }

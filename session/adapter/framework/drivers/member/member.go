@@ -3,8 +3,7 @@ package member
 import (
 	"context"
 
-	"golang.org/x/exp/slog"
-
+	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	cloudAWS "github.com/codeclout/AccountEd/session/ports/api/cloud"
 	"github.com/codeclout/AccountEd/session/ports/api/member"
 
@@ -17,30 +16,31 @@ import (
 	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 )
 
-var transactionLable = sessiontypes.LogLabel("transaction_id")
+type mtr = monitoring.Adapter
+type cloudApi = cloudAWS.AWSApiPort
+type memberApi = member.SessionAPIMemberPort
 
 type Adapter struct {
-	api    member.SessionAPIMemberPort
-	awsapi cloudAWS.AWSApiPort
-	config map[string]interface{}
-	log    *slog.Logger
+	api     memberApi
+	aws     cloudApi
+	config  map[string]interface{}
+	monitor mtr
 }
 
-func NewAdapter(config map[string]interface{}, api member.SessionAPIMemberPort, awsapi cloudAWS.AWSApiPort, log *slog.Logger) *Adapter {
+func NewAdapter(config map[string]interface{}, api memberApi, awsapi cloudApi, monitor mtr) *Adapter {
 	return &Adapter{
-		api:    api,
-		awsapi: awsapi,
-		config: config,
-		log:    log,
+		api:     api,
+		aws:     awsapi,
+		config:  config,
+		monitor: monitor,
 	}
 }
 
 func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.EncryptedStringRequest) (*pb.EncryptedStringResponse, error) {
 	arn := a.config["RoleToAssume"].(string)
-	id := request.GetSessionId()
 	region := a.config["Region"].(string)
 
-	data := sessiontypes.AmazonConfigurationInput{
+	sessionIdRequestRole := sessiontypes.AmazonConfigurationInput{
 		RoleArn: aws.String(arn),
 		Region:  aws.String(region),
 	}
@@ -49,29 +49,32 @@ func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.Encrypte
 	echan := make(chan error, 1)
 	uch := make(chan *pb.EncryptedStringResponse, 1)
 
-	ctx = context.WithValue(ctx, transactionLable, arn+"|"+region)
-	a.awsapi.GetAWSSessionCredentials(ctx, data, ch, echan)
+	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, arn+"|"+region)
+
+	apiData := sessiontypes.SessionStoreMetadata{
+		HasAutoCorrect: request.GetHasAutoCorrect(),
+		MemberID:       request.GetMemberId(),
+		SessionID:      request.GetSessionId(),
+	}
+	
+	a.aws.GetAWSSessionCredentials(ctx, sessionIdRequestRole, ch, echan)
 
 	select {
 	case session := <-ch:
-		a.log.Log(ctx, 4, string(session.GetAwsCredentials()))
-		a.api.EncryptSessionId(ctx, session.AwsCredentials, id, uch, echan)
+		a.api.EncryptSessionId(ctx, session.AwsCredentials, &apiData, uch, echan)
 	}
 
 	select {
 	case <-ctx.Done():
-		t := ctx.Value(transactionLable)
-		a.log.Error("request timeout", transactionLable, t.(string))
+		a.monitor.LogGrpcError(ctx, "request timeout")
 		return nil, errors.New("request timeout")
 
 	case out := <-uch:
-		t := ctx.Value(transactionLable)
-		a.log.Info("success", transactionLable, t.(string))
+		a.monitor.LogGrpcInfo(ctx, "success")
 		return out, nil
 
 	case e := <-echan:
-		t := ctx.Value(transactionLable)
-		a.log.Error(e.Error(), transactionLable, t.(string))
+		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}
 }

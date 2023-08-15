@@ -8,14 +8,12 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/o1egl/paseto"
 	"golang.org/x/crypto/ed25519"
-	"golang.org/x/exp/slog"
 
 	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
 type Adapter struct {
-	log       *slog.Logger
 	monitor   *drivers.Adapter
 	publicKey *ed25519.PublicKey
 	token     *paseto.V2
@@ -24,7 +22,6 @@ type Adapter struct {
 
 func NewAdapter(monitor *drivers.Adapter) (*Adapter, error) {
 	return &Adapter{
-		log:     monitor.Logger,
 		monitor: monitor,
 		token:   paseto.NewV2(),
 	}, nil
