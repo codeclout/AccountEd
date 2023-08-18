@@ -88,6 +88,7 @@ func (a *Adapter) StoreSession(ctx context.Context, api driven.DynamodbAPI, in s
 	ttl := now.Add(15 * time.Minute).Unix()
 
 	data := &dynamodb.PutItemInput{
+		ConditionExpression: aws.String("attribute_not_exists(member_id)"),
 		Item: map[string]types.AttributeValue{
 			"id":               &types.AttributeValueMemberN{Value: in.SessionID},
 			"active":           &types.AttributeValueMemberBOOL{Value: !in.HasAutoCorrect},

@@ -8,5 +8,5 @@ use (
 	session
 	storage
 	./notifications/infrastructure
-	storage/infrastructure
+	storage/infrastructure/dynamodb
 )

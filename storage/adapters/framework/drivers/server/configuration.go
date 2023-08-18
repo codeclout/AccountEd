@@ -21,7 +21,7 @@ type environment struct {
 
 type metadataAndSettings struct {
 	Metadata Metadata `hcl:"Metadata,block"`
-	Settings Settings `hcl:"Settings,block"'`
+	Settings Settings `hcl:"Settings,block"`
 }
 
 type Metadata struct {
