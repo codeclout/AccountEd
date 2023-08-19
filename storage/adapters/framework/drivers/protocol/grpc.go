@@ -41,6 +41,8 @@ func NewAdapter(config cfg, dynamoDriver dynamosrv, monitor monitoring.Adapter, 
 func (a *Adapter) StorageRun() {
 	var options []grpc.ServerOption
 
+	// creds, e := credentials.NewServerTLSFromFile()
+
 	port, ok := a.config["Port"].(string)
 	if !ok {
 		panic("ambiguous port number -> gRPC server")

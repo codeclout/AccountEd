@@ -37,9 +37,9 @@ func (a *Adapter) PreRegistrationConfirmationCore(ctx context.Context) (*dynamov
 		a.monitor.LogGrpcError(ctx, fmt.Sprintf("invalid core driven -> PreRegistrationConfirmationCore(%v)", ctx))
 		return nil, status.Error(codes.InvalidArgument, "api input is invalid")
 	}
-	
+
 	out := dynamov1.PreRegistrationConfirmationResponse{
-		Active:    !api.HasAutoCorrect,
+		Active:    api.HasAutoCorrect,
 		CreatedAt: timestamppb.New(driven.CreatedAt),
 		ExpiresAt: driven.ExpiresAt,
 		MemberId:  driven.MemberId,

@@ -90,15 +90,15 @@ func (a *Adapter) StoreSession(ctx context.Context, api driven.DynamodbAPI, in s
 	data := &dynamodb.PutItemInput{
 		ConditionExpression: aws.String("attribute_not_exists(member_id)"),
 		Item: map[string]types.AttributeValue{
-			"id":               &types.AttributeValueMemberN{Value: in.SessionID},
+			"id":               &types.AttributeValueMemberS{Value: in.SessionID},
 			"active":           &types.AttributeValueMemberBOOL{Value: !in.HasAutoCorrect},
 			"associated_data":  &types.AttributeValueMemberB{Value: in.AssociatedData},
-			"created_at":       &types.AttributeValueMemberN{Value: ts.Format(time.RFC3339)},
-			"encrypted_id":     &types.AttributeValueMemberN{Value: in.EncryptedSessionID},
-			"forwarded_ip":     &types.AttributeValueMemberN{Value: in.ForwardedIP},
+			"created_at":       &types.AttributeValueMemberS{Value: ts.Format(time.RFC3339)},
+			"encrypted_id":     &types.AttributeValueMemberS{Value: in.EncryptedSessionID},
+			"forwarded_ip":     &types.AttributeValueMemberS{Value: in.ForwardedIP},
 			"has_auto_correct": &types.AttributeValueMemberBOOL{Value: in.HasAutoCorrect},
-			"member_id":        &types.AttributeValueMemberN{Value: in.MemberID},
-			"modified_at":      &types.AttributeValueMemberN{Value: ts.Format(time.RFC3339)},
+			"member_id":        &types.AttributeValueMemberS{Value: in.MemberID},
+			"modified_at":      &types.AttributeValueMemberS{Value: ts.Format(time.RFC3339)},
 			"nonce":            &types.AttributeValueMemberB{Value: in.Nonce},
 			"ttl":              &types.AttributeValueMemberN{Value: strconv.FormatInt(ttl, 10)},
 		},
@@ -112,7 +112,7 @@ func (a *Adapter) StoreSession(ctx context.Context, api driven.DynamodbAPI, in s
 	}
 
 	out := storageTypes.PreRegistrationSessionDrivenOut{
-		Active:         !in.HasAutoCorrect,
+		Active:         in.HasAutoCorrect,
 		Attributes:     result.Attributes,
 		CreatedAt:      ts,
 		ExpiresAt:      ttl,

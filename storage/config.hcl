@@ -5,7 +5,7 @@ Metadata {
 }
 
 Settings {
-  dynamodb_demo = "localhost:4400"
+  dynamodb_demo = "http://localhost:4400"
 
   dynamodb_fips_us_east_1   = "dynamodb-fips.us-east-1.amazonaws.com"
   dynamodb_fips_us_east_2   = "dynamodb-fips.us-east-2.amazonaws.com"

@@ -40,7 +40,7 @@ func NewAdapter(config configMap, core icore, gcs *gClients, driven idriven, mon
 }
 
 func (a *Adapter) PreRegistrationConfirmationApi(ctx context.Context, in preconfirmin, ch chan *preconfirmResponsepb, ech chan error) {
-	region, ok := a.config["Region"].(string)
+	region, ok := a.config["AWSRegion"].(string)
 	if !ok {
 		a.monitor.LogGenericError("region not set in environment")
 		ech <- status.Error(codes.Internal, "region not configured in environment")

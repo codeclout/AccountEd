@@ -16,7 +16,7 @@ func main() {
 	storageconfig := server.NewAdapter(*monitor, staticConfigurationPath)
 	baseconfig := *storageconfig.LoadStorageConfig()
 
-	infraconfig := NewAdapter(*monitor)
+	infraconfig := stack.NewAdapter(*monitor)
 	config := infraconfig.LoadStorageInfrastructureConfig(baseconfig)
 
 	app := cdktf.NewApp(nil)

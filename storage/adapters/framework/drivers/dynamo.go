@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -47,20 +46,14 @@ func NewAdapter(config map[string]interface{}, dynamoApi api.DynamoDbApiPort, mo
 	}
 }
 
-func (a *Adapter) getRequestSLA() (int, error) {
-	sla, ok := a.config["SLARoutePerformance"].(string)
+func (a *Adapter) getRequestSLA() (float64, error) {
+	sla, ok := a.config["SLARoutes"].(float64)
 	if !ok {
 		a.monitor.LogGenericError("drivers -> static config sla_route_performance is not a string")
 		return 0, errors.New("wrong type: sla")
 	}
 
-	i, e := strconv.Atoi(sla)
-	if e != nil {
-		a.monitor.LogGenericError("drivers -> error converting sla_route_performance to int")
-		return 0, errors.New("error converting slaroutperformance to int: " + e.Error())
-	}
-
-	return i, nil
+	return sla, nil
 }
 
 func (a *Adapter) setContextTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
@@ -73,7 +66,7 @@ func (a *Adapter) setContextTimeout(ctx context.Context) (context.Context, conte
 
 	sla, e := a.getRequestSLA()
 	if e != nil {
-		sla = int(defaultRouteDuration)
+		sla = float64(defaultRouteDuration)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(sla)*time.Millisecond)
