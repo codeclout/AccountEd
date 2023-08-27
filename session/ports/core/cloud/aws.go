@@ -1,7 +1,11 @@
 package cloud
 
-import "context"
+import (
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/credentials"
+)
 
 type AWSCloudCorePort interface {
-  GetServiceIdMetadata(ctx context.Context)
+	ConvertCredentialsToBytes(ctx context.Context, in *credentials.StaticCredentialsProvider) ([]byte, error)
 }

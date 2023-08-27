@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
-
 	"github.com/pkg/errors"
 
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
@@ -59,13 +59,13 @@ func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *notificati
 		return nil, e
 	}
 
-	params := req.URL.Query()
-
 	emailProcessorApiKey, ok := a.config["EmailProcessorAPIKey"].(string)
 	if !ok {
 		a.monitor.LogGenericError("driven -> email processor api emailProcessorApiKey is not a string")
 		return nil, notifications.ErrorStaticConfig(errors.New("core -> wrong type: emailProcessorApiKey"))
 	}
+
+	params := req.URL.Query()
 
 	params.Add("api_key", emailProcessorApiKey)
 	params.Add("email", in.EmailAddress)
@@ -76,6 +76,13 @@ func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *notificati
 		a.monitor.LogGenericError(fmt.Sprintf("email processor api returned -> %s", response.Status))
 		return nil, notifications.ErrorEmailVerificationProcessor(errors.New(response.Status))
 	}
+
+	defer func(Body io.ReadCloser) {
+		e := Body.Close()
+		if e != nil {
+			a.monitor.LogGenericError(e.Error())
+		}
+	}(response.Body)
 
 	e = json.NewDecoder(response.Body).Decode(&out)
 	if e != nil {

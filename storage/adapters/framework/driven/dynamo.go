@@ -39,9 +39,6 @@ func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter, wg *s
 }
 
 func (a *Adapter) GetDynamoClient(ctx context.Context, creds *credentials.StaticCredentialsProvider, region *string) (*dynamodb.Client, error) {
-	// if a.clientCache != nil {
-	// 	return a.clientCache, nil
-	// }
 	var endpoint string
 
 	isDemo, ok := a.config["DemoMode"].(bool)
@@ -73,14 +70,13 @@ func (a *Adapter) GetDynamoClient(ctx context.Context, creds *credentials.Static
 		return nil, storageTypes.ErrorDefaultConfiguration(errors.New("unable to load DynamoDB configuration"))
 	}
 
-	// @TODO - store and check client expiration
 	session := dynamodb.NewFromConfig(dynamoConfig)
 	a.clientCache = session
 
 	return session, nil
 }
 
-func (a *Adapter) StoreSession(ctx context.Context, api driven.DynamodbAPI, in storeSessionIn) (*storageTypes.PreRegistrationSessionDrivenOut, error) {
+func (a *Adapter) StoreSession(ctx context.Context, client driven.DynamodbAPI, in storeSessionIn) (*storageTypes.PreRegistrationSessionDrivenOut, error) {
 	tableName := in.SessionStorageTableName
 
 	now := time.Now()
@@ -105,10 +101,17 @@ func (a *Adapter) StoreSession(ctx context.Context, api driven.DynamodbAPI, in s
 		TableName: aws.String(tableName),
 	}
 
-	result, e := api.PutItem(ctx, data)
+	result, e := client.PutItem(ctx, data)
 	if e != nil {
 		a.monitor.LogGrpcError(ctx, e.Error())
-		return nil, status.Errorf(codes.Internal, "unable to save session id -> ", in.SessionID)
+
+		var conditionalCheckFailed *types.ConditionalCheckFailedException
+		if errors.As(e, &conditionalCheckFailed) {
+			var ErrorSessionExists storageTypes.ErrorSessionExists = errors.New("session already exists")
+			return nil, status.Error(codes.AlreadyExists, ErrorSessionExists.Error())
+		}
+
+		return nil, status.Errorf(codes.Internal, "unable to save session id -> %s", in.SessionID)
 	}
 
 	out := storageTypes.PreRegistrationSessionDrivenOut{

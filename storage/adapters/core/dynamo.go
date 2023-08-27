@@ -32,7 +32,7 @@ func (a *Adapter) PreRegistrationConfirmationCore(ctx context.Context) (*dynamov
 		return nil, status.Error(codes.InvalidArgument, "api input is invalid")
 	}
 
-	driven := ctx.Value("driven_output").(*storageTypes.PreRegistrationSessionDrivenOut)
+	driven, ok := ctx.Value("driven_output").(*storageTypes.PreRegistrationSessionDrivenOut)
 	if !ok {
 		a.monitor.LogGrpcError(ctx, fmt.Sprintf("invalid core driven -> PreRegistrationConfirmationCore(%v)", ctx))
 		return nil, status.Error(codes.InvalidArgument, "api input is invalid")

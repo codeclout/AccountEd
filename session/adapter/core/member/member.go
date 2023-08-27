@@ -27,25 +27,15 @@ func NewAdapter(config map[string]interface{}, monitor *drivers.Adapter) *Adapte
 	}
 }
 
-func (a *Adapter) ProcessSessionIdEncryption(ctx context.Context) (*sessiontypes.SessionIdEncryptionOut, error) {
-	key, ok := ctx.Value(sessiontypes.ContextDrivenLabel("driven_input")).(string)
-	if !ok {
-		return nil, errors.New("invalid session id key")
-	}
-
-	id, ok := ctx.Value(sessiontypes.ContextAPILabel("api_input")).(string)
-	if !ok {
-		return nil, errors.New("invalid session id")
-	}
-
-	keyBytes := []byte(key)
+func (a *Adapter) ProcessSessionIdEncryption(ctx context.Context, key *string, id string) (*sessiontypes.SessionIdEncryptionOut, error) {
+	keyBytes := []byte(*key)
 	if len(keyBytes) != 32 {
 		return nil, errors.New("key length must equal 32 bytes")
 	}
 
 	associatedData := []byte(a.monitor.GetTimeStamp().String())
 
-	internalKey, e := aes.NewCipher([]byte(key))
+	internalKey, e := aes.NewCipher([]byte(*key))
 	if e != nil {
 		return nil, e
 	}

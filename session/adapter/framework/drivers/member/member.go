@@ -2,6 +2,7 @@ package member
 
 import (
 	"context"
+	"fmt"
 
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	cloudAWS "github.com/codeclout/AccountEd/session/ports/api/cloud"
@@ -37,8 +38,15 @@ func NewAdapter(config map[string]interface{}, api memberApi, awsapi cloudApi, m
 }
 
 func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.EncryptedStringRequest) (*pb.EncryptedStringResponse, error) {
-	arn := a.config["RoleToAssume"].(string)
-	region := a.config["Region"].(string)
+	arn, ok := a.config["RoleToAssume"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing or invalid 'RoleToAssume' in config")
+	}
+
+	region, ok := a.config["Region"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing or invalid 'Region' in config")
+	}
 
 	sessionIdRequestRole := sessiontypes.AmazonConfigurationInput{
 		RoleArn: aws.String(arn),
@@ -46,7 +54,7 @@ func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.Encrypte
 	}
 
 	ch := make(chan *awspb.AWSConfigResponse, 1)
-	echan := make(chan error, 1)
+	ech := make(chan error, 1)
 	uch := make(chan *pb.EncryptedStringResponse, 1)
 
 	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, arn+"|"+region)
@@ -56,24 +64,25 @@ func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.Encrypte
 		MemberID:       request.GetMemberId(),
 		SessionID:      request.GetSessionId(),
 	}
-	
-	a.aws.GetAWSSessionCredentials(ctx, sessionIdRequestRole, ch, echan)
+
+	a.aws.GetAWSSessionCredentials(ctx, sessionIdRequestRole, ch, ech)
 
 	select {
 	case session := <-ch:
-		a.api.EncryptSessionId(ctx, session.AwsCredentials, &apiData, uch, echan)
+		a.api.EncryptSessionId(ctx, session.AwsCredentials, &apiData, uch, ech)
 	}
 
 	select {
 	case <-ctx.Done():
-		a.monitor.LogGrpcError(ctx, "request timeout")
-		return nil, errors.New("request timeout")
+		const msg = "get encrypted session id request timeout"
+		a.monitor.LogGrpcError(ctx, msg)
+		return nil, errors.New(msg)
 
 	case out := <-uch:
 		a.monitor.LogGrpcInfo(ctx, "success")
 		return out, nil
 
-	case e := <-echan:
+	case e := <-ech:
 		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}

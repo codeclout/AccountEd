@@ -44,18 +44,21 @@ func (a *Adapter) PreRegistrationConfirmationApi(ctx context.Context, in preconf
 	if !ok {
 		a.monitor.LogGenericError("region not set in environment")
 		ech <- status.Error(codes.Internal, "region not configured in environment")
+		return
 	}
 
 	client, e := a.driven.GetDynamoClient(ctx, in.SessionServiceCredentials, &region)
 	if e != nil {
 		a.monitor.LogGrpcError(ctx, e.Error())
 		ech <- status.Error(codes.Internal, "unable to retrieve storage client")
+		return
 	}
 
 	result, e := a.driven.StoreSession(ctx, client, in)
 	if e != nil {
 		a.monitor.LogGrpcError(ctx, e.Error())
 		ech <- status.Error(codes.Internal, "unable to store session")
+		return
 	}
 
 	ctx = context.WithValue(ctx, "api_input", in)
@@ -65,7 +68,9 @@ func (a *Adapter) PreRegistrationConfirmationApi(ctx context.Context, in preconf
 	if e != nil {
 		a.monitor.LogGrpcError(ctx, e.Error())
 		ech <- status.Error(codes.Internal, "internal error")
+		return
 	}
-	
+
 	ch <- out
+	return
 }

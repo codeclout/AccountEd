@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	emailv1 "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
@@ -23,33 +23,19 @@ func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter) *Adap
 	}
 }
 
-func (a *Adapter) ProcessEmailValidation(ctx context.Context) (*notifications.EmailDrivenIn, error) {
-	email := ctx.Value(notifications.EmailAddress("address"))
-	emailAddress, ok := email.(string)
-	if !ok {
-		a.monitor.LogGenericError("core -> email address is not a string")
-		return nil, notifications.ErrorEmailVerificationProcessor(errors.New("core -> wrong type: emailAddress"))
-	}
-
-	emailProcessorDomain, ok := a.config["EmailProcessorDomain"].(string)
-	if !ok {
-		a.monitor.LogGenericError("core -> email processor domain is not a string")
-		return nil, notifications.ErrorEmailVerificationProcessor(errors.New("core -> wrong type: emailProcessorDomain"))
-	}
-
-	emailProcessorPath, ok := a.config["EmailVerifierApiPath"].(string)
-	if !ok {
-		a.monitor.LogGenericError("core -> email processor path is not a string")
-		return nil, notifications.ErrorEmailVerificationProcessor(errors.New("core -> wrong type: emailProcessorPath"))
-	}
-
-	endpoint := fmt.Sprintf("%s%s", emailProcessorDomain, emailProcessorPath)
-	preRegistrationID, _ := uuid.NewRandom()
-
-	out := notifications.EmailDrivenIn{
-		EmailAddress: emailAddress,
-		Endpoint:     endpoint,
-		SessionID:    &preRegistrationID,
+func (a *Adapter) ProcessEmailValidation(ctx context.Context, in notifications.ValidateEmailOut) (*emailv1.ValidateEmailAddressResponse, error) {
+	out := emailv1.ValidateEmailAddressResponse{
+		Email:             in.Email,
+		Autocorrect:       in.Autocorrect,
+		Deliverability:    in.Deliverability,
+		QualityScore:      in.QualityScore,
+		IsValidFormat:     in.IsValidFormat,
+		IsFreeEmail:       in.IsFreeEmail,
+		IsDisposableEmail: in.IsDisposableEmail,
+		IsRoleEmail:       in.IsRoleEmail,
+		IsCatchallEmail:   in.IsCatchallEmail,
+		IsMxFound:         in.IsMxFound,
+		IsSmtpValid:       in.IsSMTPValid,
 	}
 
 	return &out, nil

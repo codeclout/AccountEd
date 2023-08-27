@@ -1,8 +1,6 @@
 package notification_types
 
 import (
-	"github.com/google/uuid"
-
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 )
 
@@ -14,9 +12,8 @@ type ErrorStaticConfig error
 type SessionID string
 
 type EmailDrivenIn struct {
-	EmailAddress string     `json:"email_address"`
-	Endpoint     string     `json:"endpoint"`
-	SessionID    *uuid.UUID `json:"session_id"`
+	EmailAddress string `json:"email_address"`
+	Endpoint     string `json:"endpoint"`
 }
 
 type NoReplyEmailIn struct {

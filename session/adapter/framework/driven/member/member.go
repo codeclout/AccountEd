@@ -3,6 +3,7 @@ package member
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -14,15 +15,53 @@ import (
 )
 
 type Adapter struct {
-	config map[string]interface{}
+	config  map[string]interface{}
 	monitor monitoring.Adapter
 }
 
 func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		config: config,
+		config:  config,
 		monitor: monitor,
 	}
+}
+
+func (a *Adapter) GetAwsRegion() (string, error) {
+	awsRegion, ok := a.config["Region"].(string)
+	if !ok {
+		return "", errors.New("Check the 'Region' in application configuration")
+	}
+	return awsRegion, nil
+}
+
+func (a *Adapter) createSecretsManagerClient(awsconfig []byte, awsRegion string) (*secretsmanager.Client, error) {
+	var creds credentials.StaticCredentialsProvider
+
+	err := json.Unmarshal(awsconfig, &creds)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling awsconfig: %w", err)
+	}
+
+	secretsClient := secretsmanager.NewFromConfig(aws.Config{Credentials: creds}, func(options *secretsmanager.Options) {
+		options.Region = awsRegion
+	})
+
+	return secretsClient, nil
+}
+
+func (a *Adapter) createSystemsManagerClient(awsconfig []byte, awsRegion string) (*ssm.Client, error) {
+	var creds credentials.StaticCredentialsProvider
+
+	err := json.Unmarshal(awsconfig, &creds)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling awsconfig: %w", err)
+	}
+
+	ssmClient := ssm.NewFromConfig(aws.Config{Credentials: creds}, func(options *ssm.Options) {
+		options.Region = awsRegion
+	})
+
+	return ssmClient, nil
 }
 
 // GetSessionIdKey retrieves a session ID key from AWS Secret Manager via the System Manager's Parameter Store.

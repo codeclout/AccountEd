@@ -22,6 +22,7 @@ import (
 var ctx = context.Background()
 
 type cfg = map[string]interface{}
+
 type AdapterServiceClients struct {
 	AwsSessionclient        *awsv1.AWSResourceClientServiceClient
 	EmailNotificationclient *emailv1.EmailNotificationServiceClient

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
@@ -9,18 +10,18 @@ import (
 	"github.com/pkg/errors"
 
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
-	"github.com/codeclout/AccountEd/notifications/ports/core"
+	notificatonCore "github.com/codeclout/AccountEd/notifications/ports/core"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/driven"
 )
 
 type Adapter struct {
 	config      map[string]interface{}
-	core        core.EmailCorePort
+	core        notificatonCore.EmailCorePort
 	drivenEmail driven.EmailDrivenPort
 	monitor     monitoring.Adapter
 }
 
-func NewAdapter(config map[string]interface{}, core core.EmailCorePort, email driven.EmailDrivenPort, monitor monitoring.Adapter) *Adapter {
+func NewAdapter(config map[string]interface{}, core notificatonCore.EmailCorePort, email driven.EmailDrivenPort, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		config:      config,
 		core:        core,
@@ -29,39 +30,57 @@ func NewAdapter(config map[string]interface{}, core core.EmailCorePort, email dr
 	}
 }
 
-func (a *Adapter) ValidateEmailAddress(ctx context.Context, address string, ch chan *pb.ValidateEmailAddressResponse, errorch chan error) {
-	emailAddress := notifications.EmailAddress("address")
-	ctx = context.WithValue(ctx, emailAddress, address)
+func (a *Adapter) ValidateEmailAddress(ctx context.Context, address string, ch chan *pb.ValidateEmailAddressResponse, ech chan error) {
+	var s string
 
-	coreEmailProcessor, e := a.core.ProcessEmailValidation(ctx)
-	if e != nil {
-		x := errors.Wrapf(e, "api-ValidateEmailAddress -> core.ProcessEmailValidation(%v)", ctx)
-		errorch <- x
+	if address == (s) {
+		const msg = "api => email address is invalid"
+
+		a.monitor.LogGenericError(msg)
+		ech <- errors.New(msg)
 		return
 	}
 
-	validated, e := a.drivenEmail.EmailVerificationProcessor(ctx, coreEmailProcessor)
+	emailProcessorDomain, ok := a.config["EmailProcessorDomain"].(string)
+	if !ok {
+		const msg = "api => email domain is invalid"
+
+		a.monitor.LogGenericError(msg)
+		ech <- errors.New(msg)
+		return
+	}
+
+	emailProcessorPath, ok := a.config["EmailVerifierApiPath"].(string)
+	if !ok {
+		const msg = "api => email processor path is invalid"
+
+		a.monitor.LogGenericError(msg)
+		ech <- errors.New(msg)
+		return
+	}
+
+	endpoint := fmt.Sprintf("%s%s", emailProcessorDomain, emailProcessorPath)
+
+	validatorData := notifications.EmailDrivenIn{
+		EmailAddress: address,
+		Endpoint:     endpoint,
+	}
+
+	validated, e := a.drivenEmail.EmailVerificationProcessor(ctx, &validatorData)
 	if e != nil {
 		x := errors.Wrapf(e, "api-ValidateEmailAddress -> drivenEmail.EmailVerificationProcessor(%v)", ctx)
-		errorch <- x
+		ech <- x
 		return
 	}
 
-	out := pb.ValidateEmailAddressResponse{
-		Email:             validated.Email,
-		Autocorrect:       validated.Autocorrect,
-		Deliverability:    validated.Deliverability,
-		QualityScore:      validated.QualityScore,
-		IsValidFormat:     validated.IsValidFormat,
-		IsFreeEmail:       validated.IsFreeEmail,
-		IsDisposableEmail: validated.IsDisposableEmail,
-		IsRoleEmail:       validated.IsRoleEmail,
-		IsCatchallEmail:   validated.IsCatchallEmail,
-		IsMxFound:         validated.IsMxFound,
-		IsSmtpValid:       validated.IsSMTPValid,
+	core, e := a.core.ProcessEmailValidation(ctx, *validated)
+	if e != nil {
+		x := errors.Wrapf(e, "api-ValidateEmailAddress -> core.ProcessEmailValidation(%v)", ctx)
+		ech <- x
+		return
 	}
 
-	ch <- &out
+	ch <- core
 }
 
 func (a *Adapter) SendPreRegistrationEmailAPI(ctx context.Context, in *notifications.NoReplyEmailIn, ch chan *pb.NoReplyEmailNotificationResponse, errorch chan error) {

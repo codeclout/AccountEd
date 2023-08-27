@@ -108,6 +108,6 @@ func (a *Adapter) HandlePreRegistration(ctx context.Context, in *PrimaryMemberSt
 
 	case e := <-ech:
 		a.monitor.LogHttpError(ctx, errors.Cause(e).Error())
-		return nil, errors.New(fiber.ErrInternalServerError.Error())
+		return nil, errors.Wrap(e, fiber.ErrInternalServerError.Error())
 	}
 }

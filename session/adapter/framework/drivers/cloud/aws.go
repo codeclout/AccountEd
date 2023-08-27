@@ -38,10 +38,10 @@ func (a *Adapter) GetAWSSessionCredentials(ctx context.Context, request *awspb.A
 	}
 
 	ch := make(chan *awspb.AWSConfigResponse, 1)
-	errorch := make(chan error, 1)
+	ech := make(chan error, 1)
 
 	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, roleArn+"|"+region)
-	a.api.GetAWSSessionCredentials(ctx, data, ch, errorch)
+	a.api.GetAWSSessionCredentials(ctx, data, ch, ech)
 
 	select {
 	case <-ctx.Done():
@@ -52,7 +52,7 @@ func (a *Adapter) GetAWSSessionCredentials(ctx context.Context, request *awspb.A
 		a.monitor.LogGrpcInfo(ctx, "success")
 		return out, nil
 
-	case e := <-errorch:
+	case e := <-ech:
 		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}

@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	"google.golang.org/grpc/status"
 
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
@@ -60,24 +59,34 @@ func NewAdapter(config map[string]interface{}, core scp, cloud aws, dms dmp, grp
 }
 
 func (a *Adapter) EncryptSessionId(ctx cctx, awscreds []byte, in *storeMeta, uch chan *sessionIdResp, ech chan error) {
-	k, e := a.drivenMember.GetSessionIdKey(ctx, awscreds)
+	if in == nil {
+		const msg = "request to encrypt session id received nil input"
+		a.monitor.LogGenericError(msg)
+
+		ech <- errors.New(msg)
+		return
+	}
+
+	driven, e := a.drivenMember.GetSessionIdKey(ctx, awscreds)
 	if e != nil {
 		x := errors.Wrapf(e, "api-EncryptSessionId -> core.ProcessSessionIdEncryption(sessionID:%s)", in.SessionID)
 		ech <- x
 		return
 	}
 
-	ctx = context.WithValue(ctx, a.contextDrivenLabel, *k)
-	ctx = context.WithValue(ctx, a.contextAPILabel, in.SessionID)
-
-	core, e := a.core.ProcessSessionIdEncryption(ctx)
+	core, e := a.core.ProcessSessionIdEncryption(ctx, driven, in.SessionID)
 	if e != nil {
 		x := errors.Wrapf(e, "api-EncryptSessionId -> core.ProcessSessionIdEncryption(sessionID:%s)", in.SessionID)
 		ech <- x
 		return
 	}
 
-	go a.storeEncryptedSession(ctx, core, *in, awscreds)
+	e = a.storeEncryptedSession(ctx, core, *in, awscreds)
+	if e != nil {
+		x := errors.Wrap(e, "api-EncryptSessionId -> storeEncryptedSession")
+		ech <- x
+		return
+	}
 
 	out := pb.EncryptedStringResponse{
 		EncryptedSessionId: *core.CipherText,
@@ -87,12 +96,11 @@ func (a *Adapter) EncryptSessionId(ctx cctx, awscreds []byte, in *storeMeta, uch
 	return
 }
 
-func (a *Adapter) storeEncryptedSession(ctx cctx, in *sessionIdData, meta storeMeta, staticCredentials []byte) {
-	a.wg.Add(1)
-
+func (a *Adapter) storeEncryptedSession(ctx cctx, in *sessionIdData, meta storeMeta, staticCredentials []byte) error {
 	tableName, ok := a.config["SessionTableName"].(string)
 	if !ok {
 		a.monitor.LogGrpcError(ctx, "session table name not set in environment")
+		return errors.New("db table name missing")
 	}
 
 	data := dynamov1.PreRegistrationConfirmationRequest{
@@ -105,23 +113,23 @@ func (a *Adapter) storeEncryptedSession(ctx cctx, in *sessionIdData, meta storeM
 		SessionServiceAWScredentials: staticCredentials,
 		SessionID:                    *in.SessionID,
 		SessionTableName:             tableName,
-		Ttl:                          1000 * 60 * 15,
+		Ttl:                          1000 * 60 * 60 * 24,
 	}
+
+	if a.grpcClient == nil || a.grpcClient.SessionStorageclient == nil {
+		return errors.New("nil gRPC or SessionStorageclient")
+	}
+
+	client := *a.grpcClient.SessionStorageclient
 
 	// @TODO - Handle system event from response data -> new member pre confirmation
-	client := *a.grpcClient.SessionStorageclient
-	_, e := client.StorePreConfirmationRegistrationSession(ctx, &data)
+	cr, e := client.StorePreConfirmationRegistrationSession(ctx, &data)
 
 	if e != nil {
-		ko, ok := status.FromError(e)
-
-		if !ok {
-			panic(fmt.Sprintf("unexpected error %v", e))
-		}
-
-		a.monitor.LogGrpcError(ctx, fmt.Sprintf("session store operation failed ->  %v", ko))
-		_, _ = client.StorePreConfirmationRegistrationSession(ctx, &data)
+		return e
 	}
 
-	a.wg.Done()
+	a.monitor.LogGenericInfo(fmt.Sprintf("%+v", cr))
+
+	return nil
 }

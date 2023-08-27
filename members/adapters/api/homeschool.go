@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/codeclout/AccountEd/members/ports/framework/driven"
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
@@ -16,35 +17,56 @@ import (
 	membersCore "github.com/codeclout/AccountEd/members/ports/core"
 )
 
+type config = map[string]interface{}
+type corePort = membersCore.HomeschoolCore
+
+type drivenPort = driven.HomeschoolDrivenPort
+type gRPCclients = protocol.AdapterServiceClients
+
+type pmrStart = memberTypes.PrimaryMemberStartRegisterIn
+type pmrOut = memberTypes.PrimaryMemberStartRegisterOut
+
+type validatedEmailIn = memberTypes.VerifiedEmailIn
+type validateEmailResponse = pb.ValidateEmailAddressResponse
+
 type Adapter struct {
-	config             map[string]interface{}
+	config             config
 	contextAPILabel    memberTypes.ContextAPILabel
 	contextDrivenLabel memberTypes.ContextDrivenLabel
-	core               membersCore.HomeschoolCore
-	gRPC               *protocol.AdapterServiceClients
+	core               corePort
+	driven             drivenPort
+	gRPC               *gRPCclients
 	monitor            monitoring.Adapter
 }
 
-func NewAdapter(config map[string]interface{}, core membersCore.HomeschoolCore, grpc *protocol.AdapterServiceClients, monitor monitoring.Adapter) *Adapter {
+func NewAdapter(config config, core corePort, grpc *gRPCclients, driven drivenPort, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		config:             config,
 		contextAPILabel:    "api_input",
 		contextDrivenLabel: "driven_input",
 		core:               core,
+		driven:             driven,
 		gRPC:               grpc,
 		monitor:            monitor,
 	}
 }
 
 func (a *Adapter) encryptSessionID(ctx context.Context, in *memberTypes.PrimaryMemberStartRegisterOut) (string, error) {
-	var s string
+	if a.gRPC == nil || a.gRPC.MemberSessionclient == nil {
+		return "", errors.New("nil gRPC or MemberSessionClient")
+	}
 
-	client := *a.gRPC.MemberSessionclient
+	if in == nil {
+		return "", errors.New("input parameter is nil")
+	}
+
 	payload := sessionpb.EncryptedStringRequest{
-		HasAutoCorrect: in.AutoCorrect == (s),
+		HasAutoCorrect: len(in.AutoCorrect) > 0,
 		MemberId:       in.MemberID,
 		SessionId:      in.SessionID,
 	}
+
+	client := *a.gRPC.MemberSessionclient
 
 	encryptedSessionID, e := client.GetEncryptedSessionId(ctx, &payload)
 	if e != nil {
@@ -58,24 +80,41 @@ func (a *Adapter) encryptSessionID(ctx context.Context, in *memberTypes.PrimaryM
 func (a *Adapter) getDomain() (string, error) {
 	domain, ok := a.config["Domain"].(string)
 	if !ok {
-		return domain, errors.New("missing environment variable -> Domain")
+		const e = "homeschool API missing environment variable -> Domain"
+
+		a.monitor.LogGenericError(e)
+		return domain, errors.New(e)
 	}
 
 	return domain, nil
 }
 
 func (a *Adapter) getEmailDomain() (string, error) {
+	var s string
+
 	v, e := a.getDomain()
 	if e != nil {
 		return "", e
 	}
 
-	r, _ := url.Parse(v)
-	if r == nil || r.Hostname() == "" {
+	r, e := url.Parse(v)
+	if e != nil || r.Hostname() == (s) {
+		a.monitor.LogGenericError("failed to parse email domain: " + e.Error())
 		return "", errors.New("unable to parse hostname")
 	}
 
 	return r.Hostname(), nil
+}
+
+func (a *Adapter) handleSessionID(ctx context.Context, core *pmrOut) (*pmrOut, error) {
+	hashedSessionID, e := a.encryptSessionID(ctx, core)
+	if e != nil {
+		a.monitor.LogHttpError(ctx, "api -> encryptSessionID: "+e.Error())
+		return nil, e
+	}
+
+	core.SessionID = hashedSessionID
+	return core, nil
 }
 
 func (a *Adapter) sendPreRegistrationEmail(ctx context.Context, hashedSessionID string, toAddress []string) error {
@@ -107,47 +146,51 @@ func (a *Adapter) sendPreRegistrationEmail(ctx context.Context, hashedSessionID 
 	return nil
 }
 
-func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberTypes.PrimaryMemberStartRegisterIn, ch chan *memberTypes.PrimaryMemberStartRegisterOut, ech chan error) {
-	emailclient := *a.gRPC.EmailNotificationclient
-	response, e := emailclient.ValidateEmailAddress(ctx, &pb.ValidateEmailAddressRequest{Address: *data.Username})
+func (a *Adapter) proxyValidatedEmailResponse(ctx context.Context, data *validateEmailResponse) (*validatedEmailIn, context.Context) {
+	var workflowLabel = memberTypes.ContextPreRegistrationWorkflowLabel("proxyValidatedEmailResponse")
+
+	ctx = context.WithValue(ctx, workflowLabel, "called")
+
+	coreData := memberTypes.VerifiedEmailIn{
+		Email:             data.GetEmail(),
+		Autocorrect:       data.GetAutocorrect(),
+		Deliverability:    data.GetDeliverability(),
+		QualityScore:      data.GetQualityScore(),
+		IsValidFormat:     data.GetIsValidFormat(),
+		IsFreeEmail:       data.GetIsFreeEmail(),
+		IsDisposableEmail: data.GetIsDisposableEmail(),
+		IsRoleEmail:       data.GetIsRoleEmail(),
+		IsCatchallEmail:   data.GetIsCatchallEmail(),
+		IsMxFound:         data.GetIsMxFound(),
+		IsSmtpValid:       data.GetIsSmtpValid(),
+	}
+
+	return &coreData, ctx
+}
+
+func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *pmrStart, ch chan *pmrOut, ech chan error) {
+	validatedEmailResponse, e := a.driven.ValidateEmailAddress(ctx, data, a.gRPC.EmailNotificationclient)
 	if e != nil {
-		a.monitor.LogHttpError(ctx, *data.Username)
-		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
+		ech <- e
 		return
 	}
 
-	coreData := memberTypes.EmailValidationIn{
-		Email:             response.GetEmail(),
-		Autocorrect:       response.GetAutocorrect(),
-		Deliverability:    response.GetDeliverability(),
-		QualityScore:      response.GetQualityScore(),
-		IsValidFormat:     response.GetIsValidFormat(),
-		IsFreeEmail:       response.GetIsFreeEmail(),
-		IsDisposableEmail: response.GetIsDisposableEmail(),
-		IsRoleEmail:       response.GetIsRoleEmail(),
-		IsCatchallEmail:   response.GetIsCatchallEmail(),
-		IsMxFound:         response.GetIsMxFound(),
-		IsSmtpValid:       response.GetIsSmtpValid(),
-	}
-	if coreData == (memberTypes.EmailValidationIn{}) {
-		a.monitor.LogHttpError(ctx, "core -> 0 data returned: "+*data.Username)
-		ech <- memberTypes.ErrorCoreDataInvalid(errors.New("0 data for transaction_id:" + *data.Username))
-		return
-	}
+	drivenProxyData, ctx := a.proxyValidatedEmailResponse(ctx, validatedEmailResponse)
 
-	ctx = context.WithValue(ctx, a.contextAPILabel, coreData)
-	core, e := a.core.PreRegister(ctx)
+	core, ctx, e := a.core.PreRegister(ctx, *drivenProxyData)
 	if e != nil {
-		a.monitor.LogHttpError(ctx, "core -> pre registration: "+*data.Username)
-		ech <- errors.Wrapf(e, "registerAccountAPI -> core.PreRegister(%v)", *data)
+		ech <- errors.Wrap(e, "PreRegisterPrimaryMember -> core.PreRegister")
 		return
 	}
 
-	hashedSessionID, _ := a.encryptSessionID(ctx, core)
-	core.SessionID = hashedSessionID
+	core, e = a.handleSessionID(ctx, core)
+	if e != nil {
+		ech <- errors.Wrap(e, "session id hashing failed")
+		return
+	}
 
 	if core.RegistrationPending {
-		e = a.sendPreRegistrationEmail(ctx, hashedSessionID, []string{core.MemberID})
+		e = a.sendPreRegistrationEmail(ctx, core.SessionID, []string{core.MemberID})
 		if e != nil {
 			a.monitor.LogGenericError(e.Error())
 			ech <- errors.New("unable to process verification email")
@@ -155,10 +198,10 @@ func (a *Adapter) PreRegisterPrimaryMember(ctx context.Context, data *memberType
 		}
 
 		ch <- core
+		return
 	}
 
-	// otherwise -> asynchronously
-	// create and register account
-
+	// create and register account asynchronously
 	ch <- core
+	return
 }

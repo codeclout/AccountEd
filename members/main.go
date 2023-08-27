@@ -5,8 +5,10 @@ import (
 	"sync"
 
 	apiAdapter "github.com/codeclout/AccountEd/members/adapters/api"
+	drivenAdapter "github.com/codeclout/AccountEd/members/adapters/framework/driven"
 	memberDriverAdapter "github.com/codeclout/AccountEd/members/adapters/framework/drivers"
 	memberProtocolDriverAdapter "github.com/codeclout/AccountEd/members/adapters/framework/drivers/protocols"
+	"github.com/codeclout/AccountEd/members/ports/framework/driven"
 	memberProtocolDriverPort "github.com/codeclout/AccountEd/members/ports/framework/drivers/protocols"
 
 	driverAdapterServerConfiguration "github.com/codeclout/AccountEd/members/adapters/framework/drivers/server"
@@ -27,6 +29,7 @@ func main() {
 		homeschoolAPI       api.HomeschoolAPI
 		homeschoolCore      core.HomeschoolCore
 		homeschoolDriver    drivers.HomeschoolDriverPort
+		homeSchoolDriven    driven.HomeschoolDrivenPort
 		memberConfiguration server.MembersConfigurationPort
 		memberHTTPProtocol  memberProtocolDriverPort.MemberProtocolHTTPPort
 
@@ -35,7 +38,7 @@ func main() {
 
 	monitor := monitoring.NewAdapter()
 
-  memberConfiguration = driverAdapterServerConfiguration.NewAdapter(*monitor, "./config.hcl")
+	memberConfiguration = driverAdapterServerConfiguration.NewAdapter(*monitor, "./config.hcl")
 	config := *memberConfiguration.LoadMemberConfig()
 
 	applicationName, ok := config["Name"].(string)
@@ -66,8 +69,9 @@ func main() {
 	go gRPCAdapter.InitializeClients()
 	defer gRPCAdapter.StopProtocolListener()
 
-  homeschoolCore = coreAdapter.NewAdapter(config, *monitor)
-	homeschoolAPI = apiAdapter.NewAdapter(config, homeschoolCore, gRPCAdapter, *monitor)
+	homeschoolCore = coreAdapter.NewAdapter(config, *monitor)
+	homeSchoolDriven = drivenAdapter.NewAdapter(*monitor)
+	homeschoolAPI = apiAdapter.NewAdapter(config, homeschoolCore, gRPCAdapter, homeSchoolDriven, *monitor)
 	homeschoolDriver = memberDriverAdapter.NewAdapter(config, homeschoolAPI, *monitor)
 
 	homeschoolRoutes := homeschoolDriver.InitializeAPI()

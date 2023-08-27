@@ -2,6 +2,9 @@ package cloud
 
 import (
 	"context"
+	"encoding/json"
+
+	"github.com/aws/aws-sdk-go-v2/credentials"
 
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
@@ -18,6 +21,11 @@ func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter) *Adap
 	}
 }
 
-func (a *Adapter) GetServiceIdMetadata(ctx context.Context) {
-	
+func (a *Adapter) ConvertCredentialsToBytes(ctx context.Context, in *credentials.StaticCredentialsProvider) ([]byte, error) {
+	b, e := json.Marshal(in)
+	if e != nil {
+		return nil, e
+	}
+
+	return b, nil
 }

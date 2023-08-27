@@ -6,6 +6,8 @@ import (
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 )
 
+type ContextPreRegistrationWorkflowLabel string
+
 type ParentGuardian struct {
 	Member
 	Phone    string  `json:"phone"`
@@ -50,10 +52,9 @@ type StudentOut struct {
 	ParentAccountID string `json:"parent_account_id" validate:"required"`
 }
 
-// EmailValidationIn represents an input object for validating an email address. It contains properties related to the email validation, including
-// autocorrect, deliverability, quality score, and various email type checks (e.g., free email, disposable email, role email, catchall email, MX record, and
-// SMTP validation). The email type checks utilize protobuf EmailVerificationPayload objects.
-type EmailValidationIn struct {
+// VerifiedEmailIn represents an input object for validating an email address.
+// The email type checks utilize protobuf EmailVerificationPayload objects.
+type VerifiedEmailIn struct {
 	Email             string                       `json:"email"`
 	Autocorrect       string                       `json:"autocorrect"`
 	Deliverability    string                       `json:"deliverability"`

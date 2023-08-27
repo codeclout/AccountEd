@@ -66,14 +66,14 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEm
 	address := email.GetAddress()
 
 	ch := make(chan *pb.ValidateEmailAddressResponse, 1)
-	errorch := make(chan error, 1)
+	ech := make(chan error, 1)
 
 	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, address)
 	ctx, cancel := a.setContextTimeout(ctx)
 
 	defer cancel()
 
-	a.apiEmail.ValidateEmailAddress(ctx, address, ch, errorch)
+	a.apiEmail.ValidateEmailAddress(ctx, address, ch, ech)
 
 	select {
 	case <-ctx.Done():
@@ -84,7 +84,7 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, email *pb.ValidateEm
 		a.monitor.LogGrpcInfo(ctx, "success")
 		return out, nil
 
-	case e := <-errorch:
+	case e := <-ech:
 		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}
@@ -99,7 +99,7 @@ func (a *Adapter) SendPreRegistrationEmail(ctx context.Context, in *pb.NoReplyEm
 	toAddress := in.GetToAddress()
 
 	ch := make(chan *pb.NoReplyEmailNotificationResponse, 1)
-	errorch := make(chan error, 1)
+	ech := make(chan error, 1)
 
 	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, sessionID)
 	ctx, cancel := a.setContextTimeout(ctx)
@@ -114,7 +114,7 @@ func (a *Adapter) SendPreRegistrationEmail(ctx context.Context, in *pb.NoReplyEm
 		ToAddress:      toAddress,
 	}
 
-	a.apiEmail.SendPreRegistrationEmailAPI(ctx, &apiData, ch, errorch)
+	a.apiEmail.SendPreRegistrationEmailAPI(ctx, &apiData, ch, ech)
 
 	select {
 	case <-ctx.Done():
@@ -125,7 +125,7 @@ func (a *Adapter) SendPreRegistrationEmail(ctx context.Context, in *pb.NoReplyEm
 		a.monitor.LogGrpcInfo(ctx, "success")
 		return out, nil
 
-	case e := <-errorch:
+	case e := <-ech:
 		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}
