@@ -27,10 +27,10 @@ message ValidFormat {
 
 message NoReplyEmailNotificationRequest {
   bytes awsCredentials = 1;
-  string fromAddress = 2;
-  string sessionId = 3;
+  string domain = 2;
+  string fromAddress = 3;
   repeated string toAddress = 4;
-  string domain = 5;
+  string token = 5;
 }
 
 message NoReplyEmailNotificationResponse {

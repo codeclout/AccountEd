@@ -4,18 +4,6 @@ import (
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 )
 
-type URL string
-type EmailAddress string
-type EmailList []string
-type ErrorEmailVerificationProcessor error
-type ErrorStaticConfig error
-type SessionID string
-
-type EmailDrivenIn struct {
-	EmailAddress string `json:"email_address"`
-	Endpoint     string `json:"endpoint"`
-}
-
 type ProcessEmailValidationOut struct {
 	AutoCorrect          string `json:"auto_correct" bson:"auto_correct"`
 	MemberID             string `json:"member_id" bson:"member_id"`
@@ -27,7 +15,7 @@ type NoReplyEmailIn struct {
 	AWSCredentials []byte
 	Domain         string
 	FromAddress    string
-	SessionID      string
+	Token          string
 	ToAddress      []string
 }
 
@@ -38,6 +26,13 @@ type NoReplyEmailInput struct {
 
 type NoReplyEmailOut struct {
 	MessageID string
+}
+
+type ValidateEmailIn struct {
+	Address           string
+	ProcessorDomain   string
+	ProcessorEndpoint string
+	ProcessorKey      string
 }
 
 type ValidateEmailOut struct {

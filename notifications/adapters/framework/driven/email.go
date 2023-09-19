@@ -17,6 +17,9 @@ import (
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
 
+type ValidateEmailIn = notifications.ValidateEmailIn
+type ValidateEmailOut = notifications.ValidateEmailOut
+
 type Adapter struct {
 	config  map[string]interface{}
 	monitor monitoring.Adapter
@@ -48,33 +51,28 @@ func (a *Adapter) getPreRegistrationNoReplyContent(body, subject string) *types.
 	return &out
 }
 
-func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *notifications.EmailDrivenIn) (*notifications.ValidateEmailOut, error) {
+func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *ValidateEmailIn) (*ValidateEmailOut, error) {
 	var out notifications.ValidateEmailOut
 
+	endpoint := fmt.Sprintf("%s%s", in.ProcessorDomain, in.ProcessorEndpoint)
 	client := &http.Client{}
 
-	req, e := http.NewRequest("GET", in.Endpoint, nil)
+	req, e := http.NewRequest("GET", endpoint, nil)
 	if e != nil {
-		a.monitor.LogGenericError(e.Error())
+		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
-	}
-
-	emailProcessorApiKey, ok := a.config["EmailProcessorAPIKey"].(string)
-	if !ok {
-		a.monitor.LogGenericError("driven -> email processor api emailProcessorApiKey is not a string")
-		return nil, notifications.ErrorStaticConfig(errors.New("core -> wrong type: emailProcessorApiKey"))
 	}
 
 	params := req.URL.Query()
 
-	params.Add("api_key", emailProcessorApiKey)
-	params.Add("email", in.EmailAddress)
+	params.Add("api_key", in.ProcessorKey)
+	params.Add("email", in.Address)
 	req.URL.RawQuery = params.Encode()
 
 	response, e := client.Do(req)
 	if e != nil || response.StatusCode > 299 {
-		a.monitor.LogGenericError(fmt.Sprintf("email processor api returned -> %s", response.Status))
-		return nil, notifications.ErrorEmailVerificationProcessor(errors.New(response.Status))
+		a.monitor.LogGrpcError(ctx, fmt.Sprintf("email processor api returned -> %s", response.Status))
+		return nil, errors.New(response.Status)
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -86,8 +84,8 @@ func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *notificati
 
 	e = json.NewDecoder(response.Body).Decode(&out)
 	if e != nil {
-		a.monitor.LogGenericError("driven EmailVerificationProcessor -> unable to decode response body")
-		return nil, notifications.ErrorEmailVerificationProcessor(errors.New("unable to decode response body"))
+		a.monitor.LogGrpcError(ctx, "driven EmailVerificationProcessor -> unable to decode response body")
+		return nil, errors.New("unable to decode response body")
 	}
 
 	return &out, nil

@@ -1,14 +1,19 @@
 package api
 
 import (
-  "context"
+	"context"
 
-  notification "github.com/codeclout/AccountEd/notifications/notification-types"
+	notification "github.com/codeclout/AccountEd/notifications/notification-types"
 
-  pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
+	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 )
 
+type cc = context.Context
+
+type NoReplyEmailIn = notification.NoReplyEmailIn
+type ValidateEmailIn = notification.ValidateEmailIn
+
 type EmailApiPort interface {
-	SendPreRegistrationEmailAPI(ctx context.Context, in *notification.NoReplyEmailIn, ch chan *pb.NoReplyEmailNotificationResponse, errorch chan error)
-	ValidateEmailAddress(ctx context.Context, address string, ch chan *pb.ValidateEmailAddressResponse, errorch chan error)
+	SendPreRegistrationEmailAPI(ctx cc, in *NoReplyEmailIn, ch chan *pb.NoReplyEmailNotificationResponse, ech chan error)
+	ValidateEmailAddress(ctx context.Context, in *ValidateEmailIn, ch chan *pb.ValidateEmailAddressResponse, ech chan error)
 }
