@@ -1,14 +1,7 @@
 package drivers
 
-import (
-	"context"
-
-	"github.com/gofiber/fiber/v2"
-
-	mt "github.com/codeclout/AccountEd/members/member-types"
-)
+import "github.com/gofiber/fiber/v2"
 
 type HomeschoolDriverPort interface {
-	HandlePreRegistration(ctx context.Context, in *mt.PrimaryMemberStartRegisterIn) (*mt.PrimaryMemberStartRegisterOut, error)
-	InitializeAPI() []*fiber.App
+	InitializeHomeschoolAPI() []*fiber.App
 }

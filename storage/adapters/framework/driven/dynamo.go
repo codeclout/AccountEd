@@ -2,6 +2,7 @@ package driven
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -15,12 +16,19 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	"github.com/codeclout/AccountEd/storage/ports/framework/driven"
 	storageTypes "github.com/codeclout/AccountEd/storage/storage-types"
 )
 
-type storeSessionIn = storageTypes.PreRegistrationSessionAPIin
+type cc = context.Context
+
+type FetchTokenIn = storageTypes.FetchTokenIn
+type FetchTokenOut = storageTypes.FetchTokenResult
+type TokenStorePayload = storageTypes.TokenStorePayload
+type TokenStoreResult = storageTypes.TokenStoreResult
 
 type Adapter struct {
 	DynamoClient driven.DynamodbAPI
@@ -38,8 +46,10 @@ func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter, wg *s
 	}
 }
 
-func (a *Adapter) GetDynamoClient(ctx context.Context, creds *credentials.StaticCredentialsProvider, region *string) (*dynamodb.Client, error) {
+func (a *Adapter) GetDynamoClient(ctx context.Context, in credentials.StaticCredentialsProvider, region *string) (*dynamodb.Client, error) {
 	var endpoint string
+
+	dynamoCredentials := &credentials.StaticCredentialsProvider{Value: in.Value}
 
 	isDemo, ok := a.config["DemoMode"].(bool)
 	if !ok {
@@ -63,8 +73,9 @@ func (a *Adapter) GetDynamoClient(ctx context.Context, creds *credentials.Static
 			func(service, awsregion string, options ...interface{}) (aws.Endpoint, error) {
 				return aws.Endpoint{URL: endpoint}, nil
 			})),
-		awsconfig.WithCredentialsProvider(*creds),
+		awsconfig.WithCredentialsProvider(dynamoCredentials),
 	)
+
 	if e != nil {
 		a.monitor.LogGenericError(e.Error())
 		return nil, storageTypes.ErrorDefaultConfiguration(errors.New("unable to load DynamoDB configuration"))
@@ -76,29 +87,51 @@ func (a *Adapter) GetDynamoClient(ctx context.Context, creds *credentials.Static
 	return session, nil
 }
 
-func (a *Adapter) StoreSession(ctx context.Context, client driven.DynamodbAPI, in storeSessionIn) (*storageTypes.PreRegistrationSessionDrivenOut, error) {
-	tableName := in.SessionStorageTableName
+func (a *Adapter) GetTokenItem(ctx context.Context, client driven.DynamodbAPI, in FetchTokenIn) (*FetchTokenOut, error) {
+	data := &dynamodb.GetItemInput{
+		Key:       map[string]types.AttributeValue{"token": &types.AttributeValueMemberS{Value: in.Token}},
+		TableName: aws.String(in.TableName),
+	}
 
-	now := time.Now()
-	ts := time.Unix(0, now.UnixNano()).UTC()
-	ttl := now.Add(15 * time.Minute).Unix()
+	resp, e := client.GetItem(ctx, data)
+	if e != nil {
+		const msg = "error occurred while trying to get item"
+
+		a.monitor.LogGrpcError(ctx, e.Error())
+		return nil, status.Error(codes.Internal, msg)
+	}
+
+	out := FetchTokenOut{}
+
+	e = attributevalue.UnmarshalMap(resp.Item, &out)
+	if e != nil {
+		const msg = "failed to unmarshal GetItem response to struct, %v"
+
+		a.monitor.LogGrpcError(ctx, fmt.Sprintf(msg, e))
+		return nil, status.Error(codes.Internal, fmt.Sprintf(msg, e))
+	}
+
+	return &out, nil
+}
+
+func (a *Adapter) StoreToken(ctx cc, client driven.DynamodbAPI, in *TokenStorePayload) (*TokenStoreResult, error) {
+	ts := a.getTimeStamp()
+	ttl := strconv.FormatInt(int64(in.Ttl), 10)
 
 	data := &dynamodb.PutItemInput{
 		ConditionExpression: aws.String("attribute_not_exists(member_id)"),
 		Item: map[string]types.AttributeValue{
-			"id":               &types.AttributeValueMemberS{Value: in.SessionID},
 			"active":           &types.AttributeValueMemberBOOL{Value: !in.HasAutoCorrect},
-			"associated_data":  &types.AttributeValueMemberB{Value: in.AssociatedData},
 			"created_at":       &types.AttributeValueMemberS{Value: ts.Format(time.RFC3339)},
-			"encrypted_id":     &types.AttributeValueMemberS{Value: in.EncryptedSessionID},
-			"forwarded_ip":     &types.AttributeValueMemberS{Value: in.ForwardedIP},
 			"has_auto_correct": &types.AttributeValueMemberBOOL{Value: in.HasAutoCorrect},
-			"member_id":        &types.AttributeValueMemberS{Value: in.MemberID},
+			"member_id":        &types.AttributeValueMemberS{Value: in.MemberId},
 			"modified_at":      &types.AttributeValueMemberS{Value: ts.Format(time.RFC3339)},
-			"nonce":            &types.AttributeValueMemberB{Value: in.Nonce},
-			"ttl":              &types.AttributeValueMemberN{Value: strconv.FormatInt(ttl, 10)},
+			"public_key":       &types.AttributeValueMemberS{Value: in.PublicKey},
+			"token":            &types.AttributeValueMemberS{Value: in.Token},
+			"token_id":         &types.AttributeValueMemberS{Value: in.TokenId},
+			"ttl":              &types.AttributeValueMemberN{Value: ttl},
 		},
-		TableName: aws.String(tableName),
+		TableName: aws.String(in.SessionTableName),
 	}
 
 	result, e := client.PutItem(ctx, data)
@@ -111,17 +144,38 @@ func (a *Adapter) StoreSession(ctx context.Context, client driven.DynamodbAPI, i
 			return nil, status.Error(codes.AlreadyExists, ErrorSessionExists.Error())
 		}
 
-		return nil, status.Errorf(codes.Internal, "unable to save session id -> %s", in.SessionID)
+		return nil, status.Errorf(codes.Internal, "unable to save token id -> %s", in.TokenId)
 	}
 
-	out := storageTypes.PreRegistrationSessionDrivenOut{
-		Active:         in.HasAutoCorrect,
-		Attributes:     result.Attributes,
+	expiresAt := a.getExpiresAt(ttl)
+
+	out := storageTypes.TokenStoreResult{
+		Active:         !in.HasAutoCorrect,
 		CreatedAt:      ts,
-		ExpiresAt:      ttl,
-		MemberId:       in.MemberID,
+		ExpiresAt:      expiresAt,
+		HasAutoCorrect: in.HasAutoCorrect,
+		Token:          in.Token,
 		ResultMetadata: result.ResultMetadata,
 	}
 
 	return &out, nil
+}
+
+func (a *Adapter) getExpiresAt(ttl string) time.Time {
+	expiresAt, e := strconv.ParseInt(ttl, 10, 64)
+	if e != nil {
+		a.monitor.LogGenericError(fmt.Sprintf("unable to process expiresAt -> %s", e.Error()))
+		return time.Unix(0, 0)
+	}
+
+	t := time.Unix(expiresAt, 0)
+
+	return t
+}
+
+func (a *Adapter) getTimeStamp() time.Time {
+	now := time.Now()
+	ts := time.Unix(0, now.UnixNano()).UTC()
+
+	return ts
 }

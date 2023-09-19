@@ -3,7 +3,12 @@ package server
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
+
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/pkg/errors"
 
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
@@ -18,19 +23,52 @@ type environment struct {
 	SessionTableName         string
 }
 
-type Adapter struct {
-	monitor monitoring.Adapter
+type metadataAndSettings struct {
+	Metadata Metadata `hcl:"Metadata,block"`
+	Settings Settings `hcl:"Settings,block"`
 }
 
-func NewAdapter(monitor monitoring.Adapter) *Adapter {
+type Metadata struct {
+	ServiceName string `hcl:"service"`
+	Version     string `hcl:"version"`
+}
+
+type Settings struct {
+	MaxGRPCResponseTime float64 `hcl:"max_grpc_response_time"`
+}
+
+type Adapter struct {
+	monitor                 monitoring.Adapter
+	staticConfigurationPath string
+}
+
+func NewAdapter(configurationPath string, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
-		monitor: monitor,
+		monitor:                 monitor,
+		staticConfigurationPath: configurationPath,
 	}
 }
 
 func (a *Adapter) LoadStorageConfig() *map[string]interface{} {
+	var metadataAndSettings metadataAndSettings
 	var out = make(map[string]interface{})
 	var s string
+
+	workingDirectory, _ := os.Getwd()
+	fileLocation := filepath.Join(workingDirectory, a.staticConfigurationPath)
+
+	e := hclsimple.DecodeFile(fileLocation, nil, &metadataAndSettings)
+	if e != nil {
+		var x hcl.Diagnostics
+		if errors.As(e, &x) {
+			for _, x := range x {
+				if x.Severity == hcl.DiagError {
+					a.monitor.LogGenericError(fmt.Sprintf("Failed to load member runtime staticConfig: %s", x))
+				}
+			}
+			panic(e)
+		}
+	}
 
 	env := environment{
 		AccessKey:                os.Getenv("AWS_ACCESS_KEY_ID"),
@@ -43,9 +81,18 @@ func (a *Adapter) LoadStorageConfig() *map[string]interface{} {
 	}
 
 	val := reflect.ValueOf(&env).Elem()
-
 	for i := 0; i < val.NumField(); i++ {
 		out[val.Type().Field(i).Name] = val.Field(i).Interface()
+	}
+
+	metadata := reflect.ValueOf(&metadataAndSettings.Metadata).Elem()
+	for i := 0; i < metadata.NumField(); i++ {
+		out[metadata.Type().Field(i).Name] = metadata.Field(i).Interface()
+	}
+
+	settings := reflect.ValueOf(&metadataAndSettings.Settings).Elem()
+	for i := 0; i < settings.NumField(); i++ {
+		out[settings.Type().Field(i).Name] = settings.Field(i).Interface()
 	}
 
 	for k, v := range out {
@@ -59,6 +106,8 @@ func (a *Adapter) LoadStorageConfig() *map[string]interface{} {
 				a.monitor.LogGenericError(fmt.Sprintf("AWS:%s is not defined in the environment", k))
 				os.Exit(1)
 			}
+		case float64:
+			continue
 		default:
 			panic("invalid AWS configuration type")
 		}

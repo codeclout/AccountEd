@@ -1,6 +1,7 @@
-package membertypes
+package validations
 
 import (
+	"encoding/base64"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -10,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	membertypes "github.com/codeclout/AccountEd/members/member-types"
 )
 
 var (
@@ -18,6 +21,12 @@ var (
 	ErrorPayloadSize  = errors.New("invalid payload size")
 	ErrorPinInvalid   = errors.New("invalid pin")
 )
+
+func ValidateBase64(in string) error {
+	_, e := base64.StdEncoding.DecodeString(in)
+
+	return e
+}
 
 // ValidateUsernamePayloadSize checks if the size of the input byte slice is within the acceptable limit.
 // It returns an error if the input byte slice is larger than 360 bytes.
@@ -82,12 +91,16 @@ func ValidatePin(pin *string) (*string, error) {
 	return &y, ErrorPinInvalid
 }
 
-// ValidatePrimaryMember takes a pointer to a PrimaryMemberStartRegisterIn object and a pointer to a sync.WaitGroup, and verifies
-// the primary member's email address. It returns an error if the provided email is invalid. The function creates a goroutine for validation,
-// adds to the wait group, and then signals its completion by invoking Done() before returning. The output channel delivers email validation results
-// in the form of error or nil. It waits for the validation to finish before returning the final result. This function accepts concurrency management
-// through the WaitGroup. The main purpose of this function is to ensure email validity before proceeding with further processing.
-func ValidatePrimaryMember(in *PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) error {
+// ValidatePrimaryMember
+/*
+ * ValidatePrimaryMember checks a primary member's email.
+ * It only prepares the member for registration if the email is valid.
+
+ * @param in pointer to PrimaryMemberStartRegisterIn, which contains the email to be validated
+ * @param wg pointer to sync.WaitGroup used to wait until the email validation is done
+ * @return error which can be either nil or ErrorInvalidEmail
+ */
+func ValidatePrimaryMember(in *membertypes.PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) error {
 	out := make(chan error, 1)
 
 	wg.Add(1)
@@ -112,26 +125,27 @@ func ValidatePrimaryMember(in *PrimaryMemberStartRegisterIn, wg *sync.WaitGroup)
 	return <-out
 }
 
-func ValidateParentGuardian(in *ParentGuardian, wg *sync.WaitGroup) error {
-	defer wg.Done()
-	out := make(chan error)
-
-	go func() {
-		names := []*string{in.Member.LegalFirstName, in.Member.LegalLastName}
-		for i, n := range names {
-			name, e := ValidateName(n)
-			if e != nil {
-				out <- errors.Wrap(e, "name validation failed")
-			}
-
-			v := name.Load()
-			x := v.(string)
-			names[i] = &x
-		}
-	}()
-
-	return <-out
-}
+//
+// func ValidateParentGuardian(in *member_types.ParentGuardian, wg *sync.WaitGroup) error {
+// 	defer wg.Done()
+// 	out := make(chan error)
+//
+// 	go func() {
+// 		names := []*string{in.Member.LegalFirstName, in.Member.LegalLastName}
+// 		for i, n := range names {
+// 			name, e := ValidateName(n)
+// 			if e != nil {
+// 				out <- errors.Wrap(e, "name validation failed")
+// 			}
+//
+// 			v := name.Load()
+// 			x := v.(string)
+// 			names[i] = &x
+// 		}
+// 	}()
+//
+// 	return <-out
+// }
 
 func ValidateRequestLimit(limit *string) bool {
 	if ok, e := regexp.MatchString(`(?m)^[1-9]{1,3}$`, *limit); ok && e == nil {

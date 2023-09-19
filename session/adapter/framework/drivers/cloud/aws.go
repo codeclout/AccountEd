@@ -12,8 +12,6 @@ import (
 	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
-var defaultRouteDuration = sessiontypes.DefaultRouteDuration(2000)
-
 type Adapter struct {
 	api     cloud.AWSApiPort
 	config  map[string]interface{}

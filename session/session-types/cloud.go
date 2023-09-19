@@ -17,10 +17,3 @@ type Value struct {
 	CanExpire       bool   `json:"CanExpire"`
 	Expires         string `json:"Expires"`
 }
-
-type SessionIdEncryptionOut struct {
-	AssociatedData []byte
-	CipherText     *string
-	IV             []byte
-	SessionID      *string
-}

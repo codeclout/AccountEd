@@ -4,15 +4,17 @@ import (
 	"os"
 	"sync"
 
+	"github.com/gofiber/fiber/v2"
+
 	apiAdapter "github.com/codeclout/AccountEd/members/adapters/api"
 	drivenAdapter "github.com/codeclout/AccountEd/members/adapters/framework/driven"
 	memberDriverAdapter "github.com/codeclout/AccountEd/members/adapters/framework/drivers"
 	memberProtocolDriverAdapter "github.com/codeclout/AccountEd/members/adapters/framework/drivers/protocols"
+	"github.com/codeclout/AccountEd/members/ports/api"
 	"github.com/codeclout/AccountEd/members/ports/framework/driven"
 	memberProtocolDriverPort "github.com/codeclout/AccountEd/members/ports/framework/drivers/protocols"
 
 	driverAdapterServerConfiguration "github.com/codeclout/AccountEd/members/adapters/framework/drivers/server"
-	"github.com/codeclout/AccountEd/members/ports/api"
 	"github.com/codeclout/AccountEd/members/ports/core"
 	"github.com/codeclout/AccountEd/members/ports/framework/drivers"
 
@@ -26,10 +28,11 @@ import (
 
 func main() {
 	var (
-		homeschoolAPI       api.HomeschoolAPI
-		homeschoolCore      core.HomeschoolCore
-		homeschoolDriver    drivers.HomeschoolDriverPort
-		homeSchoolDriven    driven.HomeschoolDrivenPort
+		memberAPI        api.MemberAPI
+		memberCore       core.MemberCorePort
+		homeschoolDriver drivers.HomeschoolDriverPort
+		memberDrivenPort driven.MemberDrivenPort
+
 		memberConfiguration server.MembersConfigurationPort
 		memberHTTPProtocol  memberProtocolDriverPort.MemberProtocolHTTPPort
 
@@ -69,13 +72,20 @@ func main() {
 	go gRPCAdapter.InitializeClients()
 	defer gRPCAdapter.StopProtocolListener()
 
-	homeschoolCore = coreAdapter.NewAdapter(config, *monitor)
-	homeSchoolDriven = drivenAdapter.NewAdapter(*monitor)
-	homeschoolAPI = apiAdapter.NewAdapter(config, homeschoolCore, gRPCAdapter, homeSchoolDriven, *monitor)
-	homeschoolDriver = memberDriverAdapter.NewAdapter(config, homeschoolAPI, *monitor)
+	memberCore = coreAdapter.NewAdapter(config, *monitor)
+	memberDrivenPort = drivenAdapter.NewAdapter(*monitor)
+	memberAPI = apiAdapter.NewAdapter(config, memberCore, gRPCAdapter, memberDrivenPort, *monitor)
 
-	homeschoolRoutes := homeschoolDriver.InitializeAPI()
-	httpAdapter.InitializeRoutes(homeschoolRoutes)
+	homeschoolDriver = memberDriverAdapter.NewHomeschoolAdapter(config, memberAPI, *monitor)
+	homeschoolMemberRoutes := homeschoolDriver.InitializeHomeschoolAPI()
+
+	memberDriver := memberDriverAdapter.NewAdapter(config, memberAPI, *monitor)
+	memberRoutes := memberDriver.InitializeMemberAPI()
+
+	var routes []*fiber.App
+	var r = append(homeschoolMemberRoutes, memberRoutes...)
+
+	httpAdapter.InitializeRoutes(append(routes, r...))
 
 	port, e := httpAdapter.GetPort()
 	if e != nil {

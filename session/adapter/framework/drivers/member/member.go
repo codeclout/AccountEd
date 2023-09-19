@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	cloudAWS "github.com/codeclout/AccountEd/session/ports/api/cloud"
 	"github.com/codeclout/AccountEd/session/ports/api/member"
@@ -11,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/pkg/errors"
 
-	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 
 	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
@@ -37,44 +40,130 @@ func NewAdapter(config map[string]interface{}, api memberApi, awsapi cloudApi, m
 	}
 }
 
-func (a Adapter) GetEncryptedSessionId(ctx context.Context, request *pb.EncryptedStringRequest) (*pb.EncryptedStringResponse, error) {
+func (a *Adapter) getRoleARN() (*string, error) {
 	arn, ok := a.config["RoleToAssume"].(string)
 	if !ok {
 		return nil, fmt.Errorf("missing or invalid 'RoleToAssume' in config")
 	}
 
+	return aws.String(arn), nil
+}
+
+func (a *Adapter) getAWSRegion() (*string, error) {
 	region, ok := a.config["Region"].(string)
 	if !ok {
 		return nil, fmt.Errorf("missing or invalid 'Region' in config")
 	}
 
-	sessionIdRequestRole := sessiontypes.AmazonConfigurationInput{
-		RoleArn: aws.String(arn),
-		Region:  aws.String(region),
+	return aws.String(region), nil
+}
+
+func (a *Adapter) getAWSCredentialInput() (*sessionTypes.AmazonConfigurationInput, error) {
+	arn, e := a.getRoleARN()
+	if e != nil {
+		return nil, status.Error(codes.Unavailable, e.Error())
+	}
+
+	region, e := a.getAWSRegion()
+	if e != nil {
+		return nil, status.Error(codes.Unavailable, e.Error())
+	}
+
+	metadata := sessionTypes.AmazonConfigurationInput{
+		RoleArn: arn,
+		Region:  region,
+	}
+
+	return &metadata, nil
+}
+
+func (a *Adapter) processMemberTokenGeneration(in *pb.GenerateTokenRequest) (*sessionTypes.NewTokenPayload, error) {
+	var s string
+
+	if in.GetMemberId() == (s) || in.GetTokenId() == (s) {
+		return nil, status.Error(codes.Internal, "invalid new token request")
+	}
+
+	return &sessionTypes.NewTokenPayload{
+		HasAutoCorrect: in.GetHasAutoCorrect(),
+		MemberId:       in.GetMemberId(),
+		TokenId:        in.GetTokenId(),
+	}, nil
+}
+
+func (a *Adapter) processTokenValidation(in *pb.ValidateTokenRequest) (*sessionTypes.ValidateTokenPayload, error) {
+	var s string
+
+	if in.GetToken() == (s) {
+		return nil, status.Error(codes.InvalidArgument, "invalid token validation request")
+	}
+
+	return &sessionTypes.ValidateTokenPayload{Token: in.GetToken()}, nil
+}
+
+func (a *Adapter) GenerateMemberToken(ctx context.Context, request *pb.GenerateTokenRequest) (*pb.GenerateTokenResponse, error) {
+	metadata, e := a.getAWSCredentialInput()
+	if e != nil {
+		return nil, status.Error(codes.FailedPrecondition, e.Error())
 	}
 
 	ch := make(chan *awspb.AWSConfigResponse, 1)
 	ech := make(chan error, 1)
-	uch := make(chan *pb.EncryptedStringResponse, 1)
+	tch := make(chan *pb.GenerateTokenResponse, 1)
 
-	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, arn+"|"+region)
-
-	apiData := sessiontypes.SessionStoreMetadata{
-		HasAutoCorrect: request.GetHasAutoCorrect(),
-		MemberID:       request.GetMemberId(),
-		SessionID:      request.GetSessionId(),
-	}
-
-	a.aws.GetAWSSessionCredentials(ctx, sessionIdRequestRole, ch, ech)
+	a.aws.GetAWSSessionCredentials(ctx, *metadata, ch, ech)
 
 	select {
 	case session := <-ch:
-		a.api.EncryptSessionId(ctx, session.AwsCredentials, &apiData, uch, ech)
+		apiData, e := a.processMemberTokenGeneration(request)
+		if e != nil {
+			return nil, e
+		}
+
+		a.api.CreateMemberToken(ctx, session.AwsCredentials, apiData, tch, ech)
 	}
 
 	select {
 	case <-ctx.Done():
-		const msg = "get encrypted session id request timeout"
+		const msg = "encryption operation request timeout"
+		a.monitor.LogGrpcError(ctx, msg)
+		return nil, errors.New(msg)
+
+	case out := <-tch:
+		a.monitor.LogGrpcInfo(ctx, "success")
+		return out, nil
+
+	case e := <-ech:
+		a.monitor.LogGrpcError(ctx, e.Error())
+		return nil, e
+	}
+}
+
+func (a *Adapter) ValidateMemberToken(ctx context.Context, request *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error) {
+	metadata, e := a.getAWSCredentialInput()
+	if e != nil {
+		return nil, status.Error(codes.FailedPrecondition, e.Error())
+	}
+
+	ch := make(chan *awspb.AWSConfigResponse, 1)
+	ech := make(chan error, 1)
+	uch := make(chan *pb.ValidateTokenResponse, 1)
+
+	a.aws.GetAWSSessionCredentials(ctx, *metadata, ch, ech)
+
+	select {
+	case session := <-ch:
+		apiData, e := a.processTokenValidation(request)
+		if e != nil {
+			return nil, e
+		}
+
+		a.api.ValidateMemberToken(ctx, session.GetAwsCredentials(), apiData, uch, ech)
+	}
+
+	select {
+	case <-ctx.Done():
+		const msg = "decryption operation request timeout"
 		a.monitor.LogGrpcError(ctx, msg)
 		return nil, errors.New(msg)
 

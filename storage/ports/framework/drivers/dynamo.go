@@ -8,10 +8,9 @@ import (
 
 type confirmedRegReq = pb.StoreConfirmedRegistrationRequest
 type confirmedRegResp = pb.StoreConfirmedRegistrationResponse
-type preConfirmRegReq = pb.PreRegistrationConfirmationRequest
-type preConfirmRegResp = pb.PreRegistrationConfirmationResponse
 
 type DynamoDbDriverPort interface {
-	StorePreConfirmationRegistrationSession(ctx context.Context, request *preConfirmRegReq) (*preConfirmRegResp, error)
+	FetchToken(ctx context.Context, request *pb.FetchTokenRequest) (*pb.FetchTokenResponse, error)
+	StorePublicToken(ctx context.Context, request *pb.TokenStoreRequest) (*pb.TokenStoreResponse, error)
 	StoreConfirmedRegistration(context.Context, *confirmedRegReq) (*confirmedRegResp, error)
 }

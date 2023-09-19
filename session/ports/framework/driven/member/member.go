@@ -1,7 +1,12 @@
 package member
 
-import "context"
+import (
+	"context"
+	"time"
+
+	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+)
 
 type SessionDrivenMemberPort interface {
-	GetSessionIdKey(ctx context.Context, awsconfig []byte) (*string, error)
+	GetTokenPayload(ctx context.Context, memberId, tokenId string, ttl time.Duration) (*sessiontypes.TokenPayload, error)
 }

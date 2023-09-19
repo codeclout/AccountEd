@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 
 	"github.com/aws/aws-sdk-go-v2/credentials"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 )
+
+type StaticCredentialsProvider = credentials.StaticCredentialsProvider
 
 type Adapter struct {
 	config  map[string]interface{}
@@ -21,10 +25,16 @@ func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter) *Adap
 	}
 }
 
-func (a *Adapter) ConvertCredentialsToBytes(ctx context.Context, in *credentials.StaticCredentialsProvider) ([]byte, error) {
+func (a *Adapter) ConvertCredentialsToBytes(ctx context.Context, in *StaticCredentialsProvider) ([]byte, error) {
+	if _, e := in.Retrieve(ctx); e != nil {
+		a.monitor.LogGenericError(e.Error())
+		return nil, status.Error(codes.FailedPrecondition, "invalid cloud credentials")
+	}
+
 	b, e := json.Marshal(in)
 	if e != nil {
-		return nil, e
+		a.monitor.LogGrpcError(ctx, e.Error())
+		return nil, status.Error(codes.Internal, e.Error())
 	}
 
 	return b, nil

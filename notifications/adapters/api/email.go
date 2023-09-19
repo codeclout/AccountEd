@@ -43,7 +43,7 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, address string, ch c
 
 	emailProcessorDomain, ok := a.config["EmailProcessorDomain"].(string)
 	if !ok {
-		const msg = "api => email domain is invalid"
+		const msg = "api => email verification domain is invalid"
 
 		a.monitor.LogGenericError(msg)
 		ech <- errors.New(msg)
@@ -52,7 +52,7 @@ func (a *Adapter) ValidateEmailAddress(ctx context.Context, address string, ch c
 
 	emailProcessorPath, ok := a.config["EmailVerifierApiPath"].(string)
 	if !ok {
-		const msg = "api => email processor path is invalid"
+		const msg = "api => email verification processor path is invalid"
 
 		a.monitor.LogGenericError(msg)
 		ech <- errors.New(msg)

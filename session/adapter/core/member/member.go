@@ -2,18 +2,19 @@ package member
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/base64"
-	"io"
+	"time"
+
+	"aidanwoods.dev/go-paseto"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
-
-	"github.com/pkg/errors"
+	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 
 	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
+
+type cc = context.Context
 
 type Adapter struct {
 	config  map[string]interface{}
@@ -27,67 +28,76 @@ func NewAdapter(config map[string]interface{}, monitor *drivers.Adapter) *Adapte
 	}
 }
 
-func (a *Adapter) ProcessSessionIdEncryption(ctx context.Context, key *string, id string) (*sessiontypes.SessionIdEncryptionOut, error) {
-	keyBytes := []byte(*key)
-	if len(keyBytes) != 32 {
-		return nil, errors.New("key length must equal 32 bytes")
+func (a *Adapter) createToken(ctx cc, in *sessiontypes.TokenPayload) (string, error) {
+	serviceName, ok := a.config["ServiceName"].(string)
+	if !ok {
+		const msg = "unable to find service name in environment settings"
+		a.monitor.LogGrpcError(ctx, msg)
+		return "", status.Error(codes.FailedPrecondition, msg)
 	}
 
-	associatedData := []byte(a.monitor.GetTimeStamp().String())
+	claims := make(map[string]any)
+	token := paseto.NewToken()
 
-	internalKey, e := aes.NewCipher([]byte(*key))
+	token.SetExpiration(in.ExpiresAt)
+	token.SetIssuedAt(in.IssuedAt)
+	token.SetJti(in.ID)
+	token.SetNotBefore(in.IssuedAt)
+	token.SetIssuer(serviceName)
+
+	claims["member-id"] = in.MemberID
+	return token.V4Sign(in.Private, nil), nil
+}
+
+func (a *Adapter) validateToken(ctx cc, publicKey, token, tokenId string) (bool, error) {
+	serviceName, ok := a.config["ServiceName"].(string)
+	if !ok {
+		const msg = "unable to find service name in environment settings"
+		a.monitor.LogGrpcError(ctx, msg)
+		return false, status.Error(codes.FailedPrecondition, msg)
+	}
+
+	parser := paseto.NewParser()
+	parser.AddRule(paseto.NotExpired())
+	parser.AddRule(paseto.IssuedBy(serviceName))
+	parser.AddRule(paseto.IdentifiedBy(tokenId))
+	parser.AddRule(paseto.ValidAt(time.Now()))
+
+	key, e := paseto.NewV4AsymmetricPublicKeyFromHex(publicKey)
 	if e != nil {
-		return nil, e
+		return false, e
 	}
 
-	gcm, e := cipher.NewGCM(internalKey)
+	_, e = parser.ParseV4Public(key, token, nil)
 	if e != nil {
+		return false, e
+	}
+
+	return true, nil
+}
+
+func (a *Adapter) ProcessTokenCreation(ctx cc, in *sessiontypes.TokenPayload) (*sessiontypes.TokenCreateOut, error) {
+	token, e := a.createToken(ctx, in)
+	if e != nil {
+		a.monitor.LogGrpcError(ctx, e.Error())
 		return nil, e
 	}
 
-	nonce := make([]byte, gcm.NonceSize())
-	if _, e = io.ReadFull(rand.Reader, nonce); e != nil {
-		return nil, e
-	}
-
-	ciphertext := gcm.Seal(nonce, nonce, []byte(id), associatedData)
-	cipherOut := base64.URLEncoding.EncodeToString(ciphertext)
-
-	out := sessiontypes.SessionIdEncryptionOut{
-		AssociatedData: associatedData,
-		CipherText:     &cipherOut,
-		IV:             nonce,
-		SessionID:      &id,
+	out := sessiontypes.TokenCreateOut{
+		Token:        token,
+		TokenPayload: in,
+		TTL:          in.ExpiresAt.Sub(in.IssuedAt),
 	}
 
 	return &out, nil
 }
 
-func (a *Adapter) ProcessSessionIdDecryption(associatedData, key []byte, cipherIn *string) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
+func (a *Adapter) ProcessTokenValidation(ctx cc, in *dynamov1.FetchTokenResponse) (bool, error) {
+	response, e := a.validateToken(ctx, in.GetPublicKey(), in.GetToken(), in.GetTokenId())
+	if e != nil {
+		a.monitor.LogGrpcError(ctx, e.Error())
+		return false, status.Error(codes.Internal, e.Error())
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	ciphertext, _ := base64.StdEncoding.DecodeString(*cipherIn)
-
-	// Nonce size should be the same as Block size
-	if len(ciphertext) < gcm.NonceSize() {
-		return nil, errors.New("ciphertext too short")
-	}
-
-	nonce, ciphertext := ciphertext[:gcm.NonceSize()], ciphertext[gcm.NonceSize():]
-
-	// Open (decrypt) the ciphertext and authenticate it with the given associated data
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, associatedData)
-	if err != nil {
-		return nil, err
-	}
-
-	return plaintext, nil
+	return response, nil
 }

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -22,12 +23,10 @@ import (
 
 var defaultRouteDuration = sessionTypes.DefaultRouteDuration(2000)
 
-type cctx = context.Context
+type cc = context.Context
 
 type ConfirmedRegReq = pb.StoreConfirmedRegistrationRequest
 type ConfirmedRegResp = pb.StoreConfirmedRegistrationResponse
-type PreRegReq = pb.PreRegistrationConfirmationRequest
-type PreRegResp = pb.PreRegistrationConfirmationResponse
 
 type Adapter struct {
 	AwsGrpcClient awspb.AWSResourceClientServiceClient
@@ -73,38 +72,37 @@ func (a *Adapter) setContextTimeout(ctx context.Context) (context.Context, conte
 	return ctx, cancel
 }
 
-func (a *Adapter) StorePreConfirmationRegistrationSession(ctx cctx, request *PreRegReq) (*PreRegResp, error) {
-	var apidata storageTypes.PreRegistrationSessionAPIin
-	var credentialsOut credentials.StaticCredentialsProvider
+func (a *Adapter) processFetchToken(in *pb.FetchTokenRequest) (*storageTypes.FetchTokenIn, error) {
+	var creds credentials.StaticCredentialsProvider
 
-	e := json.Unmarshal(request.GetSessionServiceAWScredentials(), &credentialsOut)
+	e := json.Unmarshal(in.GetCredentials(), &creds)
 	if e != nil {
-		a.monitor.LogGrpcError(ctx, e.Error())
+		a.monitor.LogGenericError(e.Error())
 		return nil, status.Error(codes.Internal, e.Error())
 	}
 
-	apidata = storageTypes.PreRegistrationSessionAPIin{
-		AssociatedData:            request.GetAssociatedData(),
-		EncryptedSessionID:        request.GetEncryptedSessionID(),
-		ForwardedIP:               request.GetForwardedIp(),
-		HasAutoCorrect:            request.GetHasAutoCorrect(),
-		MemberID:                  request.GetMemberId(),
-		Nonce:                     request.GetNonce(),
-		SessionID:                 request.GetSessionID(),
-		SessionServiceCredentials: &credentials.StaticCredentialsProvider{Value: credentialsOut.Value},
-		SessionStorageTableName:   request.GetSessionTableName(),
-		TTL:                       request.GetTtl(),
+	return &storageTypes.FetchTokenIn{
+		Credentials: creds,
+		TableName:   in.GetTableName(),
+		Token:       in.GetToken(),
+	}, nil
+}
+
+func (a *Adapter) FetchToken(ctx cc, in *pb.FetchTokenRequest) (*pb.FetchTokenResponse, error) {
+	apiData, e := a.processFetchToken(in)
+	if e != nil {
+		return nil, e
 	}
 
-	ch := make(chan *pb.PreRegistrationConfirmationResponse, 1)
+	ch := make(chan *pb.FetchTokenResponse, 1)
 	ech := make(chan error, 1)
 
-	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, request.GetSessionID())
+	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, in.GetToken())
 	ctx, cancel := a.setContextTimeout(ctx)
 
 	defer cancel()
 
-	a.dynamoApi.PreRegistrationConfirmationApi(ctx, apidata, ch, ech)
+	a.dynamoApi.GetToken(ctx, apiData, ch, ech)
 
 	select {
 	case <-ctx.Done():
@@ -122,6 +120,75 @@ func (a *Adapter) StorePreConfirmationRegistrationSession(ctx cctx, request *Pre
 	}
 }
 
-func (a *Adapter) StoreConfirmedRegistration(context.Context, *ConfirmedRegReq) (*ConfirmedRegResp, error) {
+func (a *Adapter) processStorePublicToken(in *pb.TokenStoreRequest) (*storageTypes.TokenStorePayload, error) {
+	var s string
+	var creds credentials.StaticCredentialsProvider
+
+	e := json.Unmarshal(in.GetSessionServiceAWScredentials(), &creds)
+	if e != nil {
+		a.monitor.LogGenericError(e.Error())
+		return nil, status.Error(codes.Internal, e.Error())
+	}
+
+	if in.GetMemberId() == (s) ||
+		in.GetPublicKey() == (s) ||
+		in.GetSessionTableName() == (s) ||
+		in.GetToken() == (s) ||
+		in.GetTokenId() == (s) {
+		return nil, status.Error(codes.InvalidArgument, "invalid token store request")
+	}
+
+	region, ok := a.config["AWSRegion"].(string)
+	if !ok {
+		a.monitor.LogGenericError("region not set in environment")
+		return nil, status.Error(codes.Internal, "region not configured in environment")
+	}
+
+	return &storageTypes.TokenStorePayload{
+		AWSRegion:        aws.String(region),
+		Credentials:      creds,
+		HasAutoCorrect:   in.GetHasAutoCorrect(),
+		MemberId:         in.GetMemberId(),
+		PublicKey:        in.GetPublicKey(),
+		SessionTableName: in.GetSessionTableName(),
+		Token:            in.GetToken(),
+		TokenId:          in.GetTokenId(),
+		Ttl:              in.GetTtl(),
+	}, nil
+}
+
+func (a *Adapter) StorePublicToken(ctx cc, in *pb.TokenStoreRequest) (*pb.TokenStoreResponse, error) {
+	apiData, e := a.processStorePublicToken(in)
+	if e != nil {
+		return nil, e
+	}
+
+	ch := make(chan *pb.TokenStoreResponse, 1)
+	ech := make(chan error, 1)
+
+	ctx = context.WithValue(ctx, a.monitor.LogLabelTransactionID, in.GetTokenId())
+	ctx, cancel := a.setContextTimeout(ctx)
+
+	defer cancel()
+
+	a.dynamoApi.CreatePublicTokenItem(ctx, apiData, ch, ech)
+
+	select {
+	case <-ctx.Done():
+		a.monitor.LogGrpcError(ctx, "request timeout")
+		return nil, status.Error(codes.DeadlineExceeded, "request timeout")
+
+	case out := <-ch:
+		t := ctx.Value(a.monitor.LogLabelTransactionID)
+		a.monitor.LogGrpcInfo(ctx, fmt.Sprintf("pre registration confirmation success for %s", t))
+		return out, nil
+
+	case e := <-ech:
+		a.monitor.LogGrpcError(ctx, e.Error())
+		return nil, status.Error(codes.Internal, e.Error())
+	}
+}
+
+func (a *Adapter) StoreConfirmedRegistration(ctx cc, in *ConfirmedRegReq) (*ConfirmedRegResp, error) {
 	return nil, errors.New("not implemented")
 }

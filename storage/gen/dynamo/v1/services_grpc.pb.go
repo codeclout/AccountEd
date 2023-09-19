@@ -19,15 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	DynamoDBStorageService_StorePreConfirmationRegistrationSession_FullMethodName = "/proto.dynamo.v1.DynamoDBStorageService/StorePreConfirmationRegistrationSession"
-	DynamoDBStorageService_StoreConfirmedRegistration_FullMethodName              = "/proto.dynamo.v1.DynamoDBStorageService/StoreConfirmedRegistration"
+	DynamoDBStorageService_FetchToken_FullMethodName                 = "/proto.dynamo.v1.DynamoDBStorageService/FetchToken"
+	DynamoDBStorageService_StorePublicToken_FullMethodName           = "/proto.dynamo.v1.DynamoDBStorageService/StorePublicToken"
+	DynamoDBStorageService_StoreConfirmedRegistration_FullMethodName = "/proto.dynamo.v1.DynamoDBStorageService/StoreConfirmedRegistration"
 )
 
 // DynamoDBStorageServiceClient is the client API for DynamoDBStorageService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DynamoDBStorageServiceClient interface {
-	StorePreConfirmationRegistrationSession(ctx context.Context, in *PreRegistrationConfirmationRequest, opts ...grpc.CallOption) (*PreRegistrationConfirmationResponse, error)
+	FetchToken(ctx context.Context, in *FetchTokenRequest, opts ...grpc.CallOption) (*FetchTokenResponse, error)
+	StorePublicToken(ctx context.Context, in *TokenStoreRequest, opts ...grpc.CallOption) (*TokenStoreResponse, error)
 	StoreConfirmedRegistration(ctx context.Context, in *StoreConfirmedRegistrationRequest, opts ...grpc.CallOption) (*StoreConfirmedRegistrationResponse, error)
 }
 
@@ -39,9 +41,18 @@ func NewDynamoDBStorageServiceClient(cc grpc.ClientConnInterface) DynamoDBStorag
 	return &dynamoDBStorageServiceClient{cc}
 }
 
-func (c *dynamoDBStorageServiceClient) StorePreConfirmationRegistrationSession(ctx context.Context, in *PreRegistrationConfirmationRequest, opts ...grpc.CallOption) (*PreRegistrationConfirmationResponse, error) {
-	out := new(PreRegistrationConfirmationResponse)
-	err := c.cc.Invoke(ctx, DynamoDBStorageService_StorePreConfirmationRegistrationSession_FullMethodName, in, out, opts...)
+func (c *dynamoDBStorageServiceClient) FetchToken(ctx context.Context, in *FetchTokenRequest, opts ...grpc.CallOption) (*FetchTokenResponse, error) {
+	out := new(FetchTokenResponse)
+	err := c.cc.Invoke(ctx, DynamoDBStorageService_FetchToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dynamoDBStorageServiceClient) StorePublicToken(ctx context.Context, in *TokenStoreRequest, opts ...grpc.CallOption) (*TokenStoreResponse, error) {
+	out := new(TokenStoreResponse)
+	err := c.cc.Invoke(ctx, DynamoDBStorageService_StorePublicToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +72,8 @@ func (c *dynamoDBStorageServiceClient) StoreConfirmedRegistration(ctx context.Co
 // All implementations should embed UnimplementedDynamoDBStorageServiceServer
 // for forward compatibility
 type DynamoDBStorageServiceServer interface {
-	StorePreConfirmationRegistrationSession(context.Context, *PreRegistrationConfirmationRequest) (*PreRegistrationConfirmationResponse, error)
+	FetchToken(context.Context, *FetchTokenRequest) (*FetchTokenResponse, error)
+	StorePublicToken(context.Context, *TokenStoreRequest) (*TokenStoreResponse, error)
 	StoreConfirmedRegistration(context.Context, *StoreConfirmedRegistrationRequest) (*StoreConfirmedRegistrationResponse, error)
 }
 
@@ -69,8 +81,11 @@ type DynamoDBStorageServiceServer interface {
 type UnimplementedDynamoDBStorageServiceServer struct {
 }
 
-func (UnimplementedDynamoDBStorageServiceServer) StorePreConfirmationRegistrationSession(context.Context, *PreRegistrationConfirmationRequest) (*PreRegistrationConfirmationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StorePreConfirmationRegistrationSession not implemented")
+func (UnimplementedDynamoDBStorageServiceServer) FetchToken(context.Context, *FetchTokenRequest) (*FetchTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FetchToken not implemented")
+}
+func (UnimplementedDynamoDBStorageServiceServer) StorePublicToken(context.Context, *TokenStoreRequest) (*TokenStoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StorePublicToken not implemented")
 }
 func (UnimplementedDynamoDBStorageServiceServer) StoreConfirmedRegistration(context.Context, *StoreConfirmedRegistrationRequest) (*StoreConfirmedRegistrationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreConfirmedRegistration not implemented")
@@ -87,20 +102,38 @@ func RegisterDynamoDBStorageServiceServer(s grpc.ServiceRegistrar, srv DynamoDBS
 	s.RegisterService(&DynamoDBStorageService_ServiceDesc, srv)
 }
 
-func _DynamoDBStorageService_StorePreConfirmationRegistrationSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PreRegistrationConfirmationRequest)
+func _DynamoDBStorageService_FetchToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FetchTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DynamoDBStorageServiceServer).StorePreConfirmationRegistrationSession(ctx, in)
+		return srv.(DynamoDBStorageServiceServer).FetchToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DynamoDBStorageService_StorePreConfirmationRegistrationSession_FullMethodName,
+		FullMethod: DynamoDBStorageService_FetchToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DynamoDBStorageServiceServer).StorePreConfirmationRegistrationSession(ctx, req.(*PreRegistrationConfirmationRequest))
+		return srv.(DynamoDBStorageServiceServer).FetchToken(ctx, req.(*FetchTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DynamoDBStorageService_StorePublicToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TokenStoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DynamoDBStorageServiceServer).StorePublicToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DynamoDBStorageService_StorePublicToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DynamoDBStorageServiceServer).StorePublicToken(ctx, req.(*TokenStoreRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -131,8 +164,12 @@ var DynamoDBStorageService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*DynamoDBStorageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "StorePreConfirmationRegistrationSession",
-			Handler:    _DynamoDBStorageService_StorePreConfirmationRegistrationSession_Handler,
+			MethodName: "FetchToken",
+			Handler:    _DynamoDBStorageService_FetchToken_Handler,
+		},
+		{
+			MethodName: "StorePublicToken",
+			Handler:    _DynamoDBStorageService_StorePublicToken_Handler,
 		},
 		{
 			MethodName: "StoreConfirmedRegistration",

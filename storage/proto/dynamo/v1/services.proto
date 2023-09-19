@@ -7,6 +7,7 @@ option go_package = "github.com/codeclout/AccountEd/storage";
 import "dynamo/v1/messages.proto";
 
 service DynamoDBStorageService {
-  rpc StorePreConfirmationRegistrationSession(PreRegistrationConfirmationRequest) returns (PreRegistrationConfirmationResponse);
+  rpc FetchToken(FetchTokenRequest) returns (FetchTokenResponse);
+  rpc StorePublicToken(TokenStoreRequest) returns (TokenStoreResponse);
   rpc StoreConfirmedRegistration(StoreConfirmedRegistrationRequest) returns (StoreConfirmedRegistrationResponse);
 }

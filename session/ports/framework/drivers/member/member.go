@@ -7,5 +7,6 @@ import (
 )
 
 type SessionDriverMemberPort interface {
-	GetEncryptedSessionId(ctx context.Context, request *pb.EncryptedStringRequest) (*pb.EncryptedStringResponse, error)
+	GenerateMemberToken(ctx context.Context, request *pb.GenerateTokenRequest) (*pb.GenerateTokenResponse, error)
+	ValidateMemberToken(ctx context.Context, request *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error)
 }

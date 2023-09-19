@@ -2,20 +2,19 @@ package member
 
 import (
 	"context"
-	"fmt"
 	"sync"
+	"time"
 
-	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
+	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 	"github.com/codeclout/AccountEd/session/ports/core/member"
 	"github.com/codeclout/AccountEd/session/ports/framework/driven/cloud"
 	drivenMemberSession "github.com/codeclout/AccountEd/session/ports/framework/driven/member"
-	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
-	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
-
-	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
+	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
 type aws = cloud.CredentialsAWSPort
@@ -23,113 +22,85 @@ type dmp = drivenMemberSession.SessionDrivenMemberPort
 type mtr = monitoring.Adapter
 type scp = member.SessionCoreMemberPort
 
-type cctx = context.Context
-type gcpc = *protocol.AdapterServiceClients
+type cc = context.Context
+type gRPC = *protocol.AdapterServiceClients
 type wait = *sync.WaitGroup
 
-type sessionIdResp = pb.EncryptedStringResponse
-type sessionIdData = sessiontypes.SessionIdEncryptionOut
-type storeMeta = sessiontypes.SessionStoreMetadata
-type storeSessResp = dynamov1.PreRegistrationConfirmationResponse
+type GenerateTokenResponse = pb.GenerateTokenResponse
+type NewTokenPayload = sessionTypes.NewTokenPayload
+type ValidateTokenPayload = sessionTypes.ValidateTokenPayload
+type ValidateTokenResponse = pb.ValidateTokenResponse
 
 type Adapter struct {
-	config             map[string]interface{}
-	contextAPILabel    sessiontypes.ContextAPILabel
-	contextDrivenLabel sessiontypes.ContextDrivenLabel
-	core               scp
-	drivenCloud        aws
-	drivenMember       dmp
-	grpcClient         gcpc
-	monitor            mtr
-	wg                 wait
+	config       map[string]interface{}
+	core         scp
+	drivenCloud  aws
+	drivenMember dmp
+	grpcClient   gRPC
+	monitor      mtr
+	wg           wait
 }
 
-func NewAdapter(config map[string]interface{}, core scp, cloud aws, dms dmp, grpc gcpc, monitor mtr, wg wait) *Adapter {
+func NewAdapter(config map[string]interface{}, core scp, cloud aws, dms dmp, grpc gRPC, monitor mtr, wg wait) *Adapter {
 	return &Adapter{
-		drivenCloud:        cloud,
-		config:             config,
-		contextAPILabel:    "api_input",
-		contextDrivenLabel: "driven_input",
-		core:               core,
-		grpcClient:         grpc,
-		monitor:            monitor,
-		drivenMember:       dms,
-		wg:                 wg,
+		drivenCloud:  cloud,
+		config:       config,
+		core:         core,
+		grpcClient:   grpc,
+		monitor:      monitor,
+		drivenMember: dms,
+		wg:           wg,
 	}
 }
 
-func (a *Adapter) EncryptSessionId(ctx cctx, awscreds []byte, in *storeMeta, uch chan *sessionIdResp, ech chan error) {
+func (a *Adapter) ValidateMemberToken(ctx cc, awscreds []byte, in *ValidateTokenPayload, tch chan *ValidateTokenResponse, ech chan error) {
+	driven, e := a.drivenCloud.GetToken(ctx, awscreds, in.Token, a.grpcClient.SessionStorageclient)
+	if e != nil {
+		ech <- e
+		return
+	}
+
+	ok, e := a.core.ProcessTokenValidation(ctx, driven)
+	if e != nil {
+		ech <- e
+		return
+	}
+
+	tch <- &pb.ValidateTokenResponse{IsValidToken: ok}
+}
+
+func (a *Adapter) CreateMemberToken(ctx cc, awscreds []byte, in *NewTokenPayload, tch chan *GenerateTokenResponse, ech chan error) {
+	var sessionExpiry = time.Hour
+
 	if in == nil {
 		const msg = "request to encrypt session id received nil input"
-		a.monitor.LogGenericError(msg)
+		a.monitor.LogGrpcError(ctx, msg)
 
-		ech <- errors.New(msg)
+		ech <- status.Error(codes.InvalidArgument, msg)
 		return
 	}
 
-	driven, e := a.drivenMember.GetSessionIdKey(ctx, awscreds)
+	driven, e := a.drivenMember.GetTokenPayload(ctx, in.MemberId, in.TokenId, sessionExpiry)
 	if e != nil {
-		x := errors.Wrapf(e, "api-EncryptSessionId -> core.ProcessSessionIdEncryption(sessionID:%s)", in.SessionID)
-		ech <- x
+		ech <- e
 		return
 	}
 
-	core, e := a.core.ProcessSessionIdEncryption(ctx, driven, in.SessionID)
+	core, e := a.core.ProcessTokenCreation(ctx, driven)
 	if e != nil {
-		x := errors.Wrapf(e, "api-EncryptSessionId -> core.ProcessSessionIdEncryption(sessionID:%s)", in.SessionID)
-		ech <- x
+		ech <- e
 		return
 	}
 
-	e = a.storeEncryptedSession(ctx, core, *in, awscreds)
+	e = a.drivenCloud.StoreToken(ctx, a.grpcClient.SessionStorageclient, core, in.HasAutoCorrect, awscreds)
 	if e != nil {
-		x := errors.Wrap(e, "api-EncryptSessionId -> storeEncryptedSession")
-		ech <- x
+		ech <- e
 		return
 	}
 
-	out := pb.EncryptedStringResponse{
-		EncryptedSessionId: *core.CipherText,
+	out := pb.GenerateTokenResponse{
+		Token: core.Token,
 	}
 
-	uch <- &out
-	return
-}
-
-func (a *Adapter) storeEncryptedSession(ctx cctx, in *sessionIdData, meta storeMeta, staticCredentials []byte) error {
-	tableName, ok := a.config["SessionTableName"].(string)
-	if !ok {
-		a.monitor.LogGrpcError(ctx, "session table name not set in environment")
-		return errors.New("db table name missing")
-	}
-
-	data := dynamov1.PreRegistrationConfirmationRequest{
-		AssociatedData:               in.AssociatedData,
-		EncryptedSessionID:           *in.CipherText,
-		ForwardedIp:                  "",
-		HasAutoCorrect:               meta.HasAutoCorrect,
-		MemberId:                     meta.MemberID,
-		Nonce:                        in.IV,
-		SessionServiceAWScredentials: staticCredentials,
-		SessionID:                    *in.SessionID,
-		SessionTableName:             tableName,
-		Ttl:                          1000 * 60 * 60 * 24,
-	}
-
-	if a.grpcClient == nil || a.grpcClient.SessionStorageclient == nil {
-		return errors.New("nil gRPC or SessionStorageclient")
-	}
-
-	client := *a.grpcClient.SessionStorageclient
-
-	// @TODO - Handle system event from response data -> new member pre confirmation
-	cr, e := client.StorePreConfirmationRegistrationSession(ctx, &data)
-
-	if e != nil {
-		return e
-	}
-
-	a.monitor.LogGenericInfo(fmt.Sprintf("%+v", cr))
-
-	return nil
+	tch <- &out
 }

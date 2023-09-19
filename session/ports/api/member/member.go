@@ -4,12 +4,17 @@ import (
 	"context"
 
 	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
-	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
-type sessionIdResponse = pb.EncryptedStringResponse
-type storeMetadata = sessiontypes.SessionStoreMetadata
+type cc = context.Context
+
+type GenerateTokenRequest = pb.GenerateTokenRequest
+type GenerateTokenResponse = pb.GenerateTokenResponse
+type ValidateTokenPayload = sessionTypes.ValidateTokenPayload
+type ValidateTokenResponse = pb.ValidateTokenResponse
 
 type SessionAPIMemberPort interface {
-	EncryptSessionId(ctx context.Context, awscreds []byte, in *storeMetadata, uch chan *sessionIdResponse, ech chan error)
+	CreateMemberToken(ctx cc, awscreds []byte, in *sessionTypes.NewTokenPayload, tch chan *GenerateTokenResponse, ech chan error)
+	ValidateMemberToken(ctx cc, awscreds []byte, in *ValidateTokenPayload, tch chan *ValidateTokenResponse, ech chan error)
 }

@@ -4,9 +4,10 @@ import (
 	"context"
 
 	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 )
 
 type SessionCoreMemberPort interface {
-	ProcessSessionIdEncryption(ctx context.Context, in *string, id string) (*sessiontypes.SessionIdEncryptionOut, error)
-	ProcessSessionIdDecryption(associatedData, key []byte, cipherIn *string) ([]byte, error)
+	ProcessTokenCreation(ctx context.Context, in *sessiontypes.TokenPayload) (*sessiontypes.TokenCreateOut, error)
+	ProcessTokenValidation(ctx context.Context, in *dynamov1.FetchTokenResponse) (bool, error)
 }

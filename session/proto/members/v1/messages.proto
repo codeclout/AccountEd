@@ -4,12 +4,20 @@ package proto.members.v1;
 
 option go_package = "github.com/codeclout/AccountEd/session";
 
-message EncryptedStringRequest {
-  bool hasAutoCorrect = 1;
-  string memberId = 2;
-  string sessionId = 3;
+message ValidateTokenRequest {
+  string token = 1;
 }
 
-message EncryptedStringResponse {
-  string encryptedSessionId = 1;
+message ValidateTokenResponse {
+  bool isValidToken = 1;
+}
+
+message GenerateTokenRequest {
+  bool hasAutoCorrect = 1;
+  string memberId = 2;
+  string tokenId = 3;
+}
+
+message GenerateTokenResponse {
+  string token = 1;
 }

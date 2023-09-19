@@ -2,7 +2,7 @@ package core
 
 import (
 	"context"
-	"fmt"
+	"reflect"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -12,6 +12,8 @@ import (
 	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 	storageTypes "github.com/codeclout/AccountEd/storage/storage-types"
 )
+
+type TokenStoreResult = storageTypes.TokenStoreResult
 
 type Adapter struct {
 	config  map[string]interface{}
@@ -25,24 +27,37 @@ func NewAdapter(config map[string]interface{}, monitor monitoring.Adapter) *Adap
 	}
 }
 
-func (a *Adapter) PreRegistrationConfirmationCore(ctx context.Context) (*dynamov1.PreRegistrationConfirmationResponse, error) {
-	api, ok := ctx.Value("api_input").(storageTypes.PreRegistrationSessionAPIin)
-	if !ok {
-		a.monitor.LogGrpcError(ctx, fmt.Sprintf("invalid core api -> PreRegistrationConfirmationCore(%v)", ctx))
-		return nil, status.Error(codes.InvalidArgument, "api input is invalid")
+func (a *Adapter) ProcessFetchedToken(ctx context.Context, in storageTypes.FetchTokenResult) (*dynamov1.FetchTokenResponse, error) {
+	if reflect.DeepEqual(in, storageTypes.FetchTokenResult{}) {
+		const msg = "received zero state decrypted message"
+
+		a.monitor.LogGrpcError(ctx, msg)
+		return nil, status.Error(codes.InvalidArgument, msg)
 	}
 
-	driven, ok := ctx.Value("driven_output").(*storageTypes.PreRegistrationSessionDrivenOut)
-	if !ok {
-		a.monitor.LogGrpcError(ctx, fmt.Sprintf("invalid core driven -> PreRegistrationConfirmationCore(%v)", ctx))
-		return nil, status.Error(codes.InvalidArgument, "api input is invalid")
+	out := dynamov1.FetchTokenResponse{
+		Active:    in.Active,
+		MemberId:  in.MemberID,
+		PublicKey: in.PublicKey,
+		Token:     in.Token,
+		TokenId:   in.TokenId,
 	}
 
-	out := dynamov1.PreRegistrationConfirmationResponse{
-		Active:    api.HasAutoCorrect,
-		CreatedAt: timestamppb.New(driven.CreatedAt),
-		ExpiresAt: driven.ExpiresAt,
-		MemberId:  driven.MemberId,
+	return &out, nil
+}
+
+func (a *Adapter) ProcessStoredToken(ctx context.Context, in *TokenStoreResult) (*dynamov1.TokenStoreResponse, error) {
+	if reflect.DeepEqual(in, storageTypes.TokenStoreResult{}) {
+		const msg = "received zero state encrypted session"
+		a.monitor.LogGrpcError(ctx, msg)
+		return nil, status.Error(codes.InvalidArgument, msg)
+	}
+
+	out := dynamov1.TokenStoreResponse{
+		Active:    in.Active,
+		CreatedAt: timestamppb.New(in.CreatedAt),
+		ExpiresAt: timestamppb.New(in.ExpiresAt),
+		Token:     in.Token,
 	}
 
 	return &out, nil

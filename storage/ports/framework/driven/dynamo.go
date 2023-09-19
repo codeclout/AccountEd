@@ -9,9 +9,16 @@ import (
 	storageTypes "github.com/codeclout/AccountEd/storage/storage-types"
 )
 
+type TokenStorePayload = storageTypes.TokenStorePayload
+type TokenStoreResult = storageTypes.TokenStoreResult
+
+type FetchTokenIn = storageTypes.FetchTokenIn
+type FetchTokenResult = storageTypes.FetchTokenResult
+
 type DynamoDbDrivenPort interface {
-	GetDynamoClient(ctx context.Context, creds *credentials.StaticCredentialsProvider, region *string) (*dynamodb.Client, error)
-	StoreSession(ctx context.Context, api DynamodbAPI, data storageTypes.PreRegistrationSessionAPIin) (*storageTypes.PreRegistrationSessionDrivenOut, error)
+	GetDynamoClient(ctx context.Context, creds credentials.StaticCredentialsProvider, region *string) (*dynamodb.Client, error)
+	GetTokenItem(ctx context.Context, api DynamodbAPI, data FetchTokenIn) (*FetchTokenResult, error)
+	StoreToken(ctx context.Context, api DynamodbAPI, data *TokenStorePayload) (*TokenStoreResult, error)
 }
 
 type DynamodbAPI interface {

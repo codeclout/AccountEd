@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	MemberSession_GetEncryptedSessionId_FullMethodName = "/proto.members.v1.MemberSession/GetEncryptedSessionId"
+	MemberSession_GenerateMemberToken_FullMethodName = "/proto.members.v1.MemberSession/GenerateMemberToken"
+	MemberSession_ValidateMemberToken_FullMethodName = "/proto.members.v1.MemberSession/ValidateMemberToken"
 )
 
 // MemberSessionClient is the client API for MemberSession service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MemberSessionClient interface {
-	GetEncryptedSessionId(ctx context.Context, in *EncryptedStringRequest, opts ...grpc.CallOption) (*EncryptedStringResponse, error)
+	GenerateMemberToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error)
+	ValidateMemberToken(ctx context.Context, in *ValidateTokenRequest, opts ...grpc.CallOption) (*ValidateTokenResponse, error)
 }
 
 type memberSessionClient struct {
@@ -37,9 +39,18 @@ func NewMemberSessionClient(cc grpc.ClientConnInterface) MemberSessionClient {
 	return &memberSessionClient{cc}
 }
 
-func (c *memberSessionClient) GetEncryptedSessionId(ctx context.Context, in *EncryptedStringRequest, opts ...grpc.CallOption) (*EncryptedStringResponse, error) {
-	out := new(EncryptedStringResponse)
-	err := c.cc.Invoke(ctx, MemberSession_GetEncryptedSessionId_FullMethodName, in, out, opts...)
+func (c *memberSessionClient) GenerateMemberToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error) {
+	out := new(GenerateTokenResponse)
+	err := c.cc.Invoke(ctx, MemberSession_GenerateMemberToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *memberSessionClient) ValidateMemberToken(ctx context.Context, in *ValidateTokenRequest, opts ...grpc.CallOption) (*ValidateTokenResponse, error) {
+	out := new(ValidateTokenResponse)
+	err := c.cc.Invoke(ctx, MemberSession_ValidateMemberToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,15 +61,19 @@ func (c *memberSessionClient) GetEncryptedSessionId(ctx context.Context, in *Enc
 // All implementations should embed UnimplementedMemberSessionServer
 // for forward compatibility
 type MemberSessionServer interface {
-	GetEncryptedSessionId(context.Context, *EncryptedStringRequest) (*EncryptedStringResponse, error)
+	GenerateMemberToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error)
+	ValidateMemberToken(context.Context, *ValidateTokenRequest) (*ValidateTokenResponse, error)
 }
 
 // UnimplementedMemberSessionServer should be embedded to have forward compatible implementations.
 type UnimplementedMemberSessionServer struct {
 }
 
-func (UnimplementedMemberSessionServer) GetEncryptedSessionId(context.Context, *EncryptedStringRequest) (*EncryptedStringResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEncryptedSessionId not implemented")
+func (UnimplementedMemberSessionServer) GenerateMemberToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateMemberToken not implemented")
+}
+func (UnimplementedMemberSessionServer) ValidateMemberToken(context.Context, *ValidateTokenRequest) (*ValidateTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateMemberToken not implemented")
 }
 
 // UnsafeMemberSessionServer may be embedded to opt out of forward compatibility for this service.
@@ -72,20 +87,38 @@ func RegisterMemberSessionServer(s grpc.ServiceRegistrar, srv MemberSessionServe
 	s.RegisterService(&MemberSession_ServiceDesc, srv)
 }
 
-func _MemberSession_GetEncryptedSessionId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EncryptedStringRequest)
+func _MemberSession_GenerateMemberToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MemberSessionServer).GetEncryptedSessionId(ctx, in)
+		return srv.(MemberSessionServer).GenerateMemberToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MemberSession_GetEncryptedSessionId_FullMethodName,
+		FullMethod: MemberSession_GenerateMemberToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MemberSessionServer).GetEncryptedSessionId(ctx, req.(*EncryptedStringRequest))
+		return srv.(MemberSessionServer).GenerateMemberToken(ctx, req.(*GenerateTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MemberSession_ValidateMemberToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MemberSessionServer).ValidateMemberToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MemberSession_ValidateMemberToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MemberSessionServer).ValidateMemberToken(ctx, req.(*ValidateTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -98,8 +131,12 @@ var MemberSession_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*MemberSessionServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetEncryptedSessionId",
-			Handler:    _MemberSession_GetEncryptedSessionId_Handler,
+			MethodName: "GenerateMemberToken",
+			Handler:    _MemberSession_GenerateMemberToken_Handler,
+		},
+		{
+			MethodName: "ValidateMemberToken",
+			Handler:    _MemberSession_ValidateMemberToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

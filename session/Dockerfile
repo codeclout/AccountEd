@@ -1,4 +1,4 @@
-FROM golang:1.20.5-bullseye as build
+FROM golang:1.21.0-bullseye as build
 
 WORKDIR /usr/ci-svc-usr
 

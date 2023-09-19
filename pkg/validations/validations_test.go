@@ -1,10 +1,12 @@
-package membertypes
+package validations
 
 import (
 	"errors"
 	"strings"
 	"sync"
 	"testing"
+
+	member_types "github.com/codeclout/AccountEd/members/member-types"
 )
 
 func TestValidateUsernamePayloadSize(t *testing.T) {
@@ -89,10 +91,10 @@ func TestValidatePrimaryMember(t *testing.T) {
 	var wg sync.WaitGroup
 
 	addresses := []string{"something.null", "x.y@example.com", "Barry Gibbs <bg@example.com>"}
-	prime := []*PrimaryMemberStartRegisterIn{
-		&PrimaryMemberStartRegisterIn{Username: &addresses[0]},
-		&PrimaryMemberStartRegisterIn{Username: &addresses[1]},
-		&PrimaryMemberStartRegisterIn{Username: &addresses[2]},
+	prime := []*member_types.PrimaryMemberStartRegisterIn{
+		&member_types.PrimaryMemberStartRegisterIn{Username: &addresses[0]},
+		&member_types.PrimaryMemberStartRegisterIn{Username: &addresses[1]},
+		&member_types.PrimaryMemberStartRegisterIn{Username: &addresses[2]},
 	}
 
 	cases := []struct {

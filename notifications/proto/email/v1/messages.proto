@@ -5,17 +5,10 @@ package proto.email.v1;
 option go_package = "github.com/codeclout/AccountEd/notifications";
 
 message ValidateEmailAddressResponse {
-  string email = 1;
-  string autocorrect = 2;
-  string deliverability = 3;
-  string quality_score = 4;
-  EmailVerificationPayload is_valid_format = 5;
-  EmailVerificationPayload is_free_email = 6;
-  EmailVerificationPayload is_disposable_email = 7;
-  EmailVerificationPayload is_role_email = 8;
-  EmailVerificationPayload is_catchall_email = 9;
-  EmailVerificationPayload is_mx_found = 10;
-  EmailVerificationPayload is_smtp_valid = 11;
+  string autoCorrect = 1;
+  string memberId = 2;
+  bool memberIdPending = 3;
+  bool shouldConfirmAddress = 4;
 }
 
 message EmailVerificationPayload {

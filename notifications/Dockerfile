@@ -1,9 +1,11 @@
-FROM golang:1.20.5-bullseye as build
+FROM golang:1.21.0-alpine3.18 as build
 
-EXPOSE 8088
+ARG PORT
+
+EXPOSE $PORT
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=7s --retries=3 \
-    CMD curl -f http://0.0.0.0/8088/hc || exit 1
+    CMD curl -f http://0.0.0.0:$PORT/hc || exit 1
 
 WORKDIR /usr/ci-svc-usr
 
@@ -16,7 +18,7 @@ COPY ./ .
 
 RUN CGO_ENABLED=0 GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) go build -ldflags="-s -w" -v -o ./accountEd-notification-service ./
 
-FROM alpine:3.17.0 as prod
+FROM alpine:3.18 as prod
 
 ARG AWS_REGION
 ENV AWS_REGION="${AWS_REGION}"

@@ -5,18 +5,10 @@ const (
 	Male
 )
 
-type ErrorCoreDataInvalid error
-type PreRegistrationAutoCorrect error
-
 type Gender int8
 type ConfigurationPath string
 type ContextAPILabel string
 type ContextDrivenLabel string
-type LogLabel string
-
-type AutoCorrectErrorOutput struct {
-	SuggestedEmailAddress string `json:"suggestedEmailAddress"`
-}
 
 type Member struct {
 	AccountType         string   `json:"accountType"`
@@ -38,6 +30,11 @@ type Member struct {
 	UpdatedAt           int64    `json:"updated"`
 }
 
+type MemberErrorOut struct {
+	Error bool   `json:"error"`
+	Msg   string `json:"msg"`
+}
+
 type MemberID string
 
 type MemberGroup struct {
@@ -54,14 +51,19 @@ type MemberType struct {
 	UpdatedAt int64  `json:"updated_at"`
 }
 
+type PrimaryMemberConfirmationOut struct {
+	IsPrimaryMemberConfirmed bool `json:"isConfirmed"`
+}
+
 type PrimaryMemberStartRegisterIn struct {
 	Username *string `json:"username" bson:"username" validate:"required,email"`
 }
 
-type PrimaryMemberStartRegisterOut struct {
-	AutoCorrect         string `json:"autoCorrect" bson:"auto_correct"`
-	MemberID            string `json:"memberID" bson:"member_id"`
-	RegistrationPending bool   `json:"registration_pending" bson:"registration_pending"`
-	SessionID           string `json:"sessionID" bson:"session_id"`
-	UsernamePending     bool   `json:"usernamePending" bson:"username_pending"`
+type ValidatedEmailResonse struct { //nolint:maligned
+	AutoCorrect         string `json:"auto_correct"`
+	MemberID            string `json:"member_id"`
+	RegistrationPending bool   `json:"registration_pending"`
+	TokenID             string `json:"token_id"`
+	Token               string `json:"token"`
+	UsernamePending     bool   `json:"username_pending"`
 }

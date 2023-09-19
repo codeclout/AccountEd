@@ -47,7 +47,7 @@ func main() {
 
 	monitor := monitoringDriver.NewAdapter()
 
-	sessionConfiguration := configuration.NewAdapter(*monitor)
+	sessionConfiguration := configuration.NewAdapter("./config.hcl", *monitor)
 	internalConfig := sessionConfiguration.LoadStorageConfig()
 
 	awsCoreAdapter = cloudAdapterCore.NewAdapter(*internalConfig, *monitor)

@@ -16,6 +16,13 @@ type EmailDrivenIn struct {
 	Endpoint     string `json:"endpoint"`
 }
 
+type ProcessEmailValidationOut struct {
+	AutoCorrect          string `json:"auto_correct" bson:"auto_correct"`
+	MemberID             string `json:"member_id" bson:"member_id"`
+	ShouldConfirmAddress bool   `json:"should_confirm_address" bson:"should_confirm_address"`
+	MemberIdPending      bool   `json:"member_id_pending" bson:"member_id_pending"`
+}
+
 type NoReplyEmailIn struct {
 	AWSCredentials []byte
 	Domain         string

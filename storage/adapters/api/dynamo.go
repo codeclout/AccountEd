@@ -14,22 +14,26 @@ import (
 	storageTypes "github.com/codeclout/AccountEd/storage/storage-types"
 )
 
+type cc = context.Context
 type configMap = map[string]interface{}
 type gClients = protocol.AdapterServiceClients
-type icore = core.DynamoDbCorePort
-type idriven = driven.DynamoDbDrivenPort
-type preconfirmin = storageTypes.PreRegistrationSessionAPIin
-type preconfirmResponsepb = pb.PreRegistrationConfirmationResponse
+
+type dynamoCore = core.DynamoDbCorePort
+type drivenDynamo = driven.DynamoDbDrivenPort
+
+type monitoringA = monitoring.Adapter
+
+type TokenStorePayload = storageTypes.TokenStorePayload
 
 type Adapter struct {
-	config     map[string]interface{}
+	config     configMap
 	core       core.DynamoDbCorePort
 	driven     driven.DynamoDbDrivenPort
 	gRPClients *protocol.AdapterServiceClients
 	monitor    monitoring.Adapter
 }
 
-func NewAdapter(config configMap, core icore, gcs *gClients, driven idriven, monitor monitoring.Adapter) *Adapter {
+func NewAdapter(config configMap, core dynamoCore, gcs *gClients, driven drivenDynamo, monitor monitoringA) *Adapter {
 	return &Adapter{
 		config:     config,
 		core:       core,
@@ -39,7 +43,29 @@ func NewAdapter(config configMap, core icore, gcs *gClients, driven idriven, mon
 	}
 }
 
-func (a *Adapter) PreRegistrationConfirmationApi(ctx context.Context, in preconfirmin, ch chan *preconfirmResponsepb, ech chan error) {
+func (a *Adapter) CreatePublicTokenItem(ctx cc, in *TokenStorePayload, ch chan *pb.TokenStoreResponse, ech chan error) {
+	client, e := a.driven.GetDynamoClient(ctx, in.Credentials, in.AWSRegion)
+	if e != nil {
+		ech <- status.Error(codes.Internal, "unable to retrieve storage client")
+		return
+	}
+
+	result, e := a.driven.StoreToken(ctx, client, in)
+	if e != nil {
+		ech <- status.Error(codes.Internal, "unable to store session")
+		return
+	}
+
+	out, e := a.core.ProcessStoredToken(ctx, result)
+	if e != nil {
+		ech <- status.Error(codes.Internal, "internal error")
+		return
+	}
+
+	ch <- out
+}
+
+func (a *Adapter) GetToken(ctx cc, in *storageTypes.FetchTokenIn, ch chan *pb.FetchTokenResponse, ech chan error) {
 	region, ok := a.config["AWSRegion"].(string)
 	if !ok {
 		a.monitor.LogGenericError("region not set in environment")
@@ -47,30 +73,27 @@ func (a *Adapter) PreRegistrationConfirmationApi(ctx context.Context, in preconf
 		return
 	}
 
-	client, e := a.driven.GetDynamoClient(ctx, in.SessionServiceCredentials, &region)
+	client, e := a.driven.GetDynamoClient(ctx, in.Credentials, &region)
 	if e != nil {
-		a.monitor.LogGrpcError(ctx, e.Error())
 		ech <- status.Error(codes.Internal, "unable to retrieve storage client")
 		return
 	}
 
-	result, e := a.driven.StoreSession(ctx, client, in)
+	result, e := a.driven.GetTokenItem(ctx, client, storageTypes.FetchTokenIn{
+		TableName: in.TableName,
+		Token:     in.Token,
+	})
 	if e != nil {
-		a.monitor.LogGrpcError(ctx, e.Error())
 		ech <- status.Error(codes.Internal, "unable to store session")
 		return
 	}
 
-	ctx = context.WithValue(ctx, "api_input", in)
-	ctx = context.WithValue(ctx, "driven_output", result)
-
-	out, e := a.core.PreRegistrationConfirmationCore(ctx)
+	out, e := a.core.ProcessFetchedToken(ctx, *result)
 	if e != nil {
-		a.monitor.LogGrpcError(ctx, e.Error())
 		ech <- status.Error(codes.Internal, "internal error")
 		return
 	}
 
 	ch <- out
-	return
+
 }

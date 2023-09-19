@@ -1,5 +1,5 @@
 package runner
 
 type NotificationsInfraConfigPort interface {
-  LoadNotificationsInfrastructureConfig() *map[string]interface{}
+	LoadStorageInfrastructureConfig(baseConfiguration map[string]interface{}) *map[string]interface{}
 }
