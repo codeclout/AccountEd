@@ -79,10 +79,7 @@ func (a *Adapter) GetToken(ctx cc, in *storageTypes.FetchTokenIn, ch chan *pb.Fe
 		return
 	}
 
-	result, e := a.driven.GetTokenItem(ctx, client, storageTypes.FetchTokenIn{
-		TableName: in.TableName,
-		Token:     in.Token,
-	})
+	result, e := a.driven.GetTokenItem(ctx, client, *in)
 	if e != nil {
 		ech <- status.Error(codes.Internal, "unable to store session")
 		return
