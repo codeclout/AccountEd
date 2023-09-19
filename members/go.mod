@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.32
+	github.com/codeclout/AccountEd v0.0.0-20230919023448-38ffbf333b99
 	github.com/codeclout/AccountEd/notifications v0.0.0-20230725183757-963806e4880b
 	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230725183757-963806e4880b
 	github.com/codeclout/AccountEd/pkg/server v0.0.0-20230725183757-963806e4880b
@@ -12,8 +13,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl/v2 v2.17.0
 	github.com/pkg/errors v0.9.1
-	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
-	golang.org/x/text v0.12.0
 )
 
 require (
@@ -34,8 +33,10 @@ require (
 	github.com/valyala/fasthttp v1.48.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/zclconf/go-cty v1.13.2 // indirect
+	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230814215434-ca7cfce7776a // indirect
 	google.golang.org/grpc v1.57.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect

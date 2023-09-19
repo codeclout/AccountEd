@@ -9,4 +9,5 @@ use (
 	storage
 	./notifications/infrastructure
 	storage/infrastructure/dynamodb
+	pkg/validations
 )
