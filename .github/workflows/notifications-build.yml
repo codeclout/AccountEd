@@ -32,10 +32,12 @@ jobs:
           go-version-file: './notifications/go.mod'
           cache-dependency-path: './notifications/go.sum'
       -
+        working-directory: './notifications'
         name: build-image
         run: |
           make build-image
-      - name: scan-image
+      -
+        name: scan-image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{env.ENV}}-sch00l.io-notifications
