@@ -39,6 +39,12 @@ jobs:
           cache-dependency-path: './notifications/go.sum'
       -
         working-directory: './notifications'
+        name: Vulnerabilities Check
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+      -
+        working-directory: './notifications'
         name: build-image
         run: |
           make build-image
