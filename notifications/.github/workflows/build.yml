@@ -1,0 +1,46 @@
+name: build
+
+on:
+  push:
+    branches:
+      - alpha
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    name: notifications-build
+    runs-on: ubuntu-latest
+    env:
+      ENV: ${{ github.ref_name == 'alpha' && 'dev' || 'prod'}}
+      GH_ACTOR: ${{ github.actor }}
+      GH_REPOSITORY: 'codeclout/accounted'
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: './notifications/go.mod'
+          cache-dependency-path: './notifications/go.sum'
+      -
+        name: build-image
+        run: |
+          make build-image
+      - name: scan-image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{env.ENV}}-sch00l.io-notifications
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'

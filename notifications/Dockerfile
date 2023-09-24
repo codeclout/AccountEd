@@ -1,11 +1,4 @@
-FROM golang:1.21.0-alpine3.18 as build
-
-ARG PORT
-
-EXPOSE $PORT
-
-HEALTHCHECK --interval=30s --timeout=30s --start-period=7s --retries=3 \
-    CMD curl -f http://0.0.0.0:$PORT/hc || exit 1
+FROM golang:1.21.1-alpine3.18 as build
 
 WORKDIR /usr/ci-svc-usr
 
@@ -16,7 +9,7 @@ RUN go mod verify
 
 COPY ./ .
 
-RUN CGO_ENABLED=0 GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) go build -ldflags="-s -w" -v -o ./accountEd-notification-service ./
+RUN CGO_ENABLED=0 GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) go build -ldflags="-s -w" -a -v -o ./accountEd-notification-service ./
 
 FROM alpine:3.18 as prod
 
@@ -37,6 +30,8 @@ ENV PERFORMANCE_SLA="${PERFORMANCE_SLA}"
 
 ARG PORT
 ENV PORT="${PORT}"
+
+EXPOSE $PORT
 
 RUN set -ex \
     && apk update \
