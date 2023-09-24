@@ -16,11 +16,17 @@ jobs:
     name: notifications-build
     runs-on: ubuntu-latest
     env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      EMAIL_PROCESSOR_API_KEY: ${{ secrets.EMAIL_PROCESSOR_API_KEY }}
+      EMAIL_PROCESSOR_DOMAIN: ${{ secrets.EMAIL_PROCESSOR_DOMAIN }}
+      EMAIL_VERIFIER_API_PATH: ${{ secrets.EMAIL_VERIFIER_API_PATH }}
       ENV: ${{ github.ref_name == 'alpha' && 'dev' || 'prod'}}
       GH_ACTOR: ${{ github.actor }}
       GH_REPOSITORY: 'codeclout/accounted'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       IMAGE_TAG: ${{ github.sha }}
+      PERFORMANCE_SLA: ${{ secrets.PERFORMANCE_SLA }}
+      PORT: ${{ secrets.PORT }}
     steps:
       -
         name: Checkout
