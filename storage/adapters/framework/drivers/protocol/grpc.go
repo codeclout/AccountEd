@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 	"github.com/codeclout/AccountEd/storage/ports/framework/drivers"
@@ -20,13 +20,13 @@ type cfg = map[string]interface{}
 type dynamosrv = drivers.DynamoDbDriverPort
 
 type Adapter struct {
-	awsSessionClient  *awspb.AWSResourceClientServiceClient
-	config            cfg
-	dynamoDriver      drivers.DynamoDbDriverPort
-	listener          net.Listener
-	monitor           monitoring.Adapter
-	server            *grpc.Server
-	waitgroup         *sync.WaitGroup
+	awsSessionClient *awspb.AWSResourceClientServiceClient
+	config           cfg
+	dynamoDriver     drivers.DynamoDbDriverPort
+	listener         net.Listener
+	monitor          monitoring.Adapter
+	server           *grpc.Server
+	waitgroup        *sync.WaitGroup
 }
 
 func NewAdapter(config cfg, dynamoDriver dynamosrv, monitor monitoring.Adapter, wg *sync.WaitGroup) *Adapter {

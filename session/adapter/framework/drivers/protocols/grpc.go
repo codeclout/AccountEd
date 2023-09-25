@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 	"github.com/codeclout/AccountEd/session/ports/framework/drivers/cloud"

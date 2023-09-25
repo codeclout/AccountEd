@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	coreCloud "github.com/codeclout/AccountEd/session/ports/core/cloud"
 	"github.com/codeclout/AccountEd/session/ports/framework/driven/cloud"
 	sessiontypes "github.com/codeclout/AccountEd/session/session-types"

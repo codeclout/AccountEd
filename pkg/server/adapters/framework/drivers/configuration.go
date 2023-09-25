@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 //go:embed config.hcl

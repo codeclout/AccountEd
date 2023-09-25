@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 )

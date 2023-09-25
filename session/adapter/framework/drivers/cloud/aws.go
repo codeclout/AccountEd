@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 
 	"github.com/codeclout/AccountEd/session/ports/api/cloud"

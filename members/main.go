@@ -13,6 +13,7 @@ import (
 	"github.com/codeclout/AccountEd/members/ports/api"
 	"github.com/codeclout/AccountEd/members/ports/framework/driven"
 	memberProtocolDriverPort "github.com/codeclout/AccountEd/members/ports/framework/drivers/protocols"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 
 	driverAdapterServerConfiguration "github.com/codeclout/AccountEd/members/adapters/framework/drivers/server"
 	"github.com/codeclout/AccountEd/members/ports/core"
@@ -21,7 +22,6 @@ import (
 	coreAdapter "github.com/codeclout/AccountEd/members/adapters/core"
 
 	"github.com/codeclout/AccountEd/members/ports/framework/drivers/server"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	serverProtocolAdapter "github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
 	"github.com/codeclout/AccountEd/pkg/server/server-types/protocols"
 )

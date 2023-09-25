@@ -2,28 +2,23 @@ package driver
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/go-webauthn/webauthn/webauthn"
-	"github.com/o1egl/paseto"
 	"golang.org/x/crypto/ed25519"
 
-	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
-	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type Adapter struct {
-	monitor   *drivers.Adapter
+	monitor   *monitoring.Adapter
 	publicKey *ed25519.PublicKey
-	token     *paseto.V2
 	webAuth   *webauthn.WebAuthn
 }
 
-func NewAdapter(monitor *drivers.Adapter) (*Adapter, error) {
+func NewAdapter(monitor *monitoring.Adapter) (*Adapter, error) {
 	return &Adapter{
 		monitor: monitor,
-		token:   paseto.NewV2(),
 	}, nil
 }
 
@@ -59,6 +54,6 @@ func (a *Adapter) CreateToken(ctx context.Context, duration time.Duration, group
 	return nil, nil
 }
 
-func (a *Adapter) VerifyTokenData(ctx context.Context) (*sessiontypes.StatelessAPI, error) {
-	return nil, errors.New("not implemented")
-}
+// func (a *Adapter) VerifyTokenData(ctx context.Context) (*sessiontypes.StatelessAPI, error) {
+// 	return nil, errors.New("not implemented")
+// }

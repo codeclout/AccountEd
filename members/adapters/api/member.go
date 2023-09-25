@@ -11,7 +11,7 @@ import (
 	memberCore "github.com/codeclout/AccountEd/members/ports/core"
 	"github.com/codeclout/AccountEd/members/ports/framework/driven"
 	notificationEmailv1 "github.com/codeclout/AccountEd/notifications/gen/email/v1"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
 	sessionMembersv1 "github.com/codeclout/AccountEd/session/gen/members/v1"
 )
@@ -109,7 +109,7 @@ func (a *Adapter) getEmailDomain() (string, error) {
 	return r.Hostname(), nil
 }
 
-func (a *Adapter) sendPrimaryMemberEmail(ctx context.Context, hashedSessionID string, toAddress []string) *MemberErrorOut {
+func (a *Adapter) sendPrimaryMemberEmail(ctx context.Context, token string, toAddress []string) *MemberErrorOut {
 	emailclient := *a.gRPC.EmailNotificationclient
 
 	fqdn, e := a.getEmailDomain()
@@ -128,7 +128,7 @@ func (a *Adapter) sendPrimaryMemberEmail(ctx context.Context, hashedSessionID st
 		AwsCredentials: a.getAWSCredentialBytes(ctx),
 		Domain:         uri,
 		FromAddress:    fmt.Sprintf("no-reply@%s", fqdn),
-		SessionId:      hashedSessionID,
+		Token:          token,
 		ToAddress:      toAddress,
 	}
 

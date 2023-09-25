@@ -4,7 +4,7 @@ import (
 	"github.com/aws/jsii-runtime-go"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/storage/adapters/framework/drivers/server"
 	"github.com/codeclout/AccountEd/storage/infrastructure/dynamodb/stack"
 )

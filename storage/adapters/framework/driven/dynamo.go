@@ -18,7 +18,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/storage/ports/framework/driven"
 	storageTypes "github.com/codeclout/AccountEd/storage/storage-types"
 )

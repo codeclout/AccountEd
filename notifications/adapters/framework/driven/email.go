@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type ValidateEmailIn = notifications.ValidateEmailIn

@@ -6,14 +6,13 @@ import (
 	driverAdapter "github.com/codeclout/AccountEd/notifications/adapters/framework/drivers"
 	protocolGrpcAdapter "github.com/codeclout/AccountEd/notifications/adapters/framework/drivers/protocols"
 	configuration "github.com/codeclout/AccountEd/notifications/adapters/framework/drivers/server"
+	apiEmail "github.com/codeclout/AccountEd/notifications/ports/api"
 	"github.com/codeclout/AccountEd/notifications/ports/core"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/driven"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/drivers"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/drivers/protocols"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/drivers/server"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
-
-	apiEmail "github.com/codeclout/AccountEd/notifications/ports/api"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 
 	"github.com/codeclout/AccountEd/notifications/adapters/api"
 )

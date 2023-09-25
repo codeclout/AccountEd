@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/timeout"
 
 	"github.com/codeclout/AccountEd/members/ports/api"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 func NewHomeschoolAdapter(conifg map[string]interface{}, api api.MemberAPI, monitor monitoring.Adapter) *Adapter {

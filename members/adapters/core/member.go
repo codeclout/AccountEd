@@ -8,7 +8,7 @@ import (
 
 	memberTypes "github.com/codeclout/AccountEd/members/member-types"
 	emailv1 "github.com/codeclout/AccountEd/notifications/gen/email/v1"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type ValidateEmailAddressResponse = emailv1.ValidateEmailAddressResponse

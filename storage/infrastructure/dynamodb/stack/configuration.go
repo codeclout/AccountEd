@@ -5,7 +5,7 @@ import (
 	"os"
 	"reflect"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type environment struct {

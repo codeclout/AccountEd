@@ -5,43 +5,38 @@ go 1.21
 require (
 	aidanwoods.dev/go-paseto v1.5.0
 	github.com/aws/aws-sdk-go-v2 v1.21.0
-	github.com/aws/aws-sdk-go-v2/config v1.18.40
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.38
+	github.com/aws/aws-sdk-go-v2/config v1.18.42
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.40
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.21.3
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.37.5
 	github.com/aws/aws-sdk-go-v2/service/sts v1.22.0
-	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230919025237-530bfe6aa148
-	github.com/codeclout/AccountEd/pkg/server v0.0.0-20230919025237-530bfe6aa148
-	github.com/codeclout/AccountEd/storage v0.0.0-20230919024124-857e45a93024
+	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230924142241-7ebe65a71c84
+	github.com/codeclout/AccountEd/pkg/server v0.0.0-20230924142241-7ebe65a71c84
+	github.com/codeclout/AccountEd/storage v0.0.0-20230924142241-7ebe65a71c84
 	github.com/go-webauthn/webauthn v0.8.6
 	github.com/hashicorp/hcl/v2 v2.18.0
-	github.com/o1egl/paseto v1.0.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/crypto v0.13.0
 	golang.org/x/net v0.15.0
-	google.golang.org/grpc v1.58.1
+	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
 )
 
 require (
 	aidanwoods.dev/go-result v0.1.0 // indirect
-	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
-	github.com/aead/chacha20poly1305 v0.0.0-20201124145622-1a5aba2a8b29 // indirect
-	github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.11 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.41 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.35 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.42 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.43 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.35 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.14.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.16.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.14.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.1 // indirect
 	github.com/aws/smithy-go v1.14.2 // indirect
-	github.com/codeclout/AccountEd/members v0.0.0-20230919025237-530bfe6aa148 // indirect
-	github.com/codeclout/AccountEd/notifications v0.0.0-20230919024124-857e45a93024 // indirect
+	github.com/codeclout/AccountEd/members v0.0.0-20230924142241-7ebe65a71c84 // indirect
+	github.com/codeclout/AccountEd/notifications v0.0.0-20230924142241-7ebe65a71c84 // indirect
 	github.com/fxamacker/cbor/v2 v2.5.0 // indirect
 	github.com/go-webauthn/x v0.1.4 // indirect
 	github.com/gofiber/fiber/v2 v2.49.2 // indirect
@@ -63,8 +58,7 @@ require (
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zclconf/go-cty v1.14.0 // indirect
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230913181813-007df8e322eb // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 )

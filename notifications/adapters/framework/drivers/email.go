@@ -12,11 +12,10 @@ import (
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
 	"github.com/codeclout/AccountEd/notifications/ports/api"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 var defaultRouteDuration = notifications.DefaultRouteDuration(2000)
-var transactionID = notifications.TransactionID("transactionID")
 
 type Adapter struct {
 	apiEmail api.EmailApiPort

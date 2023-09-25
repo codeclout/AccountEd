@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/pkg/errors"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type environment struct {

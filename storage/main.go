@@ -3,7 +3,7 @@ package main
 import (
 	"sync"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	serverProtocolAdapter "github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
 	"github.com/codeclout/AccountEd/storage/adapters/api"
 	"github.com/codeclout/AccountEd/storage/adapters/core"

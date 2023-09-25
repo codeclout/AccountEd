@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	cloudAWS "github.com/codeclout/AccountEd/session/ports/api/cloud"
 	"github.com/codeclout/AccountEd/session/ports/api/member"
 

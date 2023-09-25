@@ -10,7 +10,7 @@ import (
 
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/pkg/validations"
 )
 

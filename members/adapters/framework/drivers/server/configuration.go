@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"reflect"
 
-	membertypes "github.com/codeclout/AccountEd/members/member-types"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
-
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
+
+	membertypes "github.com/codeclout/AccountEd/members/member-types"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type environment struct {

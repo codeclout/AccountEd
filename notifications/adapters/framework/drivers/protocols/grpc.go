@@ -12,7 +12,7 @@ import (
 
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	"github.com/codeclout/AccountEd/notifications/ports/framework/drivers"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type Adapter struct {

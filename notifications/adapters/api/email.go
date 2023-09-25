@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 
-	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
-
 	"github.com/pkg/errors"
+
+	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 
 	pb "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	notificatonCore "github.com/codeclout/AccountEd/notifications/ports/core"

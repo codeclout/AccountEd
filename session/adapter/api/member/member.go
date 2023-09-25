@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
 	pb "github.com/codeclout/AccountEd/session/gen/members/v1"
 	"github.com/codeclout/AccountEd/session/ports/core/member"

@@ -14,7 +14,7 @@ import (
 
 	memberT "github.com/codeclout/AccountEd/members/member-types"
 	"github.com/codeclout/AccountEd/members/ports/api"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/pkg/validations"
 )
 

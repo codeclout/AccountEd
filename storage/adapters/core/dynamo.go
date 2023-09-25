@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 	storageTypes "github.com/codeclout/AccountEd/storage/storage-types"
 )

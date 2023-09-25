@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	awspb "github.com/codeclout/AccountEd/session/gen/aws/v1"
 	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 	pb "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"

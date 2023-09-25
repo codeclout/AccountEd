@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	emailv1 "github.com/codeclout/AccountEd/notifications/gen/email/v1"
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers"
 	awsv1 "github.com/codeclout/AccountEd/session/gen/aws/v1"
 	membersessionv1 "github.com/codeclout/AccountEd/session/gen/members/v1"

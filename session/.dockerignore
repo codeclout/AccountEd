@@ -1,4 +1,6 @@
 ./infrastructure
+./proto
+
 ./Dockerfile
 ./Makefile
 ./buf*

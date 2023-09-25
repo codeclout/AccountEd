@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 
 	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
@@ -18,10 +18,10 @@ type cc = context.Context
 
 type Adapter struct {
 	config  map[string]interface{}
-	monitor *drivers.Adapter
+	monitor *monitoring.Adapter
 }
 
-func NewAdapter(config map[string]interface{}, monitor *drivers.Adapter) *Adapter {
+func NewAdapter(config map[string]interface{}, monitor *monitoring.Adapter) *Adapter {
 	return &Adapter{
 		config:  config,
 		monitor: monitor,

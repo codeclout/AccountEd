@@ -14,7 +14,7 @@ import (
 	"github.com/cdktf/cdktf-provider-aws-go/aws/v16/sesdomainmailfrom"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 
-	monitoring "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 )
 
 type environment struct {
