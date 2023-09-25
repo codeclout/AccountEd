@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.40
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.20.0
 	github.com/codeclout/AccountEd v0.0.0-20230919023448-38ffbf333b99
-	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230924131041-5208e7b844ab
+	github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230925224348-f6130877f99a
 	github.com/pkg/errors v0.9.1
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0

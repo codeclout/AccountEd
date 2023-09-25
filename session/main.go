@@ -3,7 +3,7 @@ package main
 import (
 	"sync"
 
-	monitoringDriver "github.com/codeclout/AccountEd/pkg/monitoring"
+	"github.com/codeclout/AccountEd/pkg/monitoring"
 	serverProtocolAdapter "github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
 	memberAdapterCore "github.com/codeclout/AccountEd/session/adapter/core/member"
 	memberAdapterDriven "github.com/codeclout/AccountEd/session/adapter/framework/driven/member"
@@ -45,7 +45,7 @@ func main() {
 		grpcProtocolAdapter protocols.GRPCProtocolPort
 	)
 
-	monitor := monitoringDriver.NewAdapter()
+	monitor := monitoring.NewAdapter()
 
 	sessionConfiguration := configuration.NewAdapter("./config.hcl", *monitor)
 	internalConfig := sessionConfiguration.LoadStorageConfig()

@@ -19,8 +19,8 @@ github.com/codeclout/AccountEd v0.0.0-20230919023448-38ffbf333b99 h1:AXrfFTZ6AbU
 github.com/codeclout/AccountEd v0.0.0-20230919023448-38ffbf333b99/go.mod h1:nJ+826CvGtEaWhuzxg0dmJ1Uk7ecAgEmU8ycWbwn0NQ=
 github.com/codeclout/AccountEd/members v0.0.0-20230924131041-5208e7b844ab h1:G9KIa+7mrXWnIvSSUOGTVk90R049TGcuDWhKeZhYk9Y=
 github.com/codeclout/AccountEd/members v0.0.0-20230924131041-5208e7b844ab/go.mod h1:j7vMr3xX9bYBKHOcttLVQVACZY6yi/9wf6aY7g0HEQU=
-github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230924131041-5208e7b844ab h1:SAX6yYEI0LdiLjrFMWuV6hcongyN7rq98mnH8S//vWc=
-github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230924131041-5208e7b844ab/go.mod h1:Zi0Q0rS3r7LiRfXVZPjlyc/wZzyhfasQ8mw+5eJhb1M=
+github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230925224348-f6130877f99a h1:Q08YoVU72eiOJoh/8yIVAGUdgtei8T0JzdrJZ+xuX0Q=
+github.com/codeclout/AccountEd/pkg/monitoring v0.0.0-20230925224348-f6130877f99a/go.mod h1:Zi0Q0rS3r7LiRfXVZPjlyc/wZzyhfasQ8mw+5eJhb1M=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=
 github.com/golang/protobuf v1.5.3 h1:KhyjKVUg7Usr/dYsdSqoFveMYd5ko72D+zANwlG1mmg=
