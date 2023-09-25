@@ -28,16 +28,13 @@ build-image:
 		--build-arg EMAIL_PROCESSOR_API_KEY=$${EMAIL_PROCESSOR_API_KEY} \
 		--build-arg EMAIL_PROCESSOR_DOMAIN=$${EMAIL_PROCESSOR_DOMAIN} \
 		--build-arg EMAIL_VERIFIER_API_PATH=$${EMAIL_VERIFIER_API_PATH} \
+		--build-arg NOTIFICATIONS_PORT=$${NOTIFICATIONS_PORT} \
 		--build-arg PERFORMANCE_SLA=$${PERFORMANCE_SLA} \
-		--build-arg PORT=$${PORT} \
-		--platform linux/arm64 --load --target=prod -t $${ENV}-sch00l.io-notifications .
+		--platform linux/arm64 --load --target=prod -t sch00l.io/notifications-$${ENV} .
 
 .PHONY: init-local-environment
 init-local-environment: build-image
-	# cd ./migrations/mongo && npm i
-	docker compose config
-
-	docker compose up $(shell if [ "$${NOTIFICATIONS_DEV}" = true ]; \
+	docker compose -f ./docker-compose.yml -p accounted up -d $(shell if [ "$${NOTIFICATIONS_DEV}" = true ]; \
 	then echo 'notifications-dev'; \
 	else echo 'notifications'; \
 	fi)

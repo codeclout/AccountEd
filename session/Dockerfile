@@ -1,4 +1,4 @@
-FROM golang:1.21.0-bullseye as build
+FROM golang:1.21.1-alpine3.18 as build
 
 WORKDIR /usr/ci-svc-usr
 
@@ -11,7 +11,7 @@ COPY ./ .
 
 RUN CGO_ENABLED=0 GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) go build -ldflags="-s -w" -v -o ./accountEd-session-service ./
 
-FROM alpine:3.17.0 as prod
+FROM alpine:3.18 as prod
 
 ARG AWS_ACCESS_KEY_ID
 ENV AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
@@ -28,13 +28,13 @@ ENV AWS_ROLE_TO_ASSUME="${AWS_ROLE_TO_ASSUME}"
 ARG AWS_SECRET_ACCESS_KEY
 ENV AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
 
-ARG PORT
-ENV PORT="${PORT}"
+ARG SESSION_PORT
+ENV SESSION_PORT="${SESSION_PORT}"
 
-EXPOSE $PORT
+ARG SESSION_STORAGE_TABLE_NAME
+ENV SESSION_STORAGE_TABLE_NAME="${SESSION_STORAGE_TABLE_NAME}"
 
-HEALTHCHECK --interval=30s --timeout=30s --start-period=7s --retries=3 \
-    CMD curl -f "http://0.0.0.0/$PORT/hc" || exit 1
+EXPOSE $SESSION_PORT
 
 RUN set -ex \
     && apk update \

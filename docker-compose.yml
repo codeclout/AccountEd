@@ -83,10 +83,6 @@ services:
     volumes:
       - "./migrations/dynamodb:/home/dynamodblocal/data"
     working_dir: /home/dynamodblocal
-  notifications:
-    image: ${ENV}-sch00l.io-notifications:latest
-    ports:
-      - "9000:9000"
 
 networks:
   accountEd-local:

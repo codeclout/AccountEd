@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  notifications:
+    image: sch00l.io/notifications-${ENV}:latest
+    environment:
+      - AWS_REGION=${AWS_REGION}
+      - EMAIL_PROCESSOR_API_KEY=${EMAIL_PROCESSOR_API_KEY}
+    ports:
+      - "${NOTIFICATIONS_PORT}:${NOTIFICATIONS_PORT}"

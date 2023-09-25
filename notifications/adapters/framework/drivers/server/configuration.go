@@ -35,7 +35,7 @@ func (a *Adapter) LoadNotificationsConfig() *map[string]interface{} {
 		EmailProcessorAPIKey: os.Getenv("EMAIL_PROCESSOR_API_KEY"),
 		EmailProcessorDomain: os.Getenv("EMAIL_PROCESSOR_DOMAIN"),
 		EmailVerifierApiPath: os.Getenv("EMAIL_VERIFIER_API_PATH"),
-		Port:                 os.Getenv("PORT"),
+		Port:                 os.Getenv("NOTIFICATIONS_PORT"),
 		Region:               os.Getenv("AWS_REGION"),
 		SLARoutePerformance:  os.Getenv("PERFORMANCE_SLA"),
 	}

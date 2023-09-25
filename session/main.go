@@ -5,11 +5,11 @@ import (
 
 	monitoringDriver "github.com/codeclout/AccountEd/pkg/monitoring/adapters/framework/drivers"
 	serverProtocolAdapter "github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
+	memberAdapterCore "github.com/codeclout/AccountEd/session/adapter/core/member"
 	memberAdapterDriven "github.com/codeclout/AccountEd/session/adapter/framework/driven/member"
 	memberPortDriven "github.com/codeclout/AccountEd/session/ports/framework/driven/member"
 
 	memberAdapterApi "github.com/codeclout/AccountEd/session/adapter/api/member"
-	memberAdapterCore "github.com/codeclout/AccountEd/session/adapter/core/member"
 	memberAdapterDriver "github.com/codeclout/AccountEd/session/adapter/framework/drivers/member"
 	memberPortApi "github.com/codeclout/AccountEd/session/ports/api/member"
 	memberPortCore "github.com/codeclout/AccountEd/session/ports/core/member"
@@ -51,7 +51,6 @@ func main() {
 	internalConfig := sessionConfiguration.LoadStorageConfig()
 
 	awsCoreAdapter = cloudAdapterCore.NewAdapter(*internalConfig, *monitor)
-	memberCoreAdapter = memberAdapterCore.NewAdapter(*internalConfig, monitor)
 	awsDrivenAdapter = cloudAdapterDriven.NewAdapter(*internalConfig, *monitor)
 	awsAPIAdapter = cloud.NewAdapter(awsCoreAdapter, awsDrivenAdapter, *monitor)
 	awsDriverAdapter = cloudAdapterDriver.NewAdapter(*internalConfig, awsAPIAdapter, *monitor)
@@ -60,6 +59,7 @@ func main() {
 	go gRPCAdapterClient.InitializeClients()
 	defer gRPCAdapterClient.StopProtocolListener()
 
+	memberCoreAdapter = memberAdapterCore.NewAdapter(*internalConfig, monitor)
 	memberDrivenAdapter = memberAdapterDriven.NewAdapter(*internalConfig, *monitor)
 	memberApiAdapter = memberAdapterApi.NewAdapter(*internalConfig, memberCoreAdapter, awsDrivenAdapter, memberDrivenAdapter, gRPCAdapterClient, *monitor, &wg)
 	memberDriverAdapter = memberAdapterDriver.NewAdapter(*internalConfig, memberApiAdapter, awsAPIAdapter, *monitor)
