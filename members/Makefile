@@ -17,10 +17,10 @@ build-data:
 .PHONY: build-image
 build-image:
 	docker buildx install
-	-docker buildx rm AccountEdMember
-	docker buildx create --name AccountEdMember
-	docker buildx use AccountEdMember
-	docker buildx inspect AccountEdMember --bootstrap
+	-docker buildx rm AccountEdMembers
+	docker buildx create --name AccountEdMembers
+	docker buildx use AccountEdMembers
+	docker buildx inspect AccountEdMembers --bootstrap
 
 	docker buildx build  \
 		--build-arg ENVIRONMENT=$${ENVIRONMENT} \
@@ -29,7 +29,7 @@ build-image:
 		--build-arg AWS_REGION=$${AWS_REGION} \
 		--build-arg DOMAIN=$${DOMAIN} \
 		--build-arg MEMBER_PORT=$${MEMBER_PORT} \
-		--platform linux/arm64 --load --target=prod -t sch00l.io/session-$${ENVIRONMENT} .
+		--platform linux/arm64 --load --target=prod -t sch00l.io/members-$${ENVIRONMENT} .
 
 .PHONY: init-local-environment
 init-local-environment: build-image
@@ -40,7 +40,7 @@ init-local-environment: build-image
 
 .PHONY: release-image
 release-image: build-data
-	docker tag $${ENVIRONMENT}-sch00l.io-session-$(shell go env GOARCH) \
+	docker tag sch00l.io/members-$${ENVIRONMENT} \
 	ghcr.io/$(GH_REPOSITORY):$(ENV)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
 
 	docker push ghcr.io/$(GH_REPOSITORY):$(ENV)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)

@@ -42,7 +42,7 @@ init-local-environment: build-image
 
 .PHONY: release-image
 release-image: build-data
-	docker tag $${ENVIRONMENT}-sch00l.io-session-$(shell go env GOARCH) \
+	docker tag sch00l.io/session-$${ENVIRONMENT} \
 	ghcr.io/$(GH_REPOSITORY):$(ENVIRONMENT)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
 
 	docker push ghcr.io/$(GH_REPOSITORY):$(ENVIRONMENT)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
