@@ -19,6 +19,7 @@ type environment struct {
 	PreRegistrationParameter string
 	Region                   string
 	RoleToAssume             string
+	RuntimeEnvironment       string
 	SecretAccessKey          string
 	SessionTableName         string
 }
@@ -76,6 +77,7 @@ func (a *Adapter) LoadStorageConfig() *map[string]interface{} {
 		PreRegistrationParameter: os.Getenv("AWS_PRE_REGISTRATION_PARAM"),
 		Region:                   os.Getenv("AWS_REGION"),
 		RoleToAssume:             os.Getenv("AWS_ROLE_TO_ASSUME"),
+		RuntimeEnvironment:       os.Getenv("ENVIRONMENT"),
 		SecretAccessKey:          os.Getenv("AWS_SECRET_ACCESS_KEY"),
 		SessionTableName:         os.Getenv("SESSION_STORAGE_TABLE_NAME"),
 	}

@@ -23,14 +23,14 @@ build-image:
 	docker buildx inspect AccountEdNotifications --bootstrap
 
 	docker buildx build  \
-		--build-arg ENV=$${ENV} \
+		--build-arg ENVIRONMENT=$${ENVIRONMENT} \
 		--build-arg AWS_REGION=$${AWS_REGION} \
 		--build-arg EMAIL_PROCESSOR_API_KEY=$${EMAIL_PROCESSOR_API_KEY} \
 		--build-arg EMAIL_PROCESSOR_DOMAIN=$${EMAIL_PROCESSOR_DOMAIN} \
 		--build-arg EMAIL_VERIFIER_API_PATH=$${EMAIL_VERIFIER_API_PATH} \
 		--build-arg NOTIFICATIONS_PORT=$${NOTIFICATIONS_PORT} \
 		--build-arg PERFORMANCE_SLA=$${PERFORMANCE_SLA} \
-		--platform linux/arm64 --load --target=prod -t sch00l.io/notifications-$${ENV} .
+		--platform linux/arm64 --load --target=prod -t sch00l.io/notifications-$${ENVIRONMENT} .
 
 .PHONY: init-local-environment
 init-local-environment: build-image
@@ -41,10 +41,10 @@ init-local-environment: build-image
 
 .PHONY: release-image
 release-image: build-data
-	docker tag $${ENV}-sch00l.io-notifications-$(shell go env GOARCH) \
-	ghcr.io/$(GH_REPOSITORY):$(ENV)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
+	docker tag $${ENVIRONMENT}-sch00l.io-notifications-$(shell go env GOARCH) \
+	ghcr.io/$(GH_REPOSITORY):$(ENVIRONMENT)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
 
-	docker push ghcr.io/$(GH_REPOSITORY):$(ENV)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
+	docker push ghcr.io/$(GH_REPOSITORY):$(ENVIRONMENT)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
 	docker logout ghcr.io/$${GH_ACTOR}
 
 .PHONY: test-all

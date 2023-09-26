@@ -6,5 +6,6 @@ services:
     environment:
       - AWS_REGION=${AWS_REGION}
       - EMAIL_PROCESSOR_API_KEY=${EMAIL_PROCESSOR_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT}
     ports:
       - "${NOTIFICATIONS_PORT}:${NOTIFICATIONS_PORT}"

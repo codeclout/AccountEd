@@ -76,7 +76,7 @@ func (a *Adapter) LoadMemberConfig() *map[string]interface{} {
 		AWSRegion:                os.Getenv("AWS_REGION"),
 		AWSRolePreRegistration:   os.Getenv("AWS_PRE_REGISTRATION_ROLE"),
 		Domain:                   os.Getenv("DOMAIN"),
-		Port:                     os.Getenv("PORT"),
+		Port:                     os.Getenv("MEMBER_PORT"),
 		PreRegistrationParameter: os.Getenv("AWS_PRE_REGISTRATION_HASH_PARAM"),
 		RuntimeEnvironment:       os.Getenv("ENVIRONMENT"),
 	}

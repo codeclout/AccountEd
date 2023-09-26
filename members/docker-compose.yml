@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  member:
+    image: sch00l.io/member-${ENVIRONMENT}:latest
+    environment:
+      - AWS_PRE_REGISTRATION_HASH_PARAM=${AWS_PRE_REGISTRATION_HASH_PARAM}
+      - AWS_PRE_REGISTRATION_ROLE=${AWS_PRE_REGISTRATION_ROLE}
+      - AWS_REGION=${AWS_REGION}
+      - DOMAIN=${DOMAIN}
+      - ENVIRONMENT=${ENVIRONMENT}
+    ports:
+      - "${MEMBER_PORT}:${MEMBER_PORT}"

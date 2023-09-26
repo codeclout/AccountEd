@@ -23,7 +23,7 @@ build-image:
 	docker buildx inspect AccountEdSession --bootstrap
 
 	docker buildx build  \
-		--build-arg ENV=$${ENV} \
+		--build-arg ENVIRONMENT=$${ENVIRONMENT} \
 		--build-arg AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID} \
 		--build-arg AWS_PRE_REGISTRATION_PARAM=$${AWS_PRE_REGISTRATION_PARAM} \
 		--build-arg AWS_REGION=$${AWS_REGION} \
@@ -31,7 +31,7 @@ build-image:
 		--build-arg AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY} \
 		--build-arg SESSION_PORT=$${SESSION_PORT} \
 		--build-arg SESSION_STORAGE_TABLE_NAME=$${SESSION_STORAGE_TABLE_NAME} \
-		--platform linux/arm64 --load --target=prod -t sch00l.io/session-$${ENV} .
+		--platform linux/arm64 --load --target=prod -t sch00l.io/session-$${ENVIRONMENT} .
 
 .PHONY: init-local-environment
 init-local-environment: build-image
@@ -42,10 +42,10 @@ init-local-environment: build-image
 
 .PHONY: release-image
 release-image: build-data
-	docker tag $${ENV}-sch00l.io-session-$(shell go env GOARCH) \
-	ghcr.io/$(GH_REPOSITORY):$(ENV)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
+	docker tag $${ENVIRONMENT}-sch00l.io-session-$(shell go env GOARCH) \
+	ghcr.io/$(GH_REPOSITORY):$(ENVIRONMENT)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
 
-	docker push ghcr.io/$(GH_REPOSITORY):$(ENV)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
+	docker push ghcr.io/$(GH_REPOSITORY):$(ENVIRONMENT)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
 	docker logout ghcr.io/$${GH_ACTOR}
 
 .PHONY: test-all

@@ -9,12 +9,13 @@ import (
 )
 
 type environment struct {
-	EmailProcessorAPIKey string `json:"email_processor_api_key"`
-	EmailProcessorDomain string `json:"email_processor_domain"`
-	EmailVerifierApiPath string `json:"email_verifier_api_path"`
-	Port                 string `json:"port"`
-	Region               string `json:"awsRegion"`
-	SLARoutePerformance  string `json:"sla_route_performance"`
+	EmailProcessorAPIKey string
+	EmailProcessorDomain string
+	EmailVerifierApiPath string
+	Port                 string
+	Region               string
+	RuntimeEnvironment   string
+	SLARoutePerformance  string
 }
 
 type Adapter struct {
@@ -37,6 +38,7 @@ func (a *Adapter) LoadNotificationsConfig() *map[string]interface{} {
 		EmailVerifierApiPath: os.Getenv("EMAIL_VERIFIER_API_PATH"),
 		Port:                 os.Getenv("NOTIFICATIONS_PORT"),
 		Region:               os.Getenv("AWS_REGION"),
+		RuntimeEnvironment:   os.Getenv("ENVIRONMENT"),
 		SLARoutePerformance:  os.Getenv("PERFORMANCE_SLA"),
 	}
 

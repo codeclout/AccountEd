@@ -1,4 +1,4 @@
-name: build
+name: session-build
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ENV: ${{ github.ref_name == 'alpha' && 'dev' || 'prod'}}
+      ENVIRONMENT: ${{ github.ref_name == 'alpha' && 'dev' || 'prod'}}
       GH_ACTOR: ${{ github.actor }}
       GH_REPOSITORY: 'codeclout/accounted'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -55,7 +55,7 @@ jobs:
         name: scan-image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: sch00l.io/session-${{env.ENV}}
+          image-ref: sch00l.io/session-${{env.ENVIRONMENT}}
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true

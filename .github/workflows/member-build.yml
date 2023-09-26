@@ -1,11 +1,11 @@
-name: notifications-build
+name: member-build
 
 on:
   push:
     branches:
       - '**'
     paths:
-      - 'notifications/**'
+      - 'member/**'
   workflow_dispatch:
 
 permissions:
@@ -15,20 +15,19 @@ permissions:
 
 jobs:
   build:
-    name: notifications-build
+    name: member-build
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      EMAIL_PROCESSOR_API_KEY: ${{ secrets.EMAIL_PROCESSOR_API_KEY }}
-      EMAIL_PROCESSOR_DOMAIN: ${{ secrets.EMAIL_PROCESSOR_DOMAIN }}
-      EMAIL_VERIFIER_API_PATH: ${{ secrets.EMAIL_VERIFIER_API_PATH }}
+      AWS_PRE_REGISTRATION_HASH_PARAM: ${{ secrets.AWS_PRE_REGISTRATION_HASH_PARAM }}
+      AWS_PRE_REGISTRATION_ROLE: ${{ secrets.AWS_PRE_REGISTRATION_ROLE }}
+      DOMAIN: ${{ secrets.DOMAIN }}
       ENVIRONMENT: ${{ github.ref_name == 'alpha' && 'dev' || 'prod'}}
       GH_ACTOR: ${{ github.actor }}
       GH_REPOSITORY: 'codeclout/accounted'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       IMAGE_TAG: ${{ github.sha }}
-      PERFORMANCE_SLA: ${{ secrets.PERFORMANCE_SLA }}
-      NOTIFICATIONS_PORT: ${{ secrets.NOTIFICATIONS_PORT }}
+      MEMBER_PORT: ${{ secrets.MEMBER_PORT }}
     steps:
       -
         name: Checkout
@@ -37,16 +36,16 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version-file: './notifications/go.mod'
-          cache-dependency-path: './notifications/go.sum'
+          go-version-file: './member/go.mod'
+          cache-dependency-path: './member/go.sum'
       -
-        working-directory: './notifications'
+        working-directory: './member'
         name: Vulnerabilities Check
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
       -
-        working-directory: './notifications'
+        working-directory: './member'
         name: build-image
         run: |
           make build-image
