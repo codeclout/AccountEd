@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   member:
-    image: sch00l.io/member-${ENVIRONMENT}:latest
+    image: sch00l.io/members-${ENVIRONMENT}:latest
     environment:
       - AWS_PRE_REGISTRATION_HASH_PARAM=${AWS_PRE_REGISTRATION_HASH_PARAM}
       - AWS_PRE_REGISTRATION_ROLE=${AWS_PRE_REGISTRATION_ROLE}
