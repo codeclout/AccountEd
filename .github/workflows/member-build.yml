@@ -1,11 +1,11 @@
-name: member-build
+name: members-build
 
 on:
   push:
     branches:
       - '**'
     paths:
-      - 'member/**'
+      - 'members/**'
   workflow_dispatch:
 
 permissions:
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build:
-    name: member-build
+    name: members-build
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -36,16 +36,16 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version-file: './member/go.mod'
-          cache-dependency-path: './member/go.sum'
+          go-version-file: './members/go.mod'
+          cache-dependency-path: './members/go.sum'
       -
-        working-directory: './member'
+        working-directory: './members'
         name: Vulnerabilities Check
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
       -
-        working-directory: './member'
+        working-directory: './members'
         name: build-image
         run: |
           make build-image
@@ -53,7 +53,7 @@ jobs:
         name: scan-image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: sch00l.io/notifications-${{env.ENVIRONMENT}}
+          image-ref: sch00l.io/members-${{env.ENVIRONMENT}}
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
