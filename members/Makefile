@@ -24,26 +24,26 @@ build-image:
 
 	docker buildx build  \
 		--build-arg ENVIRONMENT=$${ENVIRONMENT} \
+		--build-arg AWS_REGION=$${AWS_REGION} \
 		--build-arg AWS_PRE_REGISTRATION_HASH_PARAM=$${AWS_PRE_REGISTRATION_HASH_PARAM} \
 		--build-arg AWS_PRE_REGISTRATION_ROLE=$${AWS_PRE_REGISTRATION_ROLE} \
-		--build-arg AWS_REGION=$${AWS_REGION} \
 		--build-arg DOMAIN=$${DOMAIN} \
 		--build-arg MEMBER_PORT=$${MEMBER_PORT} \
-		--platform linux/arm64 --load --target=prod -t sch00l.io/members-$${ENVIRONMENT} -f ./Dockerfile .
+		--platform linux/arm64 --load --target=prod -t sch00l.io/members-$${ENVIRONMENT} .
 
 .PHONY: init-local-environment
 init-local-environment: build-image
-	docker compose -f ./docker-compose.yml -p accounted up -d $(shell if [ "$${MEMBER_DEV}" = true ]; \
-	then echo 'member-dev'; \
-	else echo 'member'; \
+	docker compose -f ./docker-compose.yml -p accounted up -d $(shell if [ "$${MEMBERS_DEV}" = true ]; \
+	then echo 'members-dev'; \
+	else echo 'members'; \
 	fi)
 
 .PHONY: release-image
 release-image: build-data
 	docker tag sch00l.io/members-$${ENVIRONMENT} \
-	ghcr.io/$(GH_REPOSITORY):$(ENV)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
+	ghcr.io/$(GH_REPOSITORY):$(ENVIRONMENT)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
 
-	docker push ghcr.io/$(GH_REPOSITORY):$(ENV)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
+	docker push ghcr.io/$(GH_REPOSITORY):$(ENVIRONMENT)-$(shell echo $(IMAGE_TAG) | cut -c 1-12)
 	docker logout ghcr.io/$${GH_ACTOR}
 
 .PHONY: test-all
