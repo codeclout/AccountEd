@@ -23,13 +23,13 @@ build-image:
 	docker buildx inspect AccountEdMembers --bootstrap
 
 	docker buildx build  \
-		--build-arg ENVIRONMENT=$${ENVIRONMENT} \
-		--build-arg AWS_PRE_REGISTRATION_HASH_PARAM=$${AWS_PRE_REGISTRATION_HASH_PARAM} \
-		--build-arg AWS_PRE_REGISTRATION_ROLE=$${AWS_PRE_REGISTRATION_ROLE} \
-		--build-arg AWS_REGION=$${AWS_REGION} \
-		--build-arg DOMAIN=$${DOMAIN} \
-		--build-arg MEMBER_PORT=$${MEMBER_PORT} \
-		--platform linux/arm64 --load --target=prod -t sch00l.io/members-$${ENVIRONMENT} .
+	--build-arg ENVIRONMENT=$${ENVIRONMENT} \
+	--build-arg AWS_PRE_REGISTRATION_HASH_PARAM=$${AWS_PRE_REGISTRATION_HASH_PARAM} \
+	--build-arg AWS_PRE_REGISTRATION_ROLE=$${AWS_PRE_REGISTRATION_ROLE} \
+	--build-arg AWS_REGION=$${AWS_REGION} \
+	--build-arg DOMAIN=$${DOMAIN} \
+	--build-arg MEMBER_PORT=$${MEMBER_PORT} \
+	--platform linux/arm64 --load --target=prod -t sch00l.io/members-$${ENVIRONMENT} .
 
 .PHONY: init-local-environment
 init-local-environment: build-image

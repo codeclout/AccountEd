@@ -48,8 +48,6 @@ jobs:
         working-directory: './members'
         name: build-image
         run: |
-          pwd
-          ls -a
           make build-image
       -
         name: scan-image
