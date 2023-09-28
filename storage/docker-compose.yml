@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  storage:
+    image: sch00l.io/storage-${ENVIRONMENT}:latest
+    environment:
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ROLE_TO_ASSUME=${AWS_ROLE_TO_ASSUME}
+      - ENVIRONMENT=${ENVIRONMENT}
+    ports:
+      - "${STORAGE_PORT}:${STORAGE_PORT}"

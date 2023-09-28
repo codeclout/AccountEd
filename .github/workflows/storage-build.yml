@@ -1,0 +1,59 @@
+name: storage-build
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'storage/**'
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    name: storage-build
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      ENVIRONMENT: ${{ github.ref_name == 'alpha' && 'dev' || 'prod'}}
+      GH_ACTOR: ${{ github.actor }}
+      GH_REPOSITORY: 'codeclout/accounted'
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE_TAG: ${{ github.sha }}
+      STORAGE_PORT: ${{ secrets.STORAGE_PORT }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: './storage/go.mod'
+          cache-dependency-path: './storage/go.sum'
+      -
+        working-directory: './storage'
+        name: Vulnerabilities Check
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+      -
+        working-directory: './storage'
+        name: build-image
+        run: |
+          make build-image
+      -
+        name: scan-image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: sch00l.io/storage-${{env.ENVIRONMENT}}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM'

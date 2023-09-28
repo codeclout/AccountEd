@@ -79,7 +79,7 @@ func (a *Adapter) LoadStorageConfig() *map[string]interface{} {
 
 	env := environment{
 		AWSRegion:    os.Getenv("AWS_REGION"),
-		Port:         os.Getenv("PORT"),
+		Port:         os.Getenv("STORAGE_PORT"),
 		RoleToAssume: os.Getenv("AWS_ROLE_TO_ASSUME"),
 	}
 
