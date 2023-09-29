@@ -6,11 +6,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
+	"github.com/gofiber/template/html/v2"
 
 	memberT "github.com/codeclout/AccountEd/members/member-types"
 	"github.com/codeclout/AccountEd/members/ports/api"
@@ -48,7 +51,8 @@ func (a *Adapter) initMemberRoutes(app *fiber.App) *fiber.App {
 
 	b := int(sla)
 
-	app.Post("/", timeout.NewWithContext(a.processPrimaryMemberEmail, time.Duration(b)*time.Millisecond))
+	app.Post("/register", timeout.NewWithContext(a.processPrimaryMemberEmail, time.Duration(b)*time.Millisecond))
+	app.Get("/register", timeout.NewWithContext(a.processRegistrationPage, time.Duration(b)*time.Millisecond))
 	app.Get("/email/confirm", timeout.NewWithContext(a.processEmailVerification, time.Duration(b)*time.Millisecond))
 
 	return app
@@ -64,11 +68,20 @@ func (a *Adapter) setContextLabels(ctx *fiber.Ctx, txnValue string) context.Cont
 }
 
 func (a *Adapter) InitializeMemberAPI() []*fiber.App {
-	app := fiber.New()
+	workingDirectory, _ := os.Getwd()
+
+	driver := filepath.Join(workingDirectory, "./templates")
+	engine := html.New(driver, ".html")
+
+	app := fiber.New(fiber.Config{Views: engine})
 
 	return []*fiber.App{
 		a.initMemberRoutes(app),
 	}
+}
+
+func (a *Adapter) processRegistrationPage(ctx *fiber.Ctx) error {
+	return ctx.Render("shell", nil)
 }
 
 func (a *Adapter) processEmailVerification(ctx *fiber.Ctx) error {

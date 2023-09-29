@@ -22,6 +22,9 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.21.0 // indirect
 	github.com/aws/smithy-go v1.14.2 // indirect
 	github.com/codeclout/AccountEd/storage v0.0.0-20230926022608-2ed72cb9a4c6 // indirect
+	github.com/gofiber/template v1.8.2 // indirect
+	github.com/gofiber/template/html/v2 v2.0.5 // indirect
+	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect

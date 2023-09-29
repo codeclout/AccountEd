@@ -40,6 +40,15 @@ jobs:
           go-version-file: './notifications/go.mod'
           cache-dependency-path: './notifications/go.sum'
       -
+        name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: 'latest'
+          working-directory: './members'
+
+          args: --timeout=30m --issues-exit-code=1
+          install-mode: "goinstall"
+      -
         working-directory: './notifications'
         name: Vulnerabilities Check
         run: |

@@ -4,7 +4,6 @@ SHELL=/bin/bash
 
 BUILD_EPOCH := $(shell date +"%s")
 BUILD_TIME := $(shell date -u -r $(BUILD_EPOCH) +'%Y%m%d-%H%M%S')
-GO_VERSION := 1.21.1
 
 IMAGE_TAG ?= $(shell git rev-parse --short HEAD)
 
@@ -17,10 +16,10 @@ build-data:
 .PHONY: build-image
 build-image:
 	docker buildx install
-	-docker buildx rm AccountEdMembers
-	docker buildx create --name AccountEdMembers
-	docker buildx use AccountEdMembers
-	docker buildx inspect AccountEdMembers --bootstrap
+	-docker buildx rm AccountEdMember
+	docker buildx create --name AccountEdMember
+	docker buildx use AccountEdMember
+	docker buildx inspect AccountEdMember --bootstrap
 
 	docker buildx build  \
 		--build-arg ENVIRONMENT=$${ENVIRONMENT} \
