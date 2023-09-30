@@ -28,7 +28,7 @@ build-image:
 		--build-arg AWS_PRE_REGISTRATION_ROLE=$${AWS_PRE_REGISTRATION_ROLE} \
 		--build-arg DOMAIN=$${DOMAIN} \
 		--build-arg MEMBER_PORT=$${MEMBER_PORT} \
-		--platform linux/arm64 --load --target=prod -t sch00l.io/members-$${ENVIRONMENT}
+		--platform linux/arm64 --load --target=prod -t sch00l.io/members-$${ENVIRONMENT} .
 
 .PHONY: init-local-environment
 init-local-environment: build-image
