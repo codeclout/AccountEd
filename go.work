@@ -1,13 +1,15 @@
-go 1.21
+go 1.21.3
 
 use (
+	./notifications/infrastructure
+	./session/infrastructure/workflow-pre-registration-token
 	members
-	pkg/monitoring
 	notifications
+	pkg/monitoring
 	pkg/server
+	pkg/validations
 	session
 	storage
-	./notifications/infrastructure
 	storage/infrastructure/dynamodb
-	pkg/validations
+	session/infrastructure/handler-pre-registration-token
 )

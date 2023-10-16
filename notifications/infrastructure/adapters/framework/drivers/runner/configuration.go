@@ -92,7 +92,7 @@ func (a *Adapter) NewMyStack(scope constructs.Construct, id string) cdktf.Terraf
 	config := awsprovider.AwsProviderConfig{
 		AccessKey: jsii.String(internal["AccessKey"].(string)),
 		AssumeRole: []*awsprovider.AwsProviderAssumeRole{
-			&awsprovider.AwsProviderAssumeRole{
+			{
 				Duration:    jsii.String("45m"),
 				RoleArn:     jsii.String(internal["RoleArn"].(string)),
 				SessionName: jsii.String(internal["SessionLabel"].(string) + strconv.Itoa(t.Nanosecond())),

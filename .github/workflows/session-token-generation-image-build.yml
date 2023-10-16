@@ -1,0 +1,72 @@
+name: lci-session-pre-registration-token
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'session/infrastructure/handle-pre-registration-token/**'
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    name: lci-session-pre-registration-token
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ENVIRONMENT: ${{ github.ref_name == 'alpha' && 'dev' || 'prod'}}
+      GH_ACTOR: ${{ github.actor }}
+      GH_REPOSITORY: 'codeclout/accounted'
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      -
+        name: checkout
+        uses: actions/checkout@v4
+      -
+        name: setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: './session/infrastructure/handler-pre-registration-token/go.mod'
+          cache-dependency-path: './session/infrastructure/handler-pre-registration-token/go.sum'
+      -
+        name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: 'latest'
+          working-directory: './session/infrastructure/handler-pre-registration-token'
+
+          args: --timeout=30m --issues-exit-code=1
+          install-mode: "goinstall"
+      -
+        working-directory: './session/infrastructure/handler-pre-registration-token'
+        name: vulnerabilities check
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+      -
+        working-directory: './session/infrastructure/handler-pre-registration-token'
+        name: build-image
+        run: |
+          make build-image
+      -
+        name: scan-image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: sch00l.io/session-pre-registration-token-${{env.ENVIRONMENT}}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+      -
+        name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+          aws-region: ${{env.AWS_REGION}}
