@@ -29,7 +29,7 @@ func ValidateBase64(in string) error {
 }
 
 // ValidateUsernamePayloadSize checks if the size of the input byte slice is within the acceptable limit.
-// It returns an error if the input byte slice is larger than 360 bytes.
+// It returns an error if the input byte slice is larger than 320 bytes.
 func ValidateUsernamePayloadSize(in []byte) error {
 	if len(in) > 320 {
 		return ErrorPayloadSize
@@ -80,49 +80,52 @@ func ValidateEmail(email *string) (atomic.Value, error) {
 
 // ValidatePin checks if the provided PIN is valid by matching it against a regular expression pattern.
 // It accepts a string pointer to the PIN as input and returns a pointer to the result and any related error.
-// If the validation fails, an error is returned as ErrorPinInvalid. Valid PINs should contain 7 to 10 digits.
-func ValidatePin(pin *string) (*string, error) {
-	if ok, e := regexp.MatchString(`(?m)^[0-9]{7,10}$`, *pin); ok && e == nil {
-		x := "ok"
-		return &x, nil
+// If the validation fails, an error is returned as ErrorPinInvalid. Valid PINs should contain 5 to 26 digits.
+func ValidatePin(pin *string) error {
+	if ok, e := regexp.MatchString(`(?m)^[0-9]{5,26}$`, *pin); ok && e == nil {
+		return nil
 	}
 
-	y := ""
-	return &y, ErrorPinInvalid
+	return ErrorPinInvalid
 }
 
-// ValidatePrimaryMember
-/*
- * ValidatePrimaryMember checks a primary member's email.
- * It only prepares the member for registration if the email is valid.
-
- * @param in pointer to PrimaryMemberStartRegisterIn, which contains the email to be validated
- * @param wg pointer to sync.WaitGroup used to wait until the email validation is done
- * @return error which can be either nil or ErrorInvalidEmail
- */
-func ValidatePrimaryMember(in *membertypes.PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) error {
+func ValidatePrimaryMember(in *membertypes.PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) (e error) {
 	out := make(chan error, 1)
 
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
+		defer func() {
+			out <- e
+		}()
 
-		email, e := ValidateEmail(in.Username)
-		if e != nil {
-			out <- ErrorInvalidEmail
+		email, x := ValidateEmail(in.MemberID)
+		if x != nil {
+			e = ErrorInvalidEmail
 			return
 		}
 
 		v := email.Load()
-		x := v.(string)
-		in.Username = &x
 
-		out <- nil
+		vs, ok := v.(string)
+		if !ok {
+			e = ErrorInvalidEmail
+			return
+		}
+
+		in.MemberID = &vs
 	}()
 
 	wg.Wait()
-	return <-out
+
+	select {
+	case e := <-out:
+		return e
+
+	default:
+		return nil
+	}
 }
 
 //

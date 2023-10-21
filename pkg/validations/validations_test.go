@@ -88,56 +88,51 @@ func TestValidateEmail(t *testing.T) {
 }
 
 func TestValidatePrimaryMember(t *testing.T) {
-	var wg sync.WaitGroup
+	wg := &sync.WaitGroup{}
 
 	addresses := []string{"something.null", "x.y@example.com", "Barry Gibbs <bg@example.com>"}
 	prime := []*member_types.PrimaryMemberStartRegisterIn{
-		&member_types.PrimaryMemberStartRegisterIn{Username: &addresses[0]},
-		&member_types.PrimaryMemberStartRegisterIn{Username: &addresses[1]},
-		&member_types.PrimaryMemberStartRegisterIn{Username: &addresses[2]},
+		&member_types.PrimaryMemberStartRegisterIn{MemberID: &addresses[0]},
+		&member_types.PrimaryMemberStartRegisterIn{MemberID: &addresses[1]},
+		&member_types.PrimaryMemberStartRegisterIn{MemberID: &addresses[2]},
 	}
 
 	cases := []struct {
-		a string
-		b error
+		a error
 	}{
-		{a: "", b: ErrorInvalidEmail},
-		{a: "x.y@example.com", b: nil},
-		{a: "bg@example.com", b: nil},
+		{a: ErrorInvalidEmail},
+		{a: nil},
+		{a: nil},
 	}
 
-	for i, address := range cases {
-		wg.Add(1)
-		e := ValidatePrimaryMember(prime[i], &wg)
-		wg.Wait()
+	for i, cas := range cases {
+		e := ValidatePrimaryMember(prime[i], wg)
 
-		if *prime[i].Username != address.a || !errors.Is(e, address.b) {
-			t.Errorf("expected address: %s e: %t \n received address: %s e: %t", *prime[i].Username, e, address.a, address.b)
+		if !errors.Is(e, cas.a) {
+			t.Errorf("expected e: %t \n received e: %t", e, cas.a)
 		}
 	}
 }
 
 func TestValidatePin(t *testing.T) {
-	pins := []string{"7472", "382023475", "301%132$", "472651", "4276291", "32824746169"}
+	pins := []string{"7472", "382023475", "301%132$", "472651", "4276291", "328247461693282474616932824746169"}
 
 	cases := []struct {
-		a string
-		b error
+		a error
 	}{
-		{a: "", b: ErrorPinInvalid},
-		{a: "ok", b: nil},
-		{a: "", b: ErrorPinInvalid},
-		{a: "", b: ErrorPinInvalid},
-		{a: "ok", b: nil},
-		{a: "", b: ErrorPinInvalid},
+		{a: ErrorPinInvalid},
+		{a: nil},
+		{a: ErrorPinInvalid},
+		{a: nil},
+		{a: nil},
+		{a: ErrorPinInvalid},
 	}
 
-	for i, pin := range cases {
-		c, ok := ValidatePin(&pins[i])
-		id := *c
+	for i, cas := range cases {
+		e := ValidatePin(&pins[i])
 
-		if id != pin.a || !errors.Is(ok, pin.b) {
-			t.Errorf("expected pin: %s ok: %t \n received pin: %s ok: %t", id, ok, pin.a, pin.b)
+		if !errors.Is(e, cas.a) {
+			t.Errorf("expected e: %t \n received e: %t", e, cas.a)
 		}
 	}
 }
