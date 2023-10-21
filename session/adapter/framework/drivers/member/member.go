@@ -77,20 +77,6 @@ func (a *Adapter) getAWSCredentialInput() (*sessionTypes.AmazonConfigurationInpu
 	return &metadata, nil
 }
 
-func (a *Adapter) processMemberTokenGeneration(in *pb.GenerateTokenRequest) (*sessionTypes.NewTokenPayload, error) {
-	var s string
-
-	if in.GetMemberId() == (s) || in.GetTokenId() == (s) {
-		return nil, status.Error(codes.Internal, "invalid new token request")
-	}
-
-	return &sessionTypes.NewTokenPayload{
-		HasAutoCorrect: in.GetHasAutoCorrect(),
-		MemberId:       in.GetMemberId(),
-		TokenId:        in.GetTokenId(),
-	}, nil
-}
-
 func (a *Adapter) processTokenValidation(in *pb.ValidateTokenRequest) (*sessionTypes.ValidateTokenPayload, error) {
 	var s string
 
@@ -99,44 +85,6 @@ func (a *Adapter) processTokenValidation(in *pb.ValidateTokenRequest) (*sessionT
 	}
 
 	return &sessionTypes.ValidateTokenPayload{Token: in.GetToken()}, nil
-}
-
-func (a *Adapter) GenerateMemberToken(ctx context.Context, request *pb.GenerateTokenRequest) (*pb.GenerateTokenResponse, error) {
-	metadata, e := a.getAWSCredentialInput()
-	if e != nil {
-		return nil, status.Error(codes.FailedPrecondition, e.Error())
-	}
-
-	ch := make(chan *awspb.AWSConfigResponse, 1)
-	ech := make(chan error, 1)
-	tch := make(chan *pb.GenerateTokenResponse, 1)
-
-	a.aws.GetAWSSessionCredentials(ctx, *metadata, ch, ech)
-
-	select {
-	case session := <-ch:
-		apiData, e := a.processMemberTokenGeneration(request)
-		if e != nil {
-			return nil, e
-		}
-
-		a.api.CreateMemberToken(ctx, session.AwsCredentials, apiData, tch, ech)
-	}
-
-	select {
-	case <-ctx.Done():
-		const msg = "encryption operation request timeout"
-		a.monitor.LogGrpcError(ctx, msg)
-		return nil, errors.New(msg)
-
-	case out := <-tch:
-		a.monitor.LogGrpcInfo(ctx, "success")
-		return out, nil
-
-	case e := <-ech:
-		a.monitor.LogGrpcError(ctx, e.Error())
-		return nil, e
-	}
 }
 
 func (a *Adapter) ValidateMemberToken(ctx context.Context, request *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error) {

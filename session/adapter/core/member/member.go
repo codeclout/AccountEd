@@ -10,8 +10,6 @@ import (
 
 	"github.com/codeclout/AccountEd/pkg/monitoring"
 	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
-
-	sessiontypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
 type cc = context.Context
@@ -26,27 +24,6 @@ func NewAdapter(config map[string]interface{}, monitor *monitoring.Adapter) *Ada
 		config:  config,
 		monitor: monitor,
 	}
-}
-
-func (a *Adapter) createToken(ctx cc, in *sessiontypes.TokenPayload) (string, error) {
-	serviceName, ok := a.config["ServiceName"].(string)
-	if !ok {
-		const msg = "unable to find service name in environment settings"
-		a.monitor.LogGrpcError(ctx, msg)
-		return "", status.Error(codes.FailedPrecondition, msg)
-	}
-
-	claims := make(map[string]any)
-	token := paseto.NewToken()
-
-	token.SetExpiration(in.ExpiresAt)
-	token.SetIssuedAt(in.IssuedAt)
-	token.SetJti(in.ID)
-	token.SetNotBefore(in.IssuedAt)
-	token.SetIssuer(serviceName)
-
-	claims["member-id"] = in.MemberID
-	return token.V4Sign(in.Private, nil), nil
 }
 
 func (a *Adapter) validateToken(ctx cc, publicKey, token, tokenId string) (bool, error) {
@@ -74,22 +51,6 @@ func (a *Adapter) validateToken(ctx cc, publicKey, token, tokenId string) (bool,
 	}
 
 	return true, nil
-}
-
-func (a *Adapter) ProcessTokenCreation(ctx cc, in *sessiontypes.TokenPayload) (*sessiontypes.TokenCreateOut, error) {
-	token, e := a.createToken(ctx, in)
-	if e != nil {
-		a.monitor.LogGrpcError(ctx, e.Error())
-		return nil, e
-	}
-
-	out := sessiontypes.TokenCreateOut{
-		Token:        token,
-		TokenPayload: in,
-		TTL:          in.ExpiresAt.Sub(in.IssuedAt),
-	}
-
-	return &out, nil
 }
 
 func (a *Adapter) ProcessTokenValidation(ctx cc, in *dynamov1.FetchTokenResponse) (bool, error) {

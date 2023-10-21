@@ -11,13 +11,3 @@ message ValidateTokenRequest {
 message ValidateTokenResponse {
   bool isValidToken = 1;
 }
-
-message GenerateTokenRequest {
-  bool hasAutoCorrect = 1;
-  string memberId = 2;
-  string tokenId = 3;
-}
-
-message GenerateTokenResponse {
-  string token = 1;
-}

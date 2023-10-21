@@ -10,14 +10,15 @@ import (
 	membersessionv1 "github.com/codeclout/AccountEd/session/gen/members/v1"
 )
 
-type cc = context.Context
-type ec = emailv1.EmailNotificationServiceClient
-type MErrorOut = memberTypes.MemberErrorOut
-type pm = memberTypes.PrimaryMemberStartRegisterIn
-type PMConfirmOut = memberTypes.PrimaryMemberConfirmationOut
-type sc = membersessionv1.MemberSessionClient
-
-type ValidateEmailAddressResponse = emailv1.ValidateEmailAddressResponse
+type (
+	cc                           = context.Context
+	ec                           = emailv1.EmailNotificationServiceClient
+	MErrorOut                    = memberTypes.MemberErrorOut
+	pm                           = memberTypes.PrimaryMemberStartRegisterIn
+	PMConfirmOut                 = memberTypes.PrimaryMemberConfirmationOut
+	sc                           = membersessionv1.MemberSessionClient
+	ValidateEmailAddressResponse = emailv1.ValidateEmailAddressResponse
+)
 
 type Adapter struct {
 	monitor monitoring.Adapter
@@ -41,7 +42,7 @@ func (a *Adapter) ValidateEmailAddress(ctx cc, data *pm, emailClient *ec) (*Vali
 	}
 
 	client := *emailClient
-	response, e := client.ValidateEmailAddress(ctx, &emailv1.ValidateEmailAddressRequest{Address: *data.Username})
+	response, e := client.ValidateEmailAddress(ctx, &emailv1.ValidateEmailAddressRequest{Address: *data.MemberID})
 
 	if e != nil {
 		const msg = "error validating primary member"

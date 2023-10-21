@@ -7,6 +7,5 @@ import (
 )
 
 type SessionDriverMemberPort interface {
-	GenerateMemberToken(ctx context.Context, request *pb.GenerateTokenRequest) (*pb.GenerateTokenResponse, error)
 	ValidateMemberToken(ctx context.Context, request *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error)
 }

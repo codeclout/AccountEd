@@ -56,7 +56,8 @@ type PrimaryMemberConfirmationOut struct {
 }
 
 type PrimaryMemberStartRegisterIn struct {
-	Username *string `json:"username" bson:"username" validate:"required,email"`
+	MemberID *string `json:"member_id"`
+	Pin      *string `json:"pin"`
 }
 
 type ValidatedEmailResonse struct { //nolint:maligned

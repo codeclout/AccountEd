@@ -3,10 +3,6 @@ package member
 import (
 	"context"
 	"sync"
-	"time"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
@@ -17,19 +13,17 @@ import (
 	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 )
 
-type aws = cloud.CredentialsAWSPort
-type dmp = drivenMemberSession.SessionDrivenMemberPort
-type mtr = monitoring.Adapter
-type scp = member.SessionCoreMemberPort
-
-type cc = context.Context
-type gRPC = *protocol.AdapterServiceClients
-type wait = *sync.WaitGroup
-
-type GenerateTokenResponse = pb.GenerateTokenResponse
-type NewTokenPayload = sessionTypes.NewTokenPayload
-type ValidateTokenPayload = sessionTypes.ValidateTokenPayload
-type ValidateTokenResponse = pb.ValidateTokenResponse
+type (
+	aws                   = cloud.CredentialsAWSPort
+	dmp                   = drivenMemberSession.SessionDrivenMemberPort
+	mtr                   = monitoring.Adapter
+	scp                   = member.SessionCoreMemberPort
+	cc                    = context.Context
+	gRPC                  = *protocol.AdapterServiceClients
+	wait                  = *sync.WaitGroup
+	ValidateTokenPayload  = sessionTypes.ValidateTokenPayload
+	ValidateTokenResponse = pb.ValidateTokenResponse
+)
 
 type Adapter struct {
 	config       map[string]interface{}
@@ -67,40 +61,4 @@ func (a *Adapter) ValidateMemberToken(ctx cc, awscreds []byte, in *ValidateToken
 	}
 
 	tch <- &pb.ValidateTokenResponse{IsValidToken: ok}
-}
-
-func (a *Adapter) CreateMemberToken(ctx cc, awscreds []byte, in *NewTokenPayload, tch chan *GenerateTokenResponse, ech chan error) {
-	var sessionExpiry = time.Hour
-
-	if in == nil {
-		const msg = "request to encrypt session id received nil input"
-		a.monitor.LogGrpcError(ctx, msg)
-
-		ech <- status.Error(codes.InvalidArgument, msg)
-		return
-	}
-
-	driven, e := a.drivenMember.GetTokenPayload(ctx, in.MemberId, in.TokenId, sessionExpiry)
-	if e != nil {
-		ech <- e
-		return
-	}
-
-	core, e := a.core.ProcessTokenCreation(ctx, driven)
-	if e != nil {
-		ech <- e
-		return
-	}
-
-	e = a.drivenCloud.StoreToken(ctx, a.grpcClient.SessionStorageclient, core, in.HasAutoCorrect, awscreds)
-	if e != nil {
-		ech <- e
-		return
-	}
-
-	out := pb.GenerateTokenResponse{
-		Token: core.Token,
-	}
-
-	tch <- &out
 }

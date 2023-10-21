@@ -21,12 +21,13 @@ import (
 	"github.com/codeclout/AccountEd/pkg/validations"
 )
 
-type PMConfirmOut = memberT.PrimaryMemberConfirmationOut
-type MErrorOut = memberT.MemberErrorOut
-
-type cc = context.Context
-type PrimaryMemberStartIn = memberT.PrimaryMemberStartRegisterIn
-type PrimaryMemberStartOut = memberT.ValidatedEmailResonse
+type (
+	cc                    = context.Context
+	PMConfirmOut          = memberT.PrimaryMemberConfirmationOut
+	MErrorOut             = memberT.MemberErrorOut
+	PrimaryMemberStartIn  = memberT.PrimaryMemberStartRegisterIn
+	PrimaryMemberStartOut = memberT.ValidatedEmailResonse
+)
 
 type Adapter struct {
 	config  map[string]interface{}
@@ -42,7 +43,7 @@ func NewAdapter(conifg map[string]interface{}, api api.MemberAPI, monitor monito
 	}
 }
 
-func (a *Adapter) initMemberRoutes(app *fiber.App) *fiber.App {
+func (a *Adapter) initMemberAPI(app *fiber.App) *fiber.App {
 	sla, ok := a.config["SLARoutes"].(float64)
 	if !ok {
 		a.monitor.LogGenericError("sla_routes not configured")
@@ -52,8 +53,21 @@ func (a *Adapter) initMemberRoutes(app *fiber.App) *fiber.App {
 	b := int(sla)
 
 	app.Post("/register", timeout.NewWithContext(a.processPrimaryMemberEmail, time.Duration(b)*time.Millisecond))
-	app.Get("/register", timeout.NewWithContext(a.processRegistrationPage, time.Duration(b)*time.Millisecond))
 	app.Get("/email/confirm", timeout.NewWithContext(a.processEmailVerification, time.Duration(b)*time.Millisecond))
+
+	return app
+}
+
+func (a *Adapter) initMemberStatic(app *fiber.App) *fiber.App {
+	sla, ok := a.config["SLARoutes"].(float64)
+	if !ok {
+		a.monitor.LogGenericError("sla_routes not configured")
+		sla = float64(2000)
+	}
+
+	b := int(sla)
+
+	app.Get("/register", timeout.NewWithContext(a.processRegistrationPage, time.Duration(b)*time.Millisecond))
 
 	return app
 }
@@ -73,10 +87,12 @@ func (a *Adapter) InitializeMemberAPI() []*fiber.App {
 	driver := filepath.Join(workingDirectory, "./templates")
 	engine := html.New(driver, ".html")
 
-	app := fiber.New(fiber.Config{Views: engine})
+	memberAPI := fiber.New()
+	memberStatic := fiber.New(fiber.Config{Views: engine})
 
 	return []*fiber.App{
-		a.initMemberRoutes(app),
+		a.initMemberAPI(memberAPI),
+		a.initMemberStatic(memberStatic),
 	}
 }
 
@@ -134,19 +150,19 @@ func (a *Adapter) processPrimaryMemberEmail(ctx *fiber.Ctx) error {
 	var in *memberT.PrimaryMemberStartRegisterIn
 	var wg sync.WaitGroup
 
-	if e := validations.ValidateUsernamePayloadSize(ctx.Body()); e != nil {
-		a.monitor.Logger.Error(e.Error(), "request_id", ctx.Locals("requestid"))
-		return ctx.Status(http.StatusBadRequest).JSON(memberT.MemberErrorOut{
-			Error: true,
-			Msg:   "invalid payload size",
-		})
-	}
-
 	if e := json.Unmarshal(ctx.Body(), &in); e != nil {
 		a.monitor.Logger.Error(e.Error(), "request_id", ctx.Locals("requestid"))
 		return ctx.Status(http.StatusBadRequest).JSON(memberT.MemberErrorOut{
 			Error: true,
 			Msg:   "invalid payload",
+		})
+	}
+
+	if e := validations.ValidateUsernamePayloadSize([]byte(*in.MemberID)); e != nil {
+		a.monitor.Logger.Error(e.Error(), "request_id", ctx.Locals("requestid"))
+		return ctx.Status(http.StatusBadRequest).JSON(memberT.MemberErrorOut{
+			Error: true,
+			Msg:   "invalid payload size",
 		})
 	}
 
@@ -158,7 +174,15 @@ func (a *Adapter) processPrimaryMemberEmail(ctx *fiber.Ctx) error {
 		})
 	}
 
-	hash := sha256.Sum256([]byte(*in.Username))
+	if e := validations.ValidatePin(in.Pin); e != nil {
+		a.monitor.Logger.Error(e.Error(), "request_id", ctx.Locals("requestid"))
+		return ctx.Status(http.StatusBadRequest).JSON(memberT.MemberErrorOut{
+			Error: true,
+			Msg:   "invalid Pin",
+		})
+	}
+
+	hash := sha256.Sum256([]byte(*in.MemberID))
 	str := hex.EncodeToString(hash[:])
 	c := a.setContextLabels(ctx, str)
 

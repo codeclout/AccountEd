@@ -13,7 +13,6 @@ import (
 	notificationEmailv1 "github.com/codeclout/AccountEd/notifications/gen/email/v1"
 	"github.com/codeclout/AccountEd/pkg/monitoring"
 	"github.com/codeclout/AccountEd/pkg/server/adapters/framework/drivers/protocol"
-	sessionMembersv1 "github.com/codeclout/AccountEd/session/gen/members/v1"
 )
 
 type cc = context.Context
@@ -28,7 +27,7 @@ type pmo = memberT.ValidatedEmailResonse
 
 type MemberErrorOut = memberT.MemberErrorOut
 type PMConfirmOut = memberT.PrimaryMemberConfirmationOut
-type ValidatedEmailResonse = memberT.ValidatedEmailResonse
+type ValidatedEmailResponse = memberT.ValidatedEmailResonse
 
 type Adapter struct {
 	config             config
@@ -50,34 +49,6 @@ func NewAdapter(config config, core corePort, grpc *gRPCclients, driven drivenPo
 		gRPC:               grpc,
 		monitor:            monitor,
 	}
-}
-
-func (a *Adapter) getEmailValidationToken(ctx cc, core *ValidatedEmailResonse) (*ValidatedEmailResonse, *MemberErrorOut) {
-	if a.gRPC == nil || a.gRPC.MemberSessionclient == nil {
-		return nil, &MemberErrorOut{Error: true, Msg: errors.New("nil gRPC or MemberSessionClient").Error()}
-	}
-
-	if core == nil {
-		return nil, &MemberErrorOut{Error: true, Msg: "input parameter is nil"}
-	}
-
-	payload := sessionMembersv1.GenerateTokenRequest{
-		HasAutoCorrect: len(core.AutoCorrect) > 0,
-		MemberId:       core.MemberID,
-		TokenId:        core.TokenID,
-	}
-
-	client := *a.gRPC.MemberSessionclient
-
-	t, e := client.GenerateMemberToken(ctx, &payload)
-	if e != nil {
-		a.monitor.LogGenericError(e.Error())
-		return nil, &MemberErrorOut{Error: true, Msg: "failed to encrypt session ID"}
-	}
-
-	core.Token = t.GetToken()
-
-	return core, nil
 }
 
 func (a *Adapter) getDomain() (string, error) {
@@ -160,12 +131,6 @@ func (a *Adapter) VerifyPrimaryMemberEmail(ctx cc, data *pmi, ch chan *pmo, ech 
 	}
 
 	core, e := a.core.ProcessEmailValidationResponse(ctx, emailValidationResp)
-	if e != nil {
-		ech <- e
-		return
-	}
-
-	core, e = a.getEmailValidationToken(ctx, core)
 	if e != nil {
 		ech <- e
 		return
