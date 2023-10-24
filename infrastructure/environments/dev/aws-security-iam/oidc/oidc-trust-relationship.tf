@@ -1,5 +1,8 @@
 resource "aws_iam_role" "oidc_role_tfc" {
   name = "oidc-role"
+  tags = {
+    "terraform-cloud-scope": "workspace"
+  }
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
