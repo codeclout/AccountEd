@@ -1,7 +1,7 @@
 resource "aws_iam_policy" "tfc_policy" {
   name = "dev-terraform-cloud-ci-policy"
 
-  policy = jsondecode({
+  policy = jsonencode({
     Version: "2012-10-17"
     Statement: [
       {
