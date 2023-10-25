@@ -5,7 +5,3 @@ variable "tfc_organization_name" {
 variable "tfc_project_name" {
   type = string
 }
-
-variable "tfc_workspace_name" {
-  type = string
-}
