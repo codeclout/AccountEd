@@ -1,5 +1,5 @@
 resource "aws_iam_role" "oidc_role_tfc" {
-  name = "oidc-role"
+  name = "terraform-cloud-oidc-role"
   tags = {
     "terraform-cloud-scope": "workspace"
   }
