@@ -39,6 +39,6 @@ resource "aws_iam_policy" "github_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "github_policy_attachment" {
-  policy_arn = aws_iam_policy.github_policy
-  role       = aws_iam_role.oidc_role_github
+  policy_arn = aws_iam_policy.github_policy.arn
+  role       = aws_iam_role.oidc_role_github.name
 }
