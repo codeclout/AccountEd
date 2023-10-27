@@ -17,8 +17,8 @@ resource "aws_iam_policy" "tfc_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "tfc_policy_attachment" {
-  role       = aws_iam_role.oidc_role_tfc.name
   policy_arn = aws_iam_policy.tfc_policy.arn
+  role       = aws_iam_role.oidc_role_tfc.name
 }
 
 resource "aws_iam_policy" "github_policy" {
@@ -39,6 +39,6 @@ resource "aws_iam_policy" "github_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "github_policy_attachment" {
-  policy_arn = aws_iam_role.oidc_role_github.name
-  role       = aws_iam_policy.github_policy
+  policy_arn = aws_iam_policy.github_policy
+  role       = aws_iam_role.oidc_role_github
 }
