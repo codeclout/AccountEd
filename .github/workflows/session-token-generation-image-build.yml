@@ -24,7 +24,7 @@ jobs:
       ENVIRONMENT: ${{ github.ref_name == 'alpha' && 'dev' || 'prod'}}
       GH_ACTOR: ${{ github.actor }}
       GH_REPOSITORY: 'codeclout/accounted'
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       IMAGE_TAG: ${{ github.sha }}
     steps:
       -
