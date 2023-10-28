@@ -29,7 +29,8 @@ resource "aws_iam_policy" "github_policy" {
     Statement: [
       {
         Action = [
-          "ecr:PutImage"
+          "ecr:PutImage",
+          "ecr:GetAuthorizationToken"
         ]
         Effect = "Allow"
         Resource = "arn:aws:ecr:${var.AWS_REGION}:*:repository/${var.ENVIRONMENT}-*"
