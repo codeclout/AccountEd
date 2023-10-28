@@ -15,11 +15,11 @@ build-image:
 	--build-arg=ENVIRONMENT=$${ENVIRONMENT} \
 	--build-arg=WORKFLOW_STEP_PRE_REGISTRATION_ROLE=$${WORKFLOW_STEP_PRE_REGISTRATION_ROLE} \
 	--target=prod \
-	-t $${REGISTRY}/$${REPOSITORY}:sch00l.io/$${ENVIRONMENT}-workflow-step-session-generate-token-$${IMAGE_TAG} .
+	-t $${REGISTRY}/$${REPOSITORY}:$${ENVIRONMENT}-workflow-step-session-$${IMAGE_TAG} .
 
 .PHONY: push-image
 push-image:
-  docker push $${REGISTRY}/$${REPOSITORY}:sch00l.io/$${ENVIRONMENT}-workflow-step-session-generate-token-$${IMAGE_TAG}
+  docker push $${REGISTRY}/$${REPOSITORY}:$${ENVIRONMENT}-workflow-step-session-$${IMAGE_TAG}
 
 .PHONY: test-image-build
 test-image-build:
