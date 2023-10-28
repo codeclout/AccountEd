@@ -43,8 +43,9 @@ resource "aws_iam_role" "oidc_role_github" {
         Action : "sts:AssumeRoleWithWebIdentity",
         Condition : {
           StringEquals : {
+            "${module.oidc_github.openid-connect-provider-hostname}:aud" : one(module.oidc_github.openid-connect-provider-client-id-list)
             "${module.oidc_github.openid-connect-provider-hostname}:sub" : [
-              "repo:codeclout/accounted:*"
+              "repo:codeclout/AccountEd:*"
             ]
           }
         }
