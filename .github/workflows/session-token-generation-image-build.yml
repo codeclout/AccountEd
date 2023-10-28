@@ -63,11 +63,16 @@ jobs:
           buildkitd-flags: --debug
           version: v0.11.2
       -
+        name: Get current time in milliseconds
+        id: role-session-marker
+        run: echo "::set-output name=session::gh-oidc-$(date +%s%N)"
+      -
         name: configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_GH_ACTION_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
+          role-session-name: ${{ steps.role-session-marker.outputs.session }}
       -
         name: Login to Amazon ECR
         id: login-ecr
