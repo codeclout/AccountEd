@@ -5,7 +5,7 @@ on:
     branches:
       - '**'
     paths:
-      - 'session/infrastructure/handle-pre-registration-token/**'
+      - 'session/infrastructure/handler-pre-registration-token/**'
   workflow_dispatch:
 
 permissions:

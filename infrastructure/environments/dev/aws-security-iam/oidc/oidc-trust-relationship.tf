@@ -45,7 +45,7 @@ resource "aws_iam_role" "oidc_role_github" {
           StringEquals : {
             "${module.oidc_github.openid-connect-provider-hostname}:aud" : one(module.oidc_github.openid-connect-provider-client-id-list)
             "${module.oidc_github.openid-connect-provider-hostname}:sub" : [
-              "repo:codeclout/AccountEd:ref:refs/heads/alpha"
+              "repo:codeclout/accounted:*"
             ]
           }
         }
