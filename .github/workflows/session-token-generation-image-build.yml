@@ -1,4 +1,4 @@
-name: lci-session-pre-registration-token
+name: workflow-step-session-generate-token
 
 on:
   push:
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build:
-    name: lci-session-pre-registration-token
+    name: workflow-step-session-generate-token
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -26,6 +26,7 @@ jobs:
       GH_REPOSITORY: 'codeclout/accounted'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       IMAGE_TAG: ${{ github.sha }}
+      WORKFLOW_STEP_PRE_REGISTRATION_ROLE: ${{ secrets.WORKFLOW_STEP_PRE_REGISTRATION_ROLE }}
     steps:
       -
         name: checkout
@@ -72,10 +73,20 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
       -
         working-directory: './session/infrastructure/handler-pre-registration-token'
+        name: set configuration
+        run: |
+          sed -i "s/%%env%%/$ENVIRONMENT/g" config.hcl
+          sed -i "s/%%version%%/IMAGE_TAG/g" config.hcl
+      -
+        working-directory: './session/infrastructure/handler-pre-registration-token'
         name: build-image
         env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          WORKFLOW_STEP_PRE_REGISTRATION_ROLE: ${{ env.WORKFLOW_STEP_PRE_REGISTRATION_ROLE }}
         run: |
           make build-image
       -
@@ -91,7 +102,11 @@ jobs:
       -
         name: push-image
         env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          WORKFLOW_STEP_PRE_REGISTRATION_ROLE: ${{ env.WORKFLOW_STEP_PRE_REGISTRATION_ROLE }}
         run: |
           make push-image

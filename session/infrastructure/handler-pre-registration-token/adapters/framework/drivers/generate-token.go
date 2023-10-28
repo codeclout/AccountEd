@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"context"
+	"os"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/pkg/errors"
@@ -11,22 +12,33 @@ import (
 	t "handler-pre-registration-token/token-generation-types"
 )
 
+type LambdaName string
+
 type Adapter struct {
 	api     api.TokenGenerator
+	config  map[string]interface{}
 	monitor monitoring.Adapter
 }
 
-func NewAdapter(api api.TokenGenerator, monitor monitoring.Adapter) *Adapter {
+func NewAdapter(api api.TokenGenerator, config map[string]interface{}, monitor monitoring.Adapter) *Adapter {
 	return &Adapter{
 		api:     api,
+		config:  config,
 		monitor: monitor,
 	}
 }
 
 func (a *Adapter) setContextTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
 	deadline, _ := ctx.Deadline()
+	name, ok := a.config["ServiceName"].(string)
+	if !ok {
+		a.monitor.LogGenericError("ServiceName not available in environment")
+		os.Exit(1)
+	}
 
-	ctx = context.WithValue(ctx, "function_name", lambdacontext.FunctionName)
+	n := LambdaName(name)
+
+	ctx = context.WithValue(ctx, n, lambdacontext.FunctionName)
 	ctx, cancel := context.WithDeadline(ctx, deadline)
 
 	return ctx, cancel
