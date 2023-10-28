@@ -27,6 +27,11 @@ resource "aws_iam_role" "oidc_role_tfc" {
 }
 
 resource "aws_iam_role" "oidc_role_github" {
+  name = "github-oidc-role"
+  tags = {
+    "github-scope": "gh-action"
+  }
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
