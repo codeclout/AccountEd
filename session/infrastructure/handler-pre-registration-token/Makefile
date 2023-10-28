@@ -2,22 +2,25 @@ SHELL=/bin/bash
 .EXPORT_ALL_VARIABLES:
 .SHELLFLAGS = -uec
 
+.PHONY: build-local
+build-local:
+	docker buildx build \
+	--platform linux/arm64 --load --target=prod -t sch00l.io/session-workflow-generate-token-$${ENVIRONMENT} .
+
 .PHONY: build-image
 build-image:
-	docker buildx install
-	-docker buildx rm SessionPreRegistrationTokenLCI
-	docker buildx create --name SessionPreRegistrationTokenLCI
-	docker buildx use SessionPreRegistrationTokenLCI
-	docker buildx inspect SessionPreRegistrationTokenLCI --bootstrap
-
 	docker buildx build \
-	--platform linux/arm64 --load --target=prod -t sch00l.io/session-pre-registration-token-$${ENVIRONMENT} .
+	--platform linux/arm64 --load --target=prod -t $${REGISTRY}/$${REPOSITORY}:sch00l.io/session-workflow-generate-token-$${ENVIRONMENT}-$${IMAGE_TAG} .
+
+.PHONY: push-image
+push-image:
+  docker push $${REGISTRY}/$${REPOSITORY}:sch00l.io/session-workflow-generate-token-$${ENVIRONMENT}-$${IMAGE_TAG}
 
 .PHONY: test-image-build
 test-image-build:
 	docker run -d -v ~/.aws-lambda-rie:/aws-lambda -p 8800:8080 \
   --entrypoint /aws-lambda/aws-lambda-rie \
-  sch00l.io/session-pre-registration-token-$${ENVIRONMENT}:latest \
+  sch00l.io/session-workflow-generate-token-$${ENVIRONMENT}:latest \
       /usr/ci-svc-usr/main
 
 .PHONY: test-image-response
