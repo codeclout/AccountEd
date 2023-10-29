@@ -110,11 +110,9 @@ jobs:
       -
         name: push-image
         env:
-          AWS_REGION: ${{ env.AWS_REGION }}
           ENVIRONMENT: ${{ env.ENVIRONMENT }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ env.ECR_REPOSITORY }}
-          WORKFLOW_STEP_PRE_REGISTRATION_ROLE: ${{ env.WORKFLOW_STEP_PRE_REGISTRATION_ROLE }}
         run: |
           make push-image
