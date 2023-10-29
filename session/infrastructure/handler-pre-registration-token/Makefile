@@ -2,6 +2,10 @@ SHELL=/bin/bash
 .EXPORT_ALL_VARIABLES:
 .SHELLFLAGS = -uec
 
+ifndef IMAGE_TAG
+	IMAGE_TAG := $(shell git rev-parse --short HEAD | awk '{$$1=$$1};1')
+endif
+
 .PHONY: build-local
 build-local:
 	docker buildx build \
@@ -19,7 +23,8 @@ build-image:
 
 .PHONY: push-image
 push-image:
-  $(shell docker push $${REGISTRY}/$${REPOSITORY}:$${ENVIRONMENT}-workflow-step-session-$${IMAGE_TAG})
+	docker push \
+  $${REGISTRY}/$${REPOSITORY}:$${ENVIRONMENT}-workflow-step-session-$${IMAGE_TAG}
 
 .PHONY: test-image-build
 test-image-build:
