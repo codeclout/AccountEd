@@ -108,6 +108,7 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM'
       -
+        working-directory: './session/infrastructure/handler-pre-registration-token'
         name: push-image
         env:
           ENVIRONMENT: ${{ env.ENVIRONMENT }}
