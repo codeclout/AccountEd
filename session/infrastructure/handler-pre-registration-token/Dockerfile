@@ -3,7 +3,7 @@ FROM golang:1.21.3-alpine3.18 as build
 WORKDIR /usr/ci-svc-usr
 
 COPY ./go.mod ./go.sum ./
-RUN go mod tidy
+RUN go mod donwload
 
 COPY ./ .
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -v -o ./main main.go
