@@ -19,7 +19,7 @@ build-image:
 
 .PHONY: push-image
 push-image:
-  docker push $${REGISTRY}/$${REPOSITORY}:$${ENVIRONMENT}-workflow-step-session-$${IMAGE_TAG}
+  $(shell docker push $${REGISTRY}/$${REPOSITORY}:$${ENVIRONMENT}-workflow-step-session-$${IMAGE_TAG})
 
 .PHONY: test-image-build
 test-image-build:
