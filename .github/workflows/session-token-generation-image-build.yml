@@ -98,8 +98,10 @@ jobs:
       -
         name: scan-image
         uses: aquasecurity/trivy-action@master
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         with:
-          image-ref: ${{ vars.ENVIRONMENT }}-workflow-step-session-${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ vars.ENVIRONMENT }}-workflow-step-session-${{ env.IMAGE_TAG }}
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
