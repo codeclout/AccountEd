@@ -8,7 +8,9 @@ RUN go mod tidy
 COPY ./ .
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -v -o ./main main.go
 
-FROM alpine:3.18 as prod
+FROM alpine:3.18.4 as prod
+
+RUN apk update && apk upgrade
 
 ARG AWS_REGION
 ENV AWS_REGION="${AWS_REGION}"
