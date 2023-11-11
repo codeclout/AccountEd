@@ -11,3 +11,10 @@ module "oidc_terraform_cloud" {
   identity_provider_audience = "aws.workload.identity"
   identity_provider_url      = "app.terraform.io"
 }
+
+module "oidc_gitlab" {
+  source = "../../../../modules/security/oidc"
+
+  identity_provider_audience = "https://gitlab.com"
+  identity_provider_url = "https://gitlab.com"
+}

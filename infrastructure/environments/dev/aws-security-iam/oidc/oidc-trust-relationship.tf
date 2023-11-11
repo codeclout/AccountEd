@@ -55,3 +55,28 @@ resource "aws_iam_role" "oidc_role_github" {
     ]
   })
 }
+
+resource "aws_iam_role" "oidc_role_gitlab" {
+  name = "gitlab-oidc-role"
+  tags = {
+    "gitlab-scope": "gitlab-ci"
+  }
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect : "Allow",
+        Principal : {
+          Federated : module.oidc_gitlab.openid-connect-provider-arn
+        },
+        Action : "sts:AssumeRoleWithWebIdentity",
+        Condition : {
+          StringEquals : {
+            "${module.oidc_gitlab.openid-connect-provider-hostname}:sub" : "project_path:sch00l.io/*:ref_type:branch:ref:main"
+          }
+        }
+      }
+    ]
+  })
+}
