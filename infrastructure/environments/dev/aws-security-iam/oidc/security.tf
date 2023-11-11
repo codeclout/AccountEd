@@ -15,5 +15,6 @@ module "oidc_terraform_cloud" {
 module "oidc_gitlab" {
   source = "../../../../modules/security/oidc"
 
+  identity_provider_audience = "https://gitlab.com"
   identity_provider_url = "gitlab.com"
 }
