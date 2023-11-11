@@ -1,6 +1,6 @@
 variable "identity_provider_audience" {
   type = string
-  default = null
+  default = ""
 }
 
 variable "identity_provider_url" {
