@@ -72,7 +72,7 @@ resource "aws_iam_role" "oidc_role_gitlab" {
         },
         Action : "sts:AssumeRoleWithWebIdentity",
         Condition : {
-          StringEquals : {
+          StringLike : {
             "${module.oidc_gitlab.openid-connect-provider-hostname}:sub" : "project_path:sch00l.io/*:ref_type:branch:ref:main"
           }
         }
