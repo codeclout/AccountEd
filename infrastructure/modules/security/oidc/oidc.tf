@@ -9,5 +9,5 @@ resource "aws_iam_openid_connect_provider" "oidc_provider" {
 }
 
 data "tls_certificate" "thumbprint" {
-  url = "https://${var.identity_provider_url}"
+  url = var.use_tls_url ? var.tls_url : "https://${var.identity_provider_url}"
 }
