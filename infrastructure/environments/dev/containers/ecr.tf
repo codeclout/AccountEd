@@ -3,3 +3,9 @@ module "workflow_token_generation" {
 
   ecr_name = "${var.environment}-workflow-token-generation"
 }
+
+module "notifications" {
+  source = "../../../modules/containers"
+
+  ecr_name = "${var.environment}-notifications"
+}
