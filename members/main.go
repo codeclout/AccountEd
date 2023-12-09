@@ -69,7 +69,7 @@ func main() {
 	defer memberHTTPProtocol.StopProtocolListener(httpAdapter.FrameworkDriver)
 
 	gRPCAdapter := serverProtocolAdapter.NewGrpcAdapter(config, *monitor, &wg)
-	go gRPCAdapter.InitializeClients()
+	go gRPCAdapter.InitializeClientsForMember()
 	defer gRPCAdapter.StopProtocolListener()
 
 	memberCore = coreAdapter.NewAdapter(config, *monitor)

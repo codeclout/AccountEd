@@ -50,7 +50,7 @@ func NewAdapter(configurationPath string, monitor monitoring.Adapter) *Adapter {
 	}
 }
 
-func (a *Adapter) LoadStorageConfig() *map[string]interface{} {
+func (a *Adapter) LoadStaticConfig() *map[string]interface{} {
 	var metadataAndSettings metadataAndSettings
 	var out = make(map[string]interface{})
 	var s string

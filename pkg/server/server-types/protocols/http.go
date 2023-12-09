@@ -5,4 +5,3 @@ type ServerProtocolHttpMetadata struct {
 	ServerName       string
 	UseOnlyGetRoutes bool
 }
-

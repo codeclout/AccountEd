@@ -48,7 +48,7 @@ func main() {
 	monitor := monitoring.NewAdapter()
 
 	sessionConfiguration := configuration.NewAdapter("./config.hcl", *monitor)
-	internalConfig := sessionConfiguration.LoadStorageConfig()
+	internalConfig := sessionConfiguration.LoadStaticConfig()
 
 	awsCoreAdapter = cloudAdapterCore.NewAdapter(*internalConfig, *monitor)
 	awsDrivenAdapter = cloudAdapterDriven.NewAdapter(*internalConfig, *monitor)
@@ -56,7 +56,7 @@ func main() {
 	awsDriverAdapter = cloudAdapterDriver.NewAdapter(*internalConfig, awsAPIAdapter, *monitor)
 
 	gRPCAdapterClient := serverProtocolAdapter.NewGrpcAdapter(*internalConfig, *monitor, &wg)
-	go gRPCAdapterClient.InitializeClients()
+	go gRPCAdapterClient.InitializeClientsForSession()
 	defer gRPCAdapterClient.StopProtocolListener()
 
 	memberCoreAdapter = memberAdapterCore.NewAdapter(*internalConfig, monitor)

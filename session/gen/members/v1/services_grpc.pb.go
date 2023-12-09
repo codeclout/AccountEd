@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	MemberSession_GenerateMemberToken_FullMethodName = "/proto.members.v1.MemberSession/GenerateMemberToken"
 	MemberSession_ValidateMemberToken_FullMethodName = "/proto.members.v1.MemberSession/ValidateMemberToken"
 )
 
@@ -27,7 +26,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MemberSessionClient interface {
-	GenerateMemberToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error)
 	ValidateMemberToken(ctx context.Context, in *ValidateTokenRequest, opts ...grpc.CallOption) (*ValidateTokenResponse, error)
 }
 
@@ -37,15 +35,6 @@ type memberSessionClient struct {
 
 func NewMemberSessionClient(cc grpc.ClientConnInterface) MemberSessionClient {
 	return &memberSessionClient{cc}
-}
-
-func (c *memberSessionClient) GenerateMemberToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error) {
-	out := new(GenerateTokenResponse)
-	err := c.cc.Invoke(ctx, MemberSession_GenerateMemberToken_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *memberSessionClient) ValidateMemberToken(ctx context.Context, in *ValidateTokenRequest, opts ...grpc.CallOption) (*ValidateTokenResponse, error) {
@@ -61,7 +50,6 @@ func (c *memberSessionClient) ValidateMemberToken(ctx context.Context, in *Valid
 // All implementations should embed UnimplementedMemberSessionServer
 // for forward compatibility
 type MemberSessionServer interface {
-	GenerateMemberToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error)
 	ValidateMemberToken(context.Context, *ValidateTokenRequest) (*ValidateTokenResponse, error)
 }
 
@@ -69,9 +57,6 @@ type MemberSessionServer interface {
 type UnimplementedMemberSessionServer struct {
 }
 
-func (UnimplementedMemberSessionServer) GenerateMemberToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GenerateMemberToken not implemented")
-}
 func (UnimplementedMemberSessionServer) ValidateMemberToken(context.Context, *ValidateTokenRequest) (*ValidateTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateMemberToken not implemented")
 }
@@ -85,24 +70,6 @@ type UnsafeMemberSessionServer interface {
 
 func RegisterMemberSessionServer(s grpc.ServiceRegistrar, srv MemberSessionServer) {
 	s.RegisterService(&MemberSession_ServiceDesc, srv)
-}
-
-func _MemberSession_GenerateMemberToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateTokenRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MemberSessionServer).GenerateMemberToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MemberSession_GenerateMemberToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MemberSessionServer).GenerateMemberToken(ctx, req.(*GenerateTokenRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _MemberSession_ValidateMemberToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -130,10 +97,6 @@ var MemberSession_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.members.v1.MemberSession",
 	HandlerType: (*MemberSessionServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GenerateMemberToken",
-			Handler:    _MemberSession_GenerateMemberToken_Handler,
-		},
 		{
 			MethodName: "ValidateMemberToken",
 			Handler:    _MemberSession_ValidateMemberToken_Handler,

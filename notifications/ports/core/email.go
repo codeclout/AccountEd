@@ -8,6 +8,5 @@ import (
 )
 
 type EmailCorePort interface {
-	SendPreRegistrationEmailCore(ctx context.Context, in *notification.NoReplyEmailIn) (*notification.NoReplyEmailInput, error)
 	ProcessEmailValidation(ctx context.Context, out notification.ValidateEmailOut) (*pb.ValidateEmailAddressResponse, error)
 }

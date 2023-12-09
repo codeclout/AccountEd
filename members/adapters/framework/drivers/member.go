@@ -52,7 +52,7 @@ func (a *Adapter) initMemberAPI(app *fiber.App) *fiber.App {
 
 	b := int(sla)
 
-	app.Post("/register", timeout.NewWithContext(a.processPrimaryMemberEmail, time.Duration(b)*time.Millisecond))
+	// app.Post("/register", timeout.NewWithContext(a.processPrimaryMemberEmail, time.Duration(b)*time.Millisecond))
 	app.Get("/email/confirm", timeout.NewWithContext(a.processEmailVerification, time.Duration(b)*time.Millisecond))
 
 	return app

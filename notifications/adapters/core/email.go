@@ -72,21 +72,3 @@ func (a *Adapter) ProcessEmailValidation(ctx context.Context, in notifications.V
 
 	return &out, nil
 }
-
-func (a *Adapter) SendPreRegistrationEmailCore(ctx context.Context, in *notifications.NoReplyEmailIn) (*notifications.NoReplyEmailInput, error) {
-	body := "Before you can begin using your new account, it needs to be activated - " +
-		"this is a necessary step to verify that the email address you provided is valid and owned by you. " +
-		"To proceed with the activation of your account, please click on the link provided below " +
-		"or completely copy and paste it into your browser's address bar."
-	sessionLink := fmt.Sprintf("%s/members/confirm?t=%s", in.Domain, in.Token)
-	welcome := fmt.Sprintf("Welcom to %s", in.Domain)
-
-	msg := fmt.Sprintf("%s\n\n%s\n\n%s\n\nThanks!\nThe "+in.Domain+" staff", welcome, body, sessionLink)
-
-	out := notifications.NoReplyEmailInput{
-		Body:    msg,
-		Subject: "Please confirm your email address",
-	}
-
-	return &out, nil
-}

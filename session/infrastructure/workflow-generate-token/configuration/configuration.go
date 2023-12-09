@@ -28,9 +28,9 @@ type metadataAndSettings struct {
 }
 
 type Metadata struct {
-	ComputeWorkspaceName   string `hcl:"compute_workspace"`
 	ContainerWorkspaceName string `hcl:"container_workspace"`
-	SecurityWorkspaceName  string `hcl:"security_workspace"`
+	ServiceName            string `hcl:"service_name"`
+	Version                string `hcl:"version"`
 }
 
 type Settings struct {
@@ -90,6 +90,8 @@ func LoadConfig(monitor monitoring.Adapter) *map[string]interface{} {
 				monitor.LogGenericError(fmt.Sprintf("Token Generation Workflow:%s is not defined in the environment", k))
 				os.Exit(1)
 			}
+		case float64:
+			continue
 		default:
 			panic("invalid Token Generation Workflow configuration")
 		}

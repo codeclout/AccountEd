@@ -7,6 +7,5 @@ option go_package = "github.com/codeclout/AccountEd/session";
 import "members/v1/messages.proto";
 
 service MemberSession {
-  rpc GenerateMemberToken(GenerateTokenRequest) returns (GenerateTokenResponse);
   rpc ValidateMemberToken(ValidateTokenRequest) returns (ValidateTokenResponse);
 }

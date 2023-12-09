@@ -37,7 +37,7 @@ func NewAdapter(app cdktf.App, monitor monitoring.Adapter) *Adapter {
 	}
 }
 
-func (a *Adapter) LoadStorageInfrastructureConfig(map[string]interface{}) *map[string]interface{} {
+func (a *Adapter) LoadStaticConfig(map[string]interface{}) *map[string]interface{} {
 	var out = make(map[string]interface{})
 	var s string
 
@@ -82,7 +82,7 @@ func (a *Adapter) InitializeInfrastructure() {
 }
 
 func (a *Adapter) NewMyStack(scope constructs.Construct, id string) cdktf.TerraformStack {
-	internal := *a.LoadStorageInfrastructureConfig(nil)
+	internal := *a.LoadStaticConfig(nil)
 
 	now := time.Now()
 	t := time.Unix(0, now.UnixNano()).UTC()

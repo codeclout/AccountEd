@@ -7,10 +7,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/sesv2"
-	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/pkg/errors"
 
 	notifications "github.com/codeclout/AccountEd/notifications/notification-types"
@@ -30,25 +26,6 @@ func NewAdapter(c map[string]interface{}, monitor monitoring.Adapter) *Adapter {
 		config:  c,
 		monitor: monitor,
 	}
-}
-
-func (a *Adapter) getPreRegistrationNoReplyContent(body, subject string) *types.EmailContent {
-	out := types.EmailContent{
-		Simple: &types.Message{
-			Body: &types.Body{
-				Text: &types.Content{
-					Data:    aws.String(body),
-					Charset: aws.String("UTF-8"),
-				},
-			},
-			Subject: &types.Content{
-				Data:    aws.String(subject),
-				Charset: aws.String("UTF-8"),
-			},
-		},
-	}
-
-	return &out
 }
 
 func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *ValidateEmailIn) (*ValidateEmailOut, error) {
@@ -88,40 +65,5 @@ func (a *Adapter) EmailVerificationProcessor(ctx context.Context, in *ValidateEm
 		return nil, errors.New("unable to decode response body")
 	}
 
-	return &out, nil
-}
-
-func (a *Adapter) SendPreRegistrationEmail(ctx context.Context, awsconfig []byte, body, subject string, in *notifications.NoReplyEmailIn) (*notifications.NoReplyEmailOut, error) {
-	var creds credentials.StaticCredentialsProvider
-	var out notifications.NoReplyEmailOut
-
-	e := json.Unmarshal(awsconfig, &creds)
-	if e != nil {
-		return nil, e
-	}
-
-	awsRegion, ok := a.config["Region"].(string)
-	if !ok {
-		return nil, errors.New("driven member -> AWS region missing | Check the 'Region' in application configuration")
-	}
-
-	emailClient := sesv2.NewFromConfig(aws.Config{Credentials: creds}, func(options *sesv2.Options) {
-		options.Region = awsRegion
-	})
-
-	x, e := emailClient.SendEmail(ctx, &sesv2.SendEmailInput{
-		Content: a.getPreRegistrationNoReplyContent(body, subject),
-		Destination: &types.Destination{
-			ToAddresses: in.ToAddress,
-		},
-		FromEmailAddress: aws.String(in.FromAddress),
-	})
-
-	if e != nil {
-		a.monitor.LogGenericError(e.Error())
-		return nil, e
-	}
-
-	out = notifications.NoReplyEmailOut{MessageID: *x.MessageId}
 	return &out, nil
 }

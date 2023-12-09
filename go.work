@@ -1,7 +1,7 @@
 go 1.21.3
 
 use (
-	./notifications/infrastructure
+	notifications/infrastructure
 	members
 	notifications
 	pkg/monitoring
@@ -10,5 +10,4 @@ use (
 	session
 	storage
 	storage/infrastructure/dynamodb
-	session/infrastructure/handler-pre-registration-token
 )

@@ -1,6 +1,7 @@
 package protocols
 
 type MemberProtocolGrpcPort interface {
-	InitializeClients()
+	InitializeClientsForMember()
+	InitializeClientsForSession()
 	InitializeClientsForStorage()
 }

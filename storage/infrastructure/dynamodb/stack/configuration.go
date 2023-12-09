@@ -26,7 +26,7 @@ func NewAdapter(monitor monitoring.Adapter) *Adapter {
 	}
 }
 
-func (a *Adapter) LoadStorageInfrastructureConfig(base map[string]interface{}) *map[string]interface{} {
+func (a *Adapter) LoadStaticConfig(base map[string]interface{}) *map[string]interface{} {
 	var override = make(map[string]interface{})
 	var s string
 

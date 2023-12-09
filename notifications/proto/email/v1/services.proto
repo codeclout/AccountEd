@@ -8,5 +8,4 @@ import "email/v1/messages.proto";
 
 service EmailNotificationService {
   rpc ValidateEmailAddress(ValidateEmailAddressRequest) returns (ValidateEmailAddressResponse);
-  rpc SendPreRegistrationEmail(NoReplyEmailNotificationRequest) returns (NoReplyEmailNotificationResponse);
 }

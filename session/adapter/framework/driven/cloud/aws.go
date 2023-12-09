@@ -18,7 +18,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/codeclout/AccountEd/pkg/monitoring"
-	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
 )
 
@@ -26,7 +25,7 @@ type ErrorDefaultConfiguration error
 type ErrorCredentialsRetrieval error
 
 type cc = context.Context
-type coreMemberSession = sessionTypes.TokenCreateOut
+type coreMemberSession = token_generation_types.TokenCreateOut
 
 type DBClient = dynamov1.DynamoDBStorageServiceClient
 
@@ -88,6 +87,7 @@ func (a *Adapter) getSessionTableName() (*string, error) {
 		return nil, errors.New(msg)
 	}
 
+	// @TODO - check if table exists
 	return &tableName, nil
 }
 

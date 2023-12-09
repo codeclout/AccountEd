@@ -11,23 +11,6 @@ type ProcessEmailValidationOut struct {
 	MemberIdPending      bool   `json:"member_id_pending" bson:"member_id_pending"`
 }
 
-type NoReplyEmailIn struct {
-	AWSCredentials []byte
-	Domain         string
-	FromAddress    string
-	Token          string
-	ToAddress      []string
-}
-
-type NoReplyEmailInput struct {
-	Body    string
-	Subject string
-}
-
-type NoReplyEmailOut struct {
-	MessageID string
-}
-
 type ValidateEmailIn struct {
 	Address           string
 	ProcessorDomain   string

@@ -32,7 +32,7 @@ func main() {
 	monitor := monitoring.NewAdapter()
 
 	storageConfiguration := server.NewAdapter(*monitor, staticConfigurationPath)
-	config := *storageConfiguration.LoadStorageConfig()
+	config := *storageConfiguration.LoadStaticConfig()
 
 	gRPCAdapter := serverProtocolAdapter.NewGrpcAdapter(config, *monitor, &wg)
 	go gRPCAdapter.InitializeClientsForStorage()

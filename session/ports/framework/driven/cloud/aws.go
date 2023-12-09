@@ -7,12 +7,13 @@ import (
 
 	sessionTypes "github.com/codeclout/AccountEd/session/session-types"
 	dynamov1 "github.com/codeclout/AccountEd/storage/gen/dynamo/v1"
+	"io-sch00l-workflow-token-generation/token-generation-types"
 )
 
 type cc = context.Context
 type dBStorageClient = dynamov1.DynamoDBStorageServiceClient
 type storeMetadata = sessionTypes.SessionStoreMetadata
-type sessionEncOut = sessionTypes.TokenCreateOut
+type sessionEncOut = token_generation_types.TokenCreateOut
 
 type dbClient = dynamov1.DynamoDBStorageServiceClient
 

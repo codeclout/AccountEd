@@ -30,20 +30,20 @@ type AdapterServiceClients struct {
 	SessionStorageclient    *dynamov1.DynamoDBStorageServiceClient
 	config                  cfg
 	clientList              []*grpc.ClientConn
-	pkgConfig               *cfg
+	internalConfiguration   *cfg
 	monitor                 monitoring.Adapter
 	wg                      *sync.WaitGroup
 }
 
 func NewGrpcAdapter(config cfg, monitor monitoring.Adapter, wg *sync.WaitGroup) *AdapterServiceClients {
 	aServer := drivers.NewAdapter(monitor)
-	pkgCfg := aServer.LoadServerConfiguration()
+	internals := aServer.LoadServerConfiguration()
 
 	return &AdapterServiceClients{
-		config:    config,
-		pkgConfig: pkgCfg,
-		monitor:   monitor,
-		wg:        wg,
+		config:                config,
+		internalConfiguration: internals,
+		monitor:               monitor,
+		wg:                    wg,
 	}
 }
 
@@ -53,13 +53,12 @@ func (a *AdapterServiceClients) gRPCPostInit() {
 
 	<-s
 	a.monitor.Logger.Warn("closing grpc client connections")
-
-	a.wg.Done()
-	os.Exit(0)
 }
 
 func (a *AdapterServiceClients) initializeNotificationsClient() {
-	pConfig := *a.pkgConfig
+	var options []grpc.DialOption
+
+	pConfig := *a.internalConfiguration
 	to, ok := pConfig["GRPCClientConnectionTimeout"].(float64)
 
 	if !ok {
@@ -68,14 +67,10 @@ func (a *AdapterServiceClients) initializeNotificationsClient() {
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(to)*time.Millisecond)
-
 	defer cancel()
 
-	connection, e := grpc.DialContext(
-		ctx,
-		":9000",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	connection, e := grpc.DialContext(ctx, ":9000", options...)
 	if e != nil {
 		a.monitor.LogGenericError("gRPC notifications client failed to connect")
 		os.Exit(1)
@@ -88,7 +83,9 @@ func (a *AdapterServiceClients) initializeNotificationsClient() {
 }
 
 func (a *AdapterServiceClients) initializeSessionClient() {
-	pConfig := *a.pkgConfig
+	var options []grpc.DialOption
+
+	pConfig := *a.internalConfiguration
 	to, ok := pConfig["GRPCClientConnectionTimeout"].(float64)
 
 	if !ok {
@@ -97,14 +94,10 @@ func (a *AdapterServiceClients) initializeSessionClient() {
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(to)*time.Millisecond)
-
 	defer cancel()
 
-	connection, e := grpc.DialContext(
-		ctx,
-		"localhost:9001",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	connection, e := grpc.DialContext(ctx, ":9001", options...)
 	if e != nil {
 		a.monitor.LogGenericError("gRPC session client failed to connect")
 		os.Exit(1)
@@ -119,7 +112,9 @@ func (a *AdapterServiceClients) initializeSessionClient() {
 }
 
 func (a *AdapterServiceClients) initializeStorageClient() {
-	pConfig := *a.pkgConfig
+	var options []grpc.DialOption
+
+	pConfig := *a.internalConfiguration
 	to, ok := pConfig["GRPCClientConnectionTimeout"].(float64)
 
 	if !ok {
@@ -128,14 +123,10 @@ func (a *AdapterServiceClients) initializeStorageClient() {
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(to)*time.Millisecond)
-
 	defer cancel()
 
-	connection, e := grpc.DialContext(
-		ctx,
-		"localhost:9003",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	connection, e := grpc.DialContext(ctx, ":9003", options...)
 	if e != nil {
 		a.monitor.LogGenericError("gRPC session client failed to connect")
 		os.Exit(1)
@@ -148,19 +139,31 @@ func (a *AdapterServiceClients) initializeStorageClient() {
 }
 
 func (a *AdapterServiceClients) CloseClientConnection(conn *grpc.ClientConn) {
-	_ = conn.Close()
+	e := conn.Close()
+	if e != nil {
+		a.monitor.LogGenericError(e.Error())
+		os.Exit(1)
+	}
 }
 
-func (a *AdapterServiceClients) InitializeClients() {
+func (a *AdapterServiceClients) InitializeClientsForMember() {
 	defer a.wg.Done()
 
 	a.wg.Add(1)
 
 	a.initializeSessionClient()
 	a.initializeNotificationsClient()
-	a.initializeStorageClient()
 	a.gRPCPostInit()
 
+}
+
+func (a *AdapterServiceClients) InitializeClientsForSession() {
+	defer a.wg.Done()
+
+	a.wg.Add(1)
+
+	a.initializeStorageClient()
+	a.gRPCPostInit()
 }
 
 func (a *AdapterServiceClients) InitializeClientsForStorage() {
@@ -179,4 +182,6 @@ func (a *AdapterServiceClients) StopProtocolListener() {
 		a.monitor.LogGenericInfo("closing gRPC connection: " + v.Target())
 		a.CloseClientConnection(v)
 	}
+
+	os.Exit(0)
 }

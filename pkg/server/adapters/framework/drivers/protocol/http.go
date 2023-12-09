@@ -109,6 +109,10 @@ func (a *Adapter) InitializeRoutes(routes []*fiber.App) {
 
 	for _, app := range routes {
 		a.monitor.LogGenericInfo("creating API routes for: " + a.metadata.ServerName)
-		a.FrameworkDriver.Mount("/v1/api/"+a.metadata.RoutePrefix, app)
+		if app.Config().Views != nil {
+			a.FrameworkDriver.Mount("/"+a.metadata.RoutePrefix, app)
+		} else {
+			a.FrameworkDriver.Mount("/api/v1/"+a.metadata.RoutePrefix, app)
+		}
 	}
 }

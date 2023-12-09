@@ -14,10 +14,10 @@ func main() {
 	monitor := monitoring.NewAdapter()
 
 	storageconfig := server.NewAdapter(*monitor, staticConfigurationPath)
-	baseconfig := *storageconfig.LoadStorageConfig()
+	baseconfig := *storageconfig.LoadStaticConfig()
 
 	infraconfig := stack.NewAdapter(*monitor)
-	config := infraconfig.LoadStorageInfrastructureConfig(baseconfig)
+	config := infraconfig.LoadStaticConfig(baseconfig)
 
 	app := cdktf.NewApp(nil)
 	dynamoStack := stack.NewDynamoDBStorage(*config, app, "io-sch00l-storage-dynamodb")
