@@ -1,132 +1,129 @@
 package validations
 
 import (
-	"encoding/base64"
-	"net/mail"
-	"regexp"
-	"strings"
-	"sync"
-	"sync/atomic"
+  "encoding/base64"
+  "net/mail"
+  "regexp"
+  "strings"
+  "sync/atomic"
 
-	"github.com/pkg/errors"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-
-	membertypes "github.com/codeclout/AccountEd/members/member-types"
+  "github.com/pkg/errors"
+  "golang.org/x/text/cases"
+  "golang.org/x/text/language"
 )
 
 var (
-	ErrorInvalidEmail = errors.New("invalid email")
-	ErrorMemberName   = errors.New("invalid name")
-	ErrorPayloadSize  = errors.New("invalid payload size")
-	ErrorPinInvalid   = errors.New("invalid pin")
+  ErrorInvalidEmail = errors.New("invalid email")
+  ErrorMemberName   = errors.New("invalid name")
+  ErrorPayloadSize  = errors.New("invalid payload size")
+  ErrorPinInvalid   = errors.New("invalid pin")
 )
 
 func ValidateBase64(in string) error {
-	_, e := base64.StdEncoding.DecodeString(in)
+  _, e := base64.StdEncoding.DecodeString(in)
 
-	return e
+  return e
 }
 
 // ValidateUsernamePayloadSize checks if the size of the input byte slice is within the acceptable limit.
 // It returns an error if the input byte slice is larger than 320 bytes.
 func ValidateUsernamePayloadSize(in []byte) error {
-	if len(in) > 320 {
-		return ErrorPayloadSize
-	}
+  if len(in) > 320 {
+    return ErrorPayloadSize
+  }
 
-	return nil
+  return nil
 }
 
 // ValidateName checks if the given name is valid by applying a transformation to Title case, removing trailing white spaces,
 // and verifying that the name does not contain prohibited characters. It returns an atomic.Value storing the transformed name and any
 // related errors, such as ErrorMemberName for prohibited characters. It accepts a string pointer as input.
 func ValidateName(name *string) (atomic.Value, error) {
-	var atom atomic.Value
+  var atom atomic.Value
 
-	c := cases.Title(language.English, cases.NoLower)
-	t := strings.TrimSpace(*name)
-	p := `(?m)[\p{Sm}\p{Nd}\p{Sc}\p{Sk}\p{Sm}\p{So}\p{Pe}\p{Ps}&#@*\\\/\.]`
+  c := cases.Title(language.English, cases.NoLower)
+  t := strings.TrimSpace(*name)
+  p := `(?m)[\p{Sm}\p{Nd}\p{Sc}\p{Sk}\p{Sm}\p{So}\p{Pe}\p{Ps}&#@*\\\/\.]`
 
-	if ok, e := regexp.MatchString(p, c.String(t)); e == nil && ok {
-		atom.Store("")
-		return atom, ErrorMemberName
-	}
+  if ok, e := regexp.MatchString(p, c.String(t)); e == nil && ok {
+    atom.Store("")
+    return atom, ErrorMemberName
+  }
 
-	atom.Store(c.String(*name))
-	return atom, nil
+  atom.Store(c.String(*name))
+  return atom, nil
 }
 
 // ValidateEmail checks if the provided email is valid. It accepts a string pointer to the email address as input.
 // The function returns an atomic.Value containing the parsed email address and an error which can be ErrorInvalidEmail.
 // The email address validation is performed using the net/mail.ParseAddress function and a regex check for the email domain's TLD.
 func ValidateEmail(email *string) (atomic.Value, error) {
-	var atom atomic.Value
+  var atom atomic.Value
 
-	a, e := mail.ParseAddress(*email)
-	if e != nil {
-		atom.Store("")
-		return atom, ErrorInvalidEmail
-	}
+  a, e := mail.ParseAddress(*email)
+  if e != nil {
+    atom.Store("")
+    return atom, ErrorInvalidEmail
+  }
 
-	if ok, _ := regexp.MatchString(`(?m)\.[a-z]{2,24}`, *email); !ok {
-		atom.Store("")
-		return atom, ErrorInvalidEmail
-	}
+  if ok, _ := regexp.MatchString(`(?m)\.[a-z]{2,24}`, *email); !ok {
+    atom.Store("")
+    return atom, ErrorInvalidEmail
+  }
 
-	atom.Store(a.Address)
-	return atom, nil
+  atom.Store(a.Address)
+  return atom, nil
 }
 
 // ValidatePin checks if the provided PIN is valid by matching it against a regular expression pattern.
 // It accepts a string pointer to the PIN as input and returns a pointer to the result and any related error.
 // If the validation fails, an error is returned as ErrorPinInvalid. Valid PINs should contain 5 to 26 digits.
 func ValidatePin(pin *string) error {
-	if ok, e := regexp.MatchString(`(?m)^[0-9]{5,26}$`, *pin); ok && e == nil {
-		return nil
-	}
+  if ok, e := regexp.MatchString(`(?m)^[0-9]{5,26}$`, *pin); ok && e == nil {
+    return nil
+  }
 
-	return ErrorPinInvalid
+  return ErrorPinInvalid
 }
 
-func ValidatePrimaryMember(in *membertypes.PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) (e error) {
-	out := make(chan error, 1)
-
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		defer func() {
-			out <- e
-		}()
-
-		email, x := ValidateEmail(in.MemberID)
-		if x != nil {
-			e = ErrorInvalidEmail
-			return
-		}
-
-		v := email.Load()
-
-		vs, ok := v.(string)
-		if !ok {
-			e = ErrorInvalidEmail
-			return
-		}
-
-		in.MemberID = &vs
-	}()
-
-	wg.Wait()
-
-	select {
-	case e := <-out:
-		return e
-
-	default:
-		return nil
-	}
-}
+// func ValidatePrimaryMember(in *membertypes.PrimaryMemberStartRegisterIn, wg *sync.WaitGroup) (e error) {
+// 	out := make(chan error, 1)
+//
+// 	wg.Add(1)
+//
+// 	go func() {
+// 		defer wg.Done()
+// 		defer func() {
+// 			out <- e
+// 		}()
+//
+// 		email, x := ValidateEmail(in.MemberID)
+// 		if x != nil {
+// 			e = ErrorInvalidEmail
+// 			return
+// 		}
+//
+// 		v := email.Load()
+//
+// 		vs, ok := v.(string)
+// 		if !ok {
+// 			e = ErrorInvalidEmail
+// 			return
+// 		}
+//
+// 		in.MemberID = &vs
+// 	}()
+//
+// 	wg.Wait()
+//
+// 	select {
+// 	case e := <-out:
+// 		return e
+//
+// 	default:
+// 		return nil
+// 	}
+// }
 
 //
 // func ValidateParentGuardian(in *member_types.ParentGuardian, wg *sync.WaitGroup) error {
@@ -151,9 +148,9 @@ func ValidatePrimaryMember(in *membertypes.PrimaryMemberStartRegisterIn, wg *syn
 // }
 
 func ValidateRequestLimit(limit *string) bool {
-	if ok, e := regexp.MatchString(`(?m)^[1-9]{1,3}$`, *limit); ok && e == nil {
-		return true
-	}
+  if ok, e := regexp.MatchString(`(?m)^[1-9]{1,3}$`, *limit); ok && e == nil {
+    return true
+  }
 
-	return false
+  return false
 }
